@@ -324,9 +324,7 @@ async function validateAllPatterns(
 		redosCount,
 	});
 
-	if (config.notificationsLevel === 'all') {
-		deps.notifier.showInfo(
-			`Validated ${patterns.length} patterns: ${validCount} valid, ${invalidCount} invalid${redosCount > 0 ? `, ${redosCount} with ReDoS issues` : ''}`,
-		);
-	}
+	deps.notifier.showInfo(
+		`Validated ${patterns.length} patterns: ${validCount} valid, ${invalidCount} invalid${redosCount > 0 ? `, ${redosCount} with ReDoS issues` : ''}`,
+	);
 }

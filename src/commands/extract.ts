@@ -109,11 +109,9 @@ export function registerExtractCommand(
 							matchCount: patterns.length,
 						});
 
-						if (config.notificationsLevel === 'all') {
-							deps.notifier.showInfo(
-								`Extracted ${patterns.length} regex patterns`,
-							);
-						}
+						deps.notifier.showInfo(
+							`Extracted ${patterns.length} regex patterns`,
+						);
 					},
 				);
 			} catch (error) {
