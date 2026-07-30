@@ -30,6 +30,7 @@ export const window = {
 export const workspace = {
   openTextDocument: mockFn,
   applyEdit: mockFn,
+  onDidChangeConfiguration: () => ({ dispose: () => {} }),
   getConfiguration: () => ({
     get: (_key: string, defaultValue?: unknown) => defaultValue,
     update: mockFn,
