@@ -1,7 +1,3 @@
-import * as nls from 'vscode-nls';
-
-const localize = nls.config({ messageFormat: nls.MessageFormat.file })();
-
 /**
  * Enhanced error handling utilities
  * Provides sophisticated error categorization, recovery, and user feedback
@@ -135,50 +131,26 @@ function getUserFriendlyMessage(
 	const sanitizedPath = filepath ? sanitizePath(filepath) : undefined;
 
 	if (category === 'parse') {
-		return localize(
-			'runtime.error.parse',
-			'Failed to parse content{0}',
-			sanitizedPath ? ` from ${sanitizedPath}` : '',
-		);
+		return `Failed to parse content${sanitizedPath ? ` from ${sanitizedPath}` : ''}`;
 	}
 
 	if (category === 'validation') {
-		return localize(
-			'runtime.error.validation',
-			'Validation failed{0}',
-			sanitizedPath ? ` for ${sanitizedPath}` : '',
-		);
+		return `Validation failed${sanitizedPath ? ` for ${sanitizedPath}` : ''}`;
 	}
 
 	if (category === 'safety') {
-		return localize(
-			'runtime.error.safety',
-			'Safety check failed: {0}',
-			error.message,
-		);
+		return `Safety check failed: ${error.message}`;
 	}
 
 	if (category === 'file-system') {
-		return localize(
-			'runtime.error.filesystem',
-			'File system error{0}',
-			sanitizedPath ? ` for ${sanitizedPath}` : '',
-		);
+		return `File system error${sanitizedPath ? ` for ${sanitizedPath}` : ''}`;
 	}
 
 	if (category === 'configuration') {
-		return localize(
-			'runtime.error.configuration',
-			'Configuration error: {0}',
-			error.message,
-		);
+		return `Configuration error: ${error.message}`;
 	}
 
-	return localize(
-		'runtime.error.operational',
-		'Operation failed: {0}',
-		error.message,
-	);
+	return `Operation failed: ${error.message}`;
 }
 
 /**
@@ -186,44 +158,26 @@ function getUserFriendlyMessage(
  */
 function getErrorSuggestion(_error: Error, category: ErrorCategory): string {
 	if (category === 'parse') {
-		return localize(
-			'runtime.error.parse.suggestion',
-			'Check the file format and try again',
-		);
+		return 'Check the file format and try again';
 	}
 
 	if (category === 'validation') {
-		return localize(
-			'runtime.error.validation.suggestion',
-			'Verify the input meets requirements',
-		);
+		return 'Verify the input meets requirements';
 	}
 
 	if (category === 'safety') {
-		return localize(
-			'runtime.error.safety.suggestion',
-			'Consider adjusting safety thresholds in settings',
-		);
+		return 'Consider adjusting safety thresholds in settings';
 	}
 
 	if (category === 'file-system') {
-		return localize(
-			'runtime.error.filesystem.suggestion',
-			'Check file permissions and path',
-		);
+		return 'Check file permissions and path';
 	}
 
 	if (category === 'configuration') {
-		return localize(
-			'runtime.error.configuration.suggestion',
-			'Review extension settings',
-		);
+		return 'Review extension settings';
 	}
 
-	return localize(
-		'runtime.error.operational.suggestion',
-		'Try the operation again',
-	);
+	return 'Try the operation again';
 }
 
 /**
@@ -326,10 +280,8 @@ export function createPerformanceError(
 		{
 			recoverable: true,
 			severity: 'medium',
-			suggestion: localize(
-				'runtime.error.performance.suggestion',
+			suggestion:
 				'Consider processing smaller files or adjusting performance settings',
-			),
 		},
 	);
 }

@@ -1,12 +1,9 @@
 import * as vscode from 'vscode';
-import * as nls from 'vscode-nls';
 import type {
 	EnhancedError,
 	ErrorRecoveryOptions,
 	ErrorSummary,
 } from '../utils/errorHandling';
-
-const localize = nls.config({ messageFormat: nls.MessageFormat.file })();
 
 function buildErrorMessage(
 	error: EnhancedError,
@@ -16,13 +13,13 @@ function buildErrorMessage(
 
 	const hasSuggestion = Boolean(error.suggestion);
 	if (hasSuggestion) {
-		const suggestionLabel = localize('runtime.error.suggestion', 'Suggestion');
+		const suggestionLabel = 'Suggestion';
 		fullMessage += `\n\n${suggestionLabel}: ${error.suggestion}`;
 	}
 
 	const hasUserAction = Boolean(options?.userAction);
 	if (hasUserAction) {
-		const actionLabel = localize('runtime.error.action', 'Action');
+		const actionLabel = 'Action';
 		fullMessage += `\n\n${actionLabel}: ${options?.userAction}`;
 	}
 
@@ -86,19 +83,12 @@ export function createNotifier(): Notifier {
 		showErrorSummary(summary: ErrorSummary): void {
 			const hasNoErrors = summary.totalErrors === 0;
 			if (hasNoErrors) {
-				this.showInfo(
-					localize('runtime.error.summary.none', 'No errors occurred'),
-				);
+				this.showInfo('No errors occurred');
 				return;
 			}
 
 			const criticalCount = summary.severity.high;
-			const message = localize(
-				'runtime.error.summary.notification',
-				'Processing completed with {0} errors ({1} critical)',
-				summary.totalErrors,
-				criticalCount,
-			);
+			const message = `Processing completed with ${summary.totalErrors} errors (${criticalCount} critical)`;
 
 			const hasCriticalErrors = criticalCount > 0;
 			if (hasCriticalErrors) {

@@ -21,8 +21,6 @@ export default defineConfig({
 	resolve: {
 		alias: {
 			vscode: new URL('./src/__mocks__/vscode.ts', import.meta.url).pathname,
-			'vscode-nls': new URL('./src/__mocks__/vscode-nls.ts', import.meta.url)
-				.pathname,
 		},
 	},
 });

@@ -1,5 +1,4 @@
 import * as vscode from 'vscode';
-import * as nls from 'vscode-nls';
 import { getConfiguration } from '../config/config';
 import { extractRegexPatterns } from '../extraction/regex/extractPatterns';
 import { calculatePerformanceScore } from '../extraction/regex/performance';
@@ -10,8 +9,6 @@ import type { Notifier } from '../ui/notifier';
 import type { StatusBar } from '../ui/statusBar';
 import type { PerformanceMonitor } from '../utils/performance';
 import { handleSafetyChecks } from '../utils/safety';
-
-const localize = nls.config({ messageFormat: nls.MessageFormat.file })();
 
 /**
  * Register the regex test command
@@ -34,10 +31,7 @@ export function registerTestCommand(
 			const editor = vscode.window.activeTextEditor;
 			if (!editor) {
 				deps.notifier.showWarning(
-					localize(
-						'runtime.test.no-editor',
-						'No active editor. Please open a file first.',
-					),
+					'No active editor. Please open a file first.',
 				);
 				return;
 			}
@@ -63,28 +57,16 @@ export function registerTestCommand(
 
 			if (extractedPatterns.length === 0) {
 				deps.notifier.showInfo(
-					localize(
-						'runtime.test.no-patterns',
-						'No regex patterns found in the file. Select text or provide a pattern to test.',
-					),
+					'No regex patterns found in the file. Select text or provide a pattern to test.',
 				);
 
 				// Fallback: prompt for pattern if none found
 				const patternInput = await vscode.window.showInputBox({
-					prompt: localize(
-						'runtime.test.pattern.prompt',
-						'Enter regex pattern to test',
-					),
-					placeHolder: localize(
-						'runtime.test.pattern.placeholder',
-						'e.g., /\\d+/',
-					),
+					prompt: 'Enter regex pattern to test',
+					placeHolder: 'e.g., /\\d+/',
 					validateInput: (value) => {
 						if (!value || value.trim().length === 0) {
-							return localize(
-								'runtime.test.pattern.invalid',
-								'Pattern cannot be empty',
-							);
+							return 'Pattern cannot be empty';
 						}
 						return null;
 					},
@@ -120,10 +102,7 @@ export function registerTestCommand(
 			});
 
 			const selected = await vscode.window.showQuickPick(patternChoices, {
-				placeHolder: localize(
-					'runtime.test.select-pattern',
-					'Select a pattern to test against the file',
-				),
+				placeHolder: 'Select a pattern to test against the file',
 			});
 
 			if (!selected) {
@@ -134,10 +113,7 @@ export function registerTestCommand(
 				await vscode.window.withProgress(
 					{
 						location: vscode.ProgressLocation.Notification,
-						title: localize(
-							'runtime.test.progress',
-							'Testing regex pattern...',
-						),
+						title: 'Testing regex pattern...',
 						cancellable: false,
 					},
 					async (progress) => {
@@ -167,9 +143,7 @@ export function registerTestCommand(
 			} catch (error) {
 				const errorMessage =
 					error instanceof Error ? error.message : String(error);
-				deps.notifier.showError(
-					localize('runtime.test.error', 'Testing failed: {0}', errorMessage),
-				);
+				deps.notifier.showError(`Testing failed: ${errorMessage}`);
 				deps.telemetry.event('test-failed', { error: errorMessage });
 			}
 		},

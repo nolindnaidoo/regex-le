@@ -42,7 +42,6 @@
 	],
 	"icon": "src/assets/images/icon.png",
 	"main": "./dist/extension.js",
-	"l10n": "./package.nls.json",
 	"activationEvents": [
 		"onCommand:regex-le.test",
 		"onCommand:regex-le.extract",
@@ -244,8 +243,5 @@
 		"tsx": "^4.20.6",
 		"typescript": "^5.9.3",
 		"vitest": "^3.2.4"
-	},
-	"dependencies": {
-		"vscode-nls": "^5.2.0"
 	}
 }

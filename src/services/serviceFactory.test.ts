@@ -28,11 +28,6 @@ vi.mock('../ui/statusBar', () => ({
 		dispose: vi.fn(),
 	})),
 }));
-vi.mock('../utils/localization', () => ({
-	createLocalizer: vi.fn(() => ({
-		localize: vi.fn(),
-	})),
-}));
 vi.mock('../utils/performance', () => ({
 	createPerformanceMonitor: vi.fn(() => ({
 		startOperation: vi.fn(),
@@ -75,7 +70,6 @@ describe('serviceFactory', () => {
 			expect(services.telemetry).toBeDefined();
 			expect(services.notifier).toBeDefined();
 			expect(services.statusBar).toBeDefined();
-			expect(services.localizer).toBeDefined();
 			expect(services.performanceMonitor).toBeDefined();
 			expect(services.errorHandler).toBeDefined();
 			expect(Object.isFrozen(services)).toBe(true);
@@ -99,7 +93,6 @@ describe('serviceFactory', () => {
 			const telemetry = await import('../telemetry/telemetry');
 			const notifier = await import('../ui/notifier');
 			const statusBar = await import('../ui/statusBar');
-			const localizer = await import('../utils/localization');
 			const performance = await import('../utils/performance');
 			const errorHandling = await import('../utils/errorHandling');
 
@@ -110,7 +103,6 @@ describe('serviceFactory', () => {
 			expect(vi.mocked(statusBar.createStatusBar)).toHaveBeenCalledWith(
 				mockContext,
 			);
-			expect(vi.mocked(localizer.createLocalizer)).toHaveBeenCalled();
 			expect(
 				vi.mocked(performance.createPerformanceMonitor),
 			).toHaveBeenCalled();
@@ -124,7 +116,6 @@ describe('serviceFactory', () => {
 			expect(typeof services.telemetry.event).toBe('function');
 			expect(typeof services.notifier.showInfo).toBe('function');
 			expect(typeof services.statusBar.updateText).toBe('function');
-			expect(typeof services.localizer.localize).toBe('function');
 			expect(typeof services.performanceMonitor.startOperation).toBe(
 				'function',
 			);

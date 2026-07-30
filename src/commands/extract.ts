@@ -1,13 +1,10 @@
 import * as vscode from 'vscode';
-import * as nls from 'vscode-nls';
 import { getConfiguration } from '../config/config';
 import { extractRegexPatterns } from '../extraction/regex/extractPatterns';
 import type { Telemetry } from '../telemetry/telemetry';
 import type { Notifier } from '../ui/notifier';
 import type { StatusBar } from '../ui/statusBar';
 import { handleSafetyChecks } from '../utils/safety';
-
-const localize = nls.config({ messageFormat: nls.MessageFormat.file })();
 
 /**
  * Register the regex extract command
@@ -29,10 +26,7 @@ export function registerExtractCommand(
 			const editor = vscode.window.activeTextEditor;
 			if (!editor) {
 				deps.notifier.showWarning(
-					localize(
-						'runtime.extract.no-editor',
-						'No active editor. Please open a file first.',
-					),
+					'No active editor. Please open a file first.',
 				);
 				return;
 			}
@@ -55,10 +49,7 @@ export function registerExtractCommand(
 				await vscode.window.withProgress(
 					{
 						location: vscode.ProgressLocation.Notification,
-						title: localize(
-							'runtime.extract.progress',
-							'Extracting regex patterns...',
-						),
+						title: 'Extracting regex patterns...',
 						cancellable: false,
 					},
 					async (_progress, token): Promise<void> => {
@@ -72,12 +63,7 @@ export function registerExtractCommand(
 						if (token.isCancellationRequested) return;
 
 						if (patterns.length === 0) {
-							deps.notifier.showInfo(
-								localize(
-									'runtime.extract.no-matches',
-									'No regex patterns found in the file.',
-								),
-							);
+							deps.notifier.showInfo('No regex patterns found in the file.');
 							return;
 						}
 
@@ -108,22 +94,14 @@ export function registerExtractCommand(
 							try {
 								await vscode.env.clipboard.writeText(output);
 								deps.statusBar.updateText(
-									localize(
-										'runtime.extract.copied',
-										'Extracted {0} patterns to clipboard',
-										patterns.length,
-									),
+									`Extracted ${patterns.length} patterns to clipboard`,
 								);
 							} catch {
 								// Ignore clipboard errors
 							}
 						} else {
 							deps.statusBar.updateText(
-								localize(
-									'runtime.extract.complete',
-									'Extracted {0} patterns',
-									patterns.length,
-								),
+								`Extracted ${patterns.length} patterns`,
 							);
 						}
 
@@ -133,11 +111,7 @@ export function registerExtractCommand(
 
 						if (config.notificationsLevel === 'all') {
 							deps.notifier.showInfo(
-								localize(
-									'runtime.extract.complete',
-									'Extracted {0} regex patterns',
-									patterns.length,
-								),
+								`Extracted ${patterns.length} regex patterns`,
 							);
 						}
 					},
@@ -145,13 +119,7 @@ export function registerExtractCommand(
 			} catch (error) {
 				const errorMessage =
 					error instanceof Error ? error.message : String(error);
-				deps.notifier.showError(
-					localize(
-						'runtime.extract.error',
-						'Extraction failed: {0}',
-						errorMessage,
-					),
-				);
+				deps.notifier.showError(`Extraction failed: ${errorMessage}`);
 				deps.telemetry.event('extract-failed', { error: errorMessage });
 			}
 		},

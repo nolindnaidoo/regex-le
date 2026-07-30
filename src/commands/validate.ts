@@ -1,5 +1,4 @@
 import * as vscode from 'vscode';
-import * as nls from 'vscode-nls';
 import { getConfiguration } from '../config/config';
 import { extractRegexPatterns } from '../extraction/regex/extractPatterns';
 import { estimatePatternComplexity } from '../extraction/regex/performance';
@@ -7,8 +6,6 @@ import { detectReDoS } from '../extraction/regex/redos';
 import type { Telemetry } from '../telemetry/telemetry';
 import type { Notifier } from '../ui/notifier';
 import type { StatusBar } from '../ui/statusBar';
-
-const localize = nls.config({ messageFormat: nls.MessageFormat.file })();
 
 /**
  * Register the regex validate command
@@ -30,10 +27,7 @@ export function registerValidateCommand(
 			const editor = vscode.window.activeTextEditor;
 			if (!editor) {
 				deps.notifier.showWarning(
-					localize(
-						'runtime.validate.no-editor',
-						'No active editor. Please open a file first.',
-					),
+					'No active editor. Please open a file first.',
 				);
 				return;
 			}
@@ -46,28 +40,16 @@ export function registerValidateCommand(
 
 			if (extractedPatterns.length === 0) {
 				deps.notifier.showInfo(
-					localize(
-						'runtime.validate.no-patterns',
-						'No regex patterns found in the file. Provide a pattern to validate.',
-					),
+					'No regex patterns found in the file. Provide a pattern to validate.',
 				);
 
 				// Fallback: prompt for pattern if none found
 				const patternInput = await vscode.window.showInputBox({
-					prompt: localize(
-						'runtime.validate.pattern.prompt',
-						'Enter regex pattern to validate',
-					),
-					placeHolder: localize(
-						'runtime.validate.pattern.placeholder',
-						'e.g., /\\d+/',
-					),
+					prompt: 'Enter regex pattern to validate',
+					placeHolder: 'e.g., /\\d+/',
 					validateInput: (value) => {
 						if (!value || value.trim().length === 0) {
-							return localize(
-								'runtime.validate.pattern.invalid',
-								'Pattern cannot be empty',
-							);
+							return 'Pattern cannot be empty';
 						}
 						return null;
 					},
@@ -92,10 +74,7 @@ export function registerValidateCommand(
 				await vscode.window.withProgress(
 					{
 						location: vscode.ProgressLocation.Notification,
-						title: localize(
-							'runtime.validate.progress',
-							'Validating regex patterns...',
-						),
+						title: 'Validating regex patterns...',
 						cancellable: false,
 					},
 					async (progress) => {
@@ -105,13 +84,7 @@ export function registerValidateCommand(
 			} catch (error) {
 				const errorMessage =
 					error instanceof Error ? error.message : String(error);
-				deps.notifier.showError(
-					localize(
-						'runtime.validate.error',
-						'Validation failed: {0}',
-						errorMessage,
-					),
-				);
+				deps.notifier.showError(`Validation failed: ${errorMessage}`);
 				deps.telemetry.event('validate-failed', { error: errorMessage });
 			}
 		},

@@ -1,9 +1,6 @@
 import * as vscode from 'vscode';
-import * as nls from 'vscode-nls';
 import type { Configuration } from '../types';
 import { createEnhancedError, type EnhancedError } from './errorHandling';
-
-const localize = nls.config({ messageFormat: nls.MessageFormat.file })();
 
 export interface SafetyResult {
 	readonly proceed: boolean;
@@ -48,12 +45,7 @@ export function handleSafetyChecks(
 	if (exceedsFileSize) {
 		const error = createEnhancedError(
 			new Error(
-				localize(
-					'runtime.safety.file-size',
-					'File size ({0} bytes) exceeds safety threshold ({1} bytes)',
-					content.length,
-					fileSizeThreshold,
-				),
+				`File size (${content.length} bytes) exceeds safety threshold (${fileSizeThreshold} bytes)`,
 			),
 			'safety',
 			{
@@ -64,10 +56,8 @@ export function handleSafetyChecks(
 			{
 				recoverable: false,
 				severity: 'high',
-				suggestion: localize(
-					'runtime.safety.file-size.suggestion',
+				suggestion:
 					'Consider splitting the file or increasing the safety threshold in settings',
-				),
 			},
 		);
 
@@ -83,12 +73,8 @@ export function handleSafetyChecks(
 	const warnings = collectSafetyWarnings(content, config, options);
 	const hasWarnings = warnings.length > 0;
 	const message = hasWarnings
-		? localize(
-				'runtime.safety.warnings',
-				'Safety checks passed with {0} warnings',
-				warnings.length,
-			)
-		: localize('runtime.safety.passed', 'Safety checks passed');
+		? `Safety checks passed with ${warnings.length} warnings`
+		: 'Safety checks passed';
 
 	return Object.freeze({
 		proceed: true,
@@ -112,25 +98,13 @@ function collectSafetyWarnings(
 	// Warn about large line count
 	const lineThreshold = options.customThresholds?.lineCount ?? 10000;
 	if (lineCount > lineThreshold) {
-		warnings.push(
-			localize(
-				'runtime.safety.line-count.warning',
-				'File has {0} lines (threshold: {1})',
-				lineCount,
-				lineThreshold,
-			),
-		);
+		warnings.push(`File has ${lineCount} lines (threshold: ${lineThreshold})`);
 	}
 
 	// Warn if file appears to be binary or malformed
 	const hasBinaryContent = content.includes('\x00');
 	if (hasBinaryContent) {
-		warnings.push(
-			localize(
-				'runtime.safety.binary.warning',
-				'File may contain binary content',
-			),
-		);
+		warnings.push('File may contain binary content');
 	}
 
 	return warnings;
@@ -159,12 +133,7 @@ export function checkOutputSafety(
 	if (exceedsThreshold) {
 		const error = createEnhancedError(
 			new Error(
-				localize(
-					'runtime.safety.output-size',
-					'Output size ({0} lines) exceeds safety threshold ({1} lines)',
-					lineCount,
-					threshold,
-				),
+				`Output size (${lineCount} lines) exceeds safety threshold (${threshold} lines)`,
 			),
 			'safety',
 			{
@@ -174,10 +143,7 @@ export function checkOutputSafety(
 			{
 				recoverable: true,
 				severity: 'medium',
-				suggestion: localize(
-					'runtime.safety.output-size.suggestion',
-					'Consider filtering results or increasing the threshold',
-				),
+				suggestion: 'Consider filtering results or increasing the threshold',
 			},
 		);
 
@@ -191,10 +157,7 @@ export function checkOutputSafety(
 
 	return Object.freeze({
 		proceed: true,
-		message: localize(
-			'runtime.safety.output.passed',
-			'Output safety check passed',
-		),
+		message: 'Output safety check passed',
 		warnings: Object.freeze([]),
 	});
 }
@@ -206,8 +169,8 @@ export async function confirmRiskyOperation(
 	message: string,
 	detail?: string,
 ): Promise<boolean> {
-	const proceed = localize('runtime.safety.confirm.proceed', 'Proceed');
-	const cancel = localize('runtime.safety.confirm.cancel', 'Cancel');
+	const proceed = 'Proceed';
+	const cancel = 'Cancel';
 
 	const options =
 		detail !== undefined ? { modal: true, detail } : { modal: true };
