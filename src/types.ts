@@ -77,10 +77,6 @@ export interface Configuration {
 	readonly safetyLargeOutputLinesThreshold: number;
 	readonly statusBarEnabled: boolean;
 	readonly telemetryEnabled: boolean;
-	readonly performanceEnabled: boolean;
-	readonly performanceMaxDuration: number;
-	readonly performanceMaxMemoryUsage: number;
-	readonly regexRealtimePreviewEnabled: boolean;
 	readonly regexRedosDetectionEnabled: boolean;
 	readonly regexMaxMatchLimit: number;
 }

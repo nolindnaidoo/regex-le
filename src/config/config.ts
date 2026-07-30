@@ -2,61 +2,118 @@ import * as vscode from 'vscode';
 import type { Configuration } from '../types';
 
 /**
- * Get extension configuration with validation and defaults
+ * Fallback values, kept identical to the defaults declared in
+ * package.json contributes.configuration. A unit test asserts parity so
+ * the two can never drift again.
  */
+export const CONFIG_DEFAULTS = Object.freeze({
+	copyToClipboardEnabled: false,
+	notificationsLevel: 'silent' as const,
+	openResultsSideBySide: true,
+	safetyEnabled: true,
+	safetyFileSizeWarnBytes: 1_000_000,
+	safetyLargeOutputLinesThreshold: 50_000,
+	statusBarEnabled: true,
+	telemetryEnabled: false,
+	regexRedosDetectionEnabled: true,
+	regexMaxMatchLimit: 1000,
+});
+
 export function getConfiguration(): Configuration {
 	const config = vscode.workspace.getConfiguration('regex-le');
 
-	// Validate notification level
-	const notifRaw = config.get(
-		'notificationsLevel',
-		'silent',
-	) as unknown as string;
-	const notificationsLevel = isValidNotificationLevel(notifRaw)
-		? notifRaw
-		: 'silent';
-
 	return Object.freeze({
-		copyToClipboardEnabled: Boolean(
-			config.get('copyToClipboardEnabled', false),
+		copyToClipboardEnabled: readBoolean(
+			config,
+			'copyToClipboardEnabled',
+			CONFIG_DEFAULTS.copyToClipboardEnabled,
 		),
-		notificationsLevel,
-		openResultsSideBySide: Boolean(config.get('openResultsSideBySide', true)),
-		safetyEnabled: Boolean(config.get('safety.enabled', true)),
-		safetyFileSizeWarnBytes: Math.max(
+		notificationsLevel: readNotificationLevel(config),
+		openResultsSideBySide: readBoolean(
+			config,
+			'openResultsSideBySide',
+			CONFIG_DEFAULTS.openResultsSideBySide,
+		),
+		safetyEnabled: readBoolean(
+			config,
+			'safety.enabled',
+			CONFIG_DEFAULTS.safetyEnabled,
+		),
+		safetyFileSizeWarnBytes: readNumber(
+			config,
+			'safety.fileSizeWarnBytes',
+			CONFIG_DEFAULTS.safetyFileSizeWarnBytes,
 			1000,
-			Number(config.get('safety.fileSizeWarnBytes', 1000000)),
 		),
-		safetyLargeOutputLinesThreshold: Math.max(
+		safetyLargeOutputLinesThreshold: readNumber(
+			config,
+			'safety.largeOutputLinesThreshold',
+			CONFIG_DEFAULTS.safetyLargeOutputLinesThreshold,
 			100,
-			Number(config.get('safety.largeOutputLinesThreshold', 50000)),
 		),
-		statusBarEnabled: Boolean(config.get('statusBar.enabled', true)),
-		telemetryEnabled: Boolean(config.get('telemetryEnabled', false)),
-		performanceEnabled: Boolean(config.get('performance.enabled', true)),
-		performanceMaxDuration: Math.max(
-			1000,
-			Number(config.get('performance.maxDuration', 5000)),
+		statusBarEnabled: readBoolean(
+			config,
+			'statusBar.enabled',
+			CONFIG_DEFAULTS.statusBarEnabled,
 		),
-		performanceMaxMemoryUsage: Math.max(
-			1048576,
-			Number(config.get('performance.maxMemoryUsage', 104857600)),
+		telemetryEnabled: readBoolean(
+			config,
+			'telemetryEnabled',
+			CONFIG_DEFAULTS.telemetryEnabled,
 		),
-		regexRealtimePreviewEnabled: Boolean(
-			config.get('regex.realtimePreviewEnabled', true),
+		regexRedosDetectionEnabled: readBoolean(
+			config,
+			'regex.redosDetectionEnabled',
+			CONFIG_DEFAULTS.regexRedosDetectionEnabled,
 		),
-		regexRedosDetectionEnabled: Boolean(
-			config.get('regex.redosDetectionEnabled', true),
-		),
-		regexMaxMatchLimit: Math.max(
+		regexMaxMatchLimit: readNumber(
+			config,
+			'regex.maxMatchLimit',
+			CONFIG_DEFAULTS.regexMaxMatchLimit,
 			10,
-			Math.min(10000, Number(config.get('regex.maxMatchLimit', 1000))),
+			10_000,
 		),
 	});
 }
 
+function readBoolean(
+	config: vscode.WorkspaceConfiguration,
+	key: string,
+	defaultValue: boolean,
+): boolean {
+	const value = config.get(key, defaultValue);
+	return typeof value === 'boolean' ? value : defaultValue;
+}
+
+function readNumber(
+	config: vscode.WorkspaceConfiguration,
+	key: string,
+	defaultValue: number,
+	minValue: number,
+	maxValue?: number,
+): number {
+	const value = Number(config.get(key, defaultValue));
+	if (!Number.isFinite(value)) {
+		return defaultValue;
+	}
+	const clamped = Math.max(minValue, value);
+	return maxValue === undefined ? clamped : Math.min(maxValue, clamped);
+}
+
 export type NotificationLevel = 'all' | 'important' | 'silent';
 
-function isValidNotificationLevel(v: unknown): v is NotificationLevel {
+export function isValidNotificationLevel(v: unknown): v is NotificationLevel {
 	return v === 'all' || v === 'important' || v === 'silent';
+}
+
+function readNotificationLevel(
+	config: vscode.WorkspaceConfiguration,
+): NotificationLevel {
+	const raw = config.get<string>(
+		'notificationsLevel',
+		CONFIG_DEFAULTS.notificationsLevel,
+	);
+	return isValidNotificationLevel(raw)
+		? raw
+		: CONFIG_DEFAULTS.notificationsLevel;
 }
