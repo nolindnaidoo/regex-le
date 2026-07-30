@@ -7,6 +7,7 @@ import { testRegexWithPerformance } from '../extraction/regex/regexTest';
 import type { Telemetry } from '../telemetry/telemetry';
 import type { Notifier } from '../ui/notifier';
 import type { StatusBar } from '../ui/statusBar';
+import { sanitizeErrorMessage } from '../utils/errors';
 import { handleSafetyChecks } from '../utils/safety';
 
 /**
@@ -40,11 +41,7 @@ export function registerTestCommand(
 			// Perform safety checks
 			const safetyResult = handleSafetyChecks(document, config);
 			if (!safetyResult.proceed) {
-				if (safetyResult.error) {
-					await deps.notifier.showEnhancedError(safetyResult.error);
-				} else {
-					deps.notifier.showError(safetyResult.message);
-				}
+				deps.notifier.showError(safetyResult.message);
 				return;
 			}
 
@@ -141,7 +138,9 @@ export function registerTestCommand(
 			} catch (error) {
 				const errorMessage =
 					error instanceof Error ? error.message : String(error);
-				deps.notifier.showError(`Testing failed: ${errorMessage}`);
+				deps.notifier.showError(
+					sanitizeErrorMessage(`Testing failed: ${errorMessage}`),
+				);
 				deps.telemetry.event('test-failed', { error: errorMessage });
 			}
 		},

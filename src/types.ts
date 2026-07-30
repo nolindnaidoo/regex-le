@@ -10,8 +10,6 @@ export interface RegexTestResult {
 	readonly errors: readonly ParseError[];
 	readonly warnings?: readonly string[] | undefined;
 	readonly performance?: PerformanceMetrics | undefined;
-	readonly redosDetected?: boolean | undefined;
-	readonly redosSeverity?: 'low' | 'medium' | 'high' | undefined;
 }
 
 export interface RegexMatch {
@@ -30,42 +28,9 @@ export interface RegexGroup {
 	readonly end: number;
 }
 
-export interface RegexValidationResult {
-	readonly valid: boolean;
-	readonly pattern: string;
-	readonly error?: string | undefined;
-	readonly redosDetected: boolean;
-	readonly redosSeverity?: 'low' | 'medium' | 'high' | undefined;
-	readonly performanceScore: number;
-	readonly flags: string;
-	readonly warnings?: readonly string[] | undefined;
-}
-
-export interface RegexExtractionResult {
-	readonly success: boolean;
-	readonly pattern: string;
-	readonly matches: readonly RegexMatch[];
-	readonly totalMatches: number;
-	readonly errors: readonly ParseError[];
-	readonly warnings?: readonly string[] | undefined;
-	readonly metadata?:
-		| {
-				readonly fileType: string;
-				readonly totalLines: number;
-				readonly processedLines: number;
-				readonly processingTimeMs: number;
-				readonly performanceMetrics?: PerformanceMetrics | undefined;
-		  }
-		| undefined;
-}
-
 export interface ParseError {
 	readonly type: 'parse-error' | 'validation-error' | 'redos-error';
 	readonly message: string;
-	readonly filepath?: string | undefined;
-	readonly line?: number | undefined;
-	readonly column?: number | undefined;
-	readonly context?: string | undefined;
 }
 
 export interface Configuration {

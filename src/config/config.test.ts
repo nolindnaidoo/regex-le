@@ -1,10 +1,8 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
-import * as vscode from 'vscode';
+import { beforeEach, describe, expect, it } from 'vitest';
+import { _resetMockState, _setConfig } from '../__mocks__/vscode';
 import { CONFIG_DEFAULTS, getConfiguration } from './config';
-
-vi.mock('vscode');
 
 /**
  * CONFIG_DEFAULTS must stay identical to the defaults declared in
@@ -47,18 +45,8 @@ describe('config defaults parity with package.json', () => {
 });
 
 describe('getConfiguration', () => {
-	const mockConfig = {
-		get: vi.fn(),
-	};
-
 	beforeEach(() => {
-		vi.clearAllMocks();
-		vi.mocked(vscode.workspace.getConfiguration).mockReturnValue(
-			mockConfig as any,
-		);
-		mockConfig.get.mockImplementation(
-			(_key: string, defaultValue: unknown) => defaultValue,
-		);
+		_resetMockState();
 	});
 
 	it('returns a frozen configuration of exactly the declared settings', () => {
@@ -70,17 +58,13 @@ describe('getConfiguration', () => {
 	});
 
 	it('uses defaults when nothing is set', () => {
-		const config = getConfiguration();
-		expect(config).toEqual(CONFIG_DEFAULTS);
+		expect(getConfiguration()).toEqual(CONFIG_DEFAULTS);
 	});
 
 	it('reads overrides', () => {
-		mockConfig.get.mockImplementation((key: string, dflt: unknown) => {
-			if (key === 'copyToClipboardEnabled') return true;
-			if (key === 'regex.maxMatchLimit') return 500;
-			if (key === 'notificationsLevel') return 'all';
-			return dflt;
-		});
+		_setConfig('regex-le.copyToClipboardEnabled', true);
+		_setConfig('regex-le.regex.maxMatchLimit', 500);
+		_setConfig('regex-le.notificationsLevel', 'all');
 		const config = getConfiguration();
 		expect(config.copyToClipboardEnabled).toBe(true);
 		expect(config.regexMaxMatchLimit).toBe(500);
@@ -88,30 +72,21 @@ describe('getConfiguration', () => {
 	});
 
 	it('non-boolean overrides fall back to defaults', () => {
-		mockConfig.get.mockImplementation((key: string, dflt: unknown) => {
-			if (key === 'safety.enabled') return 'false';
-			return dflt;
-		});
+		_setConfig('regex-le.safety.enabled', 'false');
 		expect(getConfiguration().safetyEnabled).toBe(true);
 	});
 
 	it('non-numeric overrides fall back to defaults instead of NaN', () => {
-		mockConfig.get.mockImplementation((key: string, dflt: unknown) => {
-			if (key === 'safety.fileSizeWarnBytes') return 'a lot';
-			return dflt;
-		});
+		_setConfig('regex-le.safety.fileSizeWarnBytes', 'a lot');
 		expect(getConfiguration().safetyFileSizeWarnBytes).toBe(
 			CONFIG_DEFAULTS.safetyFileSizeWarnBytes,
 		);
 	});
 
 	it('clamps numbers to declared minimums', () => {
-		mockConfig.get.mockImplementation((key: string, dflt: unknown) => {
-			if (key === 'safety.fileSizeWarnBytes') return 1;
-			if (key === 'safety.largeOutputLinesThreshold') return 1;
-			if (key === 'regex.maxMatchLimit') return 1;
-			return dflt;
-		});
+		_setConfig('regex-le.safety.fileSizeWarnBytes', 1);
+		_setConfig('regex-le.safety.largeOutputLinesThreshold', 1);
+		_setConfig('regex-le.regex.maxMatchLimit', 1);
 		const config = getConfiguration();
 		expect(config.safetyFileSizeWarnBytes).toBe(1000);
 		expect(config.safetyLargeOutputLinesThreshold).toBe(100);
@@ -119,27 +94,18 @@ describe('getConfiguration', () => {
 	});
 
 	it('clamps maxMatchLimit to its declared maximum', () => {
-		mockConfig.get.mockImplementation((key: string, dflt: unknown) => {
-			if (key === 'regex.maxMatchLimit') return 20000;
-			return dflt;
-		});
+		_setConfig('regex-le.regex.maxMatchLimit', 20000);
 		expect(getConfiguration().regexMaxMatchLimit).toBe(10000);
 	});
 
 	it('invalid notification level falls back to silent', () => {
-		mockConfig.get.mockImplementation((key: string, dflt: unknown) => {
-			if (key === 'notificationsLevel') return 'loud';
-			return dflt;
-		});
+		_setConfig('regex-le.notificationsLevel', 'loud');
 		expect(getConfiguration().notificationsLevel).toBe('silent');
 	});
 
 	it('accepts every valid notification level', () => {
 		for (const level of ['all', 'important', 'silent'] as const) {
-			mockConfig.get.mockImplementation((key: string, dflt: unknown) => {
-				if (key === 'notificationsLevel') return level;
-				return dflt;
-			});
+			_setConfig('regex-le.notificationsLevel', level);
 			expect(getConfiguration().notificationsLevel).toBe(level);
 		}
 	});

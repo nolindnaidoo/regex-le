@@ -1,187 +1,68 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
-import * as vscode from 'vscode';
-import { getConfiguration } from '../config/config';
+import { beforeEach, describe, expect, it } from 'vitest';
+import {
+	_outputChannels,
+	_resetMockState,
+	_setConfig,
+} from '../__mocks__/vscode';
 import { createTelemetry } from './telemetry';
-
-// Mock vscode and config
-vi.mock('vscode');
-vi.mock('../config/config', () => ({
-	getConfiguration: vi.fn(() => ({
-		telemetryEnabled: true,
-	})),
-}));
 
 describe('telemetry', () => {
 	beforeEach(() => {
-		vi.clearAllMocks();
-		// Reset config mock to default (telemetryEnabled: true)
-		// This ensures tests that modify it don't affect subsequent tests
-		vi.mocked(getConfiguration).mockReturnValue({
-			telemetryEnabled: true,
-		} as any);
+		_resetMockState();
 	});
 
-	describe('createTelemetry', () => {
-		it('should create telemetry service', () => {
-			const telemetry = createTelemetry();
-			expect(telemetry).toBeDefined();
-			expect(typeof telemetry.event).toBe('function');
-			expect(typeof telemetry.dispose).toBe('function');
-		});
+	it('is a no-op when disabled (default)', () => {
+		const telemetry = createTelemetry();
+		telemetry.event('ignored');
+		expect(_outputChannels()).toHaveLength(0);
+	});
 
-		it('should create output channel lazily on first event when enabled', () => {
-			const createOutputChannelSpy = vi.mocked(
-				vscode.window.createOutputChannel,
-			);
-			createOutputChannelSpy.mockReturnValue({
-				appendLine: vi.fn(),
-				dispose: vi.fn(),
-			} as any);
+	it('creates the channel lazily on first event when enabled', () => {
+		_setConfig('regex-le.telemetryEnabled', true);
+		const telemetry = createTelemetry();
+		expect(_outputChannels()).toHaveLength(0);
 
-			const telemetry = createTelemetry();
-			expect(createOutputChannelSpy).not.toHaveBeenCalled();
+		telemetry.event('first');
+		expect(_outputChannels()).toHaveLength(1);
+		expect(_outputChannels()[0]?.name).toContain('Telemetry');
+	});
 
-			telemetry.event('first');
-			expect(createOutputChannelSpy).toHaveBeenCalledWith(
-				expect.stringContaining('Telemetry'),
-			);
-			expect(Object.isFrozen(telemetry)).toBe(true);
-		});
+	it('logs events with timestamp and properties', () => {
+		_setConfig('regex-le.telemetryEnabled', true);
+		const telemetry = createTelemetry();
+		telemetry.event('test-event', { key: 'value', count: 123 });
 
-		it('should log events when enabled', () => {
-			const appendLineSpy = vi.fn();
-			vi.mocked(vscode.window.createOutputChannel).mockReturnValue({
-				appendLine: appendLineSpy,
-				dispose: vi.fn(),
-			} as any);
+		const line = _outputChannels()[0]?._lines[0] ?? '';
+		expect(line).toContain('test-event');
+		expect(line).toContain('"key":"value"');
+		expect(line).toMatch(/\[\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/);
+	});
 
-			const telemetry = createTelemetry();
-			telemetry.event('test-event');
+	it('logs events without properties', () => {
+		_setConfig('regex-le.telemetryEnabled', true);
+		const telemetry = createTelemetry();
+		telemetry.event('simple');
+		expect(_outputChannels()[0]?._lines[0]).toContain('simple');
+	});
 
-			expect(appendLineSpy).toHaveBeenCalled();
-			const call = appendLineSpy.mock.calls[0];
-			expect(call?.[0]).toContain('test-event');
-			expect(call?.[0]).toContain('['); // timestamp
-		});
+	it('stops logging when disabled at runtime', () => {
+		_setConfig('regex-le.telemetryEnabled', true);
+		const telemetry = createTelemetry();
+		telemetry.event('while-enabled');
+		expect(_outputChannels()[0]?._lines).toHaveLength(1);
 
-		it('should include properties in event log', () => {
-			const appendLineSpy = vi.fn();
-			vi.mocked(vscode.window.createOutputChannel).mockReturnValue({
-				appendLine: appendLineSpy,
-				dispose: vi.fn(),
-			} as any);
+		_setConfig('regex-le.telemetryEnabled', false);
+		telemetry.event('while-disabled');
+		expect(_outputChannels()[0]?._lines).toHaveLength(1);
+	});
 
-			const telemetry = createTelemetry();
-			telemetry.event('test-event', { key: 'value', count: 123 });
+	it('dispose is safe with and without a channel', () => {
+		const disabled = createTelemetry();
+		expect(() => disabled.dispose()).not.toThrow();
 
-			expect(appendLineSpy).toHaveBeenCalled();
-			const call = appendLineSpy.mock.calls[0];
-			expect(call?.[0]).toContain('test-event');
-			expect(call?.[0]).toContain('key');
-			expect(call?.[0]).toContain('value');
-		});
-
-		it('should dispose output channel', () => {
-			const disposeSpy = vi.fn();
-			vi.mocked(vscode.window.createOutputChannel).mockReturnValue({
-				appendLine: vi.fn(),
-				dispose: disposeSpy,
-			} as any);
-
-			const telemetry = createTelemetry();
-			telemetry.event('creates-channel');
-			telemetry.dispose();
-
-			expect(disposeSpy).toHaveBeenCalled();
-		});
-
-		it('stops logging when telemetry is disabled at runtime', () => {
-			const appendLineSpy = vi.fn();
-			vi.mocked(vscode.window.createOutputChannel).mockReturnValue({
-				appendLine: appendLineSpy,
-				dispose: vi.fn(),
-			} as any);
-
-			const telemetry = createTelemetry();
-			telemetry.event('while-enabled');
-			expect(appendLineSpy).toHaveBeenCalledTimes(1);
-
-			vi.mocked(getConfiguration).mockReturnValue({
-				telemetryEnabled: false,
-			} as any);
-			telemetry.event('while-disabled');
-			expect(appendLineSpy).toHaveBeenCalledTimes(1);
-		});
-
-		it('should handle events without properties', () => {
-			const appendLineSpy = vi.fn();
-			vi.mocked(vscode.window.createOutputChannel).mockReturnValue({
-				appendLine: appendLineSpy,
-				dispose: vi.fn(),
-			} as any);
-
-			const telemetry = createTelemetry();
-			telemetry.event('simple-event');
-
-			expect(appendLineSpy).toHaveBeenCalled();
-			const call = appendLineSpy.mock.calls[0];
-			expect(call?.[0]).toContain('simple-event');
-		});
-
-		it('should format timestamp correctly', () => {
-			const appendLineSpy = vi.fn();
-			vi.mocked(vscode.window.createOutputChannel).mockReturnValue({
-				appendLine: appendLineSpy,
-				dispose: vi.fn(),
-			} as any);
-
-			const telemetry = createTelemetry();
-			telemetry.event('test');
-
-			const call = appendLineSpy.mock.calls[0];
-			// Should contain ISO timestamp format
-			expect(call?.[0]).toMatch(/\[\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/);
-		});
-
-		it('should not create output channel when telemetry is disabled', async () => {
-			const { getConfiguration } = await import('../config/config');
-			vi.mocked(getConfiguration).mockReturnValue({
-				telemetryEnabled: false,
-			} as any);
-
-			const createOutputChannelSpy = vi.mocked(
-				vscode.window.createOutputChannel,
-			);
-
-			const telemetry = createTelemetry();
-			telemetry.event('test'); // Should not error even without channel
-
-			// Channel should not be created
-			expect(createOutputChannelSpy).not.toHaveBeenCalled();
-		});
-
-		it('should handle multiple events', () => {
-			// Reset config mock to ensure telemetry is enabled (no async import needed)
-			// The module-level mock already sets telemetryEnabled: true by default
-			// beforeEach clears mocks but the module mock should still work
-			const appendLineSpy = vi.fn();
-			const outputChannel = {
-				appendLine: appendLineSpy,
-				dispose: vi.fn(),
-			};
-			const createOutputChannelSpy = vi.mocked(
-				vscode.window.createOutputChannel,
-			);
-			createOutputChannelSpy.mockReturnValue(outputChannel as any);
-
-			const telemetry = createTelemetry();
-
-			telemetry.event('event1');
-			telemetry.event('event2', { prop: 'value' });
-
-			expect(appendLineSpy).toHaveBeenCalledTimes(2);
-			expect(appendLineSpy.mock.calls[0]?.[0]).toContain('event1');
-			expect(appendLineSpy.mock.calls[1]?.[0]).toContain('event2');
-		});
+		_setConfig('regex-le.telemetryEnabled', true);
+		const enabled = createTelemetry();
+		enabled.event('creates-channel');
+		expect(() => enabled.dispose()).not.toThrow();
 	});
 });

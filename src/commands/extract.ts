@@ -4,6 +4,7 @@ import { extractRegexPatterns } from '../extraction/regex/extractPatterns';
 import type { Telemetry } from '../telemetry/telemetry';
 import type { Notifier } from '../ui/notifier';
 import type { StatusBar } from '../ui/statusBar';
+import { sanitizeErrorMessage } from '../utils/errors';
 import { checkOutputSafety, handleSafetyChecks } from '../utils/safety';
 
 /**
@@ -37,11 +38,7 @@ export function registerExtractCommand(
 			// Perform safety checks
 			const safetyResult = handleSafetyChecks(document, config);
 			if (!safetyResult.proceed) {
-				if (safetyResult.error) {
-					await deps.notifier.showEnhancedError(safetyResult.error);
-				} else {
-					deps.notifier.showError(safetyResult.message);
-				}
+				deps.notifier.showError(safetyResult.message);
 				return;
 			}
 
@@ -77,11 +74,7 @@ export function registerExtractCommand(
 
 						const outputSafety = checkOutputSafety(outputLines, config);
 						if (!outputSafety.proceed) {
-							if (outputSafety.error) {
-								await deps.notifier.showEnhancedError(outputSafety.error);
-							} else {
-								deps.notifier.showError(outputSafety.message);
-							}
+							deps.notifier.showError(outputSafety.message);
 							return;
 						}
 
@@ -127,7 +120,9 @@ export function registerExtractCommand(
 			} catch (error) {
 				const errorMessage =
 					error instanceof Error ? error.message : String(error);
-				deps.notifier.showError(`Extraction failed: ${errorMessage}`);
+				deps.notifier.showError(
+					sanitizeErrorMessage(`Extraction failed: ${errorMessage}`),
+				);
 				deps.telemetry.event('extract-failed', { error: errorMessage });
 			}
 		},

@@ -6,6 +6,7 @@ import { detectReDoS } from '../extraction/regex/redos';
 import type { Telemetry } from '../telemetry/telemetry';
 import type { Notifier } from '../ui/notifier';
 import type { StatusBar } from '../ui/statusBar';
+import { sanitizeErrorMessage } from '../utils/errors';
 
 /**
  * Register the regex validate command
@@ -84,7 +85,9 @@ export function registerValidateCommand(
 			} catch (error) {
 				const errorMessage =
 					error instanceof Error ? error.message : String(error);
-				deps.notifier.showError(`Validation failed: ${errorMessage}`);
+				deps.notifier.showError(
+					sanitizeErrorMessage(`Validation failed: ${errorMessage}`),
+				);
 				deps.telemetry.event('validate-failed', { error: errorMessage });
 			}
 		},
