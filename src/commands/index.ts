@@ -2,7 +2,6 @@ import type * as vscode from 'vscode';
 import type { Telemetry } from '../telemetry/telemetry';
 import type { Notifier } from '../ui/notifier';
 import type { StatusBar } from '../ui/statusBar';
-import type { PerformanceMonitor } from '../utils/performance';
 import { registerExtractCommand } from './extract';
 import { registerHelpCommand } from './help';
 import { registerTestCommand } from './test';
@@ -14,7 +13,6 @@ export function registerCommands(
 		telemetry: Telemetry;
 		notifier: Notifier;
 		statusBar: StatusBar;
-		performanceMonitor: PerformanceMonitor;
 	}>,
 ): void {
 	registerTestCommand(context, deps);

@@ -117,36 +117,3 @@ function containsEvilPattern(pattern: string): boolean {
 
 	return false;
 }
-
-/**
- * Test regex with ReDoS detection
- */
-export function testWithReDoSDetection(
-	pattern: string,
-	flags: string,
-	text: string,
-	_maxMatches: number,
-): { redosResult: ReDoSResult; safe: boolean } {
-	const redosResult = detectReDoS(pattern, flags);
-
-	// If high severity, we might want to warn even for small inputs
-	if (redosResult.detected && redosResult.severity === 'high') {
-		return {
-			redosResult,
-			safe: false,
-		};
-	}
-
-	// For medium/low, only warn on large inputs
-	if (redosResult.detected && text.length > 10000) {
-		return {
-			redosResult,
-			safe: false,
-		};
-	}
-
-	return {
-		redosResult,
-		safe: !redosResult.detected || redosResult.severity === 'low',
-	};
-}

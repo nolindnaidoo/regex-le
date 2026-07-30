@@ -12,8 +12,7 @@ lerna-debug.log*
 
 # Coverage
 *.lcov
-coverage/*
-!coverage/index.html
+coverage/
 
 # Dependency directories
 node_modules/

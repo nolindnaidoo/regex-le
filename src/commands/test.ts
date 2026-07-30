@@ -7,7 +7,6 @@ import { testRegexWithPerformance } from '../extraction/regex/regexTest';
 import type { Telemetry } from '../telemetry/telemetry';
 import type { Notifier } from '../ui/notifier';
 import type { StatusBar } from '../ui/statusBar';
-import type { PerformanceMonitor } from '../utils/performance';
 import { handleSafetyChecks } from '../utils/safety';
 
 /**
@@ -20,7 +19,6 @@ export function registerTestCommand(
 		telemetry: Telemetry;
 		notifier: Notifier;
 		statusBar: StatusBar;
-		performanceMonitor: PerformanceMonitor;
 	}>,
 ): void {
 	const disposable = vscode.commands.registerCommand(

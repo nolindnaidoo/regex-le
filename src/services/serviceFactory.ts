@@ -6,10 +6,6 @@ import { createNotifier } from '../ui/notifier';
 import type { StatusBar } from '../ui/statusBar';
 import { createStatusBar } from '../ui/statusBar';
 import { createErrorHandler, type ErrorHandler } from '../utils/errorHandling';
-import {
-	createPerformanceMonitor,
-	type PerformanceMonitor,
-} from '../utils/performance';
 
 /**
  * Core services used throughout the extension
@@ -18,7 +14,6 @@ export interface ExtensionServices {
 	readonly telemetry: Telemetry;
 	readonly notifier: Notifier;
 	readonly statusBar: StatusBar;
-	readonly performanceMonitor: PerformanceMonitor;
 	readonly errorHandler: ErrorHandler;
 }
 
@@ -37,7 +32,6 @@ export function createServices(
 	const telemetry = createTelemetry();
 	const notifier = createNotifier();
 	const statusBar = createStatusBar(context);
-	const performanceMonitor = createPerformanceMonitor();
 
 	// Register disposables to prevent memory leaks
 	context.subscriptions.push(telemetry);
@@ -50,7 +44,6 @@ export function createServices(
 		telemetry,
 		notifier,
 		statusBar,
-		performanceMonitor,
 		errorHandler,
 	});
 }

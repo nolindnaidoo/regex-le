@@ -28,20 +28,9 @@ vi.mock('../ui/statusBar', () => ({
 		dispose: vi.fn(),
 	})),
 }));
-vi.mock('../utils/performance', () => ({
-	createPerformanceMonitor: vi.fn(() => ({
-		startOperation: vi.fn(),
-	})),
-}));
 vi.mock('../utils/errorHandling', () => ({
 	createErrorHandler: vi.fn(() => ({
 		handle: vi.fn(),
-	})),
-	createErrorLogger: vi.fn(() => ({
-		log: vi.fn(),
-	})),
-	createErrorNotifier: vi.fn(() => ({
-		notify: vi.fn(),
 	})),
 }));
 
@@ -70,7 +59,6 @@ describe('serviceFactory', () => {
 			expect(services.telemetry).toBeDefined();
 			expect(services.notifier).toBeDefined();
 			expect(services.statusBar).toBeDefined();
-			expect(services.performanceMonitor).toBeDefined();
 			expect(services.errorHandler).toBeDefined();
 			expect(Object.isFrozen(services)).toBe(true);
 		});
@@ -93,7 +81,6 @@ describe('serviceFactory', () => {
 			const telemetry = await import('../telemetry/telemetry');
 			const notifier = await import('../ui/notifier');
 			const statusBar = await import('../ui/statusBar');
-			const performance = await import('../utils/performance');
 			const errorHandling = await import('../utils/errorHandling');
 
 			createServices(mockContext);
@@ -103,9 +90,6 @@ describe('serviceFactory', () => {
 			expect(vi.mocked(statusBar.createStatusBar)).toHaveBeenCalledWith(
 				mockContext,
 			);
-			expect(
-				vi.mocked(performance.createPerformanceMonitor),
-			).toHaveBeenCalled();
 			expect(vi.mocked(errorHandling.createErrorHandler)).toHaveBeenCalled();
 		});
 
@@ -116,9 +100,6 @@ describe('serviceFactory', () => {
 			expect(typeof services.telemetry.event).toBe('function');
 			expect(typeof services.notifier.showInfo).toBe('function');
 			expect(typeof services.statusBar.updateText).toBe('function');
-			expect(typeof services.performanceMonitor.startOperation).toBe(
-				'function',
-			);
 			expect(typeof services.errorHandler.handle).toBe('function');
 		});
 
