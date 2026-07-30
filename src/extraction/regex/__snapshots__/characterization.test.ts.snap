@@ -50,61 +50,26 @@ exports[`complexity characterization > estimatePatternComplexity(foo(?=bar)(?<=b
 }
 `;
 
-exports[`extraction characterization > extractRegexPatterns on log.txt 1`] = `
-[
-  {
-    "column": 46,
-    "flags": "",
-    "line": 1,
-    "match": "/usr/",
-    "pattern": "usr",
-  },
-  {
-    "column": 56,
-    "flags": "s",
-    "line": 1,
-    "match": "/bin/s",
-    "pattern": "bin",
-  },
-  {
-    "column": 13,
-    "flags": "v",
-    "line": 2,
-    "match": "/api/v",
-    "pattern": "api",
-  },
-  {
-    "column": 15,
-    "flags": "",
-    "line": 3,
-    "match": "/var/",
-    "pattern": "var",
-  },
-  {
-    "column": 23,
-    "flags": "",
-    "line": 3,
-    "match": "/app.log on 10/",
-    "pattern": "app.log on 10",
-  },
-  {
-    "column": 7,
-    "flags": "",
-    "line": 4,
-    "match": "/4 of requests under 100ms, 1/",
-    "pattern": "4 of requests under 100ms, 1",
-  },
-]
-`;
+exports[`extraction characterization > extractRegexPatterns on log.txt 1`] = `[]`;
 
 exports[`extraction characterization > extractRegexPatterns on multiline.js 1`] = `
 [
+  {
+    "column": 18,
+    "flags": "g",
+    "line": 2,
+    "match": "new RegExp(
+	'\\\\d{4}-\\\\d{2}-\\\\d{2}',
+	'g',
+)",
+    "pattern": "\\d{4}-\\d{2}-\\d{2}",
+  },
   {
     "column": 17,
     "flags": "g",
     "line": 8,
     "match": "new RegExp('\\\\d{2}:\\\\d{2}', 'g')",
-    "pattern": "\\\\d{2}:\\\\d{2}",
+    "pattern": "\\d{2}:\\d{2}",
   },
 ]
 `;
@@ -151,7 +116,7 @@ exports[`extraction characterization > extractRegexPatterns on patterns.js 1`] =
     "flags": "g",
     "line": 9,
     "match": "new RegExp('\\\\d{3}-\\\\d{4}', 'g')",
-    "pattern": "\\\\d{3}-\\\\d{4}",
+    "pattern": "\\d{3}-\\d{4}",
   },
   {
     "column": 21,
@@ -161,32 +126,11 @@ exports[`extraction characterization > extractRegexPatterns on patterns.js 1`] =
     "pattern": "hello",
   },
   {
-    "column": 13,
+    "column": 14,
     "flags": "i",
     "line": 11,
-    "match": " RegExp('world', 'i')",
+    "match": "RegExp('world', 'i')",
     "pattern": "world",
-  },
-  {
-    "column": 17,
-    "flags": "",
-    "line": 17,
-    "match": "/ b /",
-    "pattern": " b ",
-  },
-  {
-    "column": 21,
-    "flags": "",
-    "line": 20,
-    "match": "/example.com/",
-    "pattern": "example.com",
-  },
-  {
-    "column": 38,
-    "flags": "",
-    "line": 20,
-    "match": "/to/",
-    "pattern": "to",
   },
 ]
 `;
@@ -242,6 +186,13 @@ exports[`extraction characterization > extractRegexPatterns on patterns.ts 1`] =
     "match": "new RegExp('a|b|c', 'gi')",
     "pattern": "a|b|c",
   },
+  {
+    "column": 16,
+    "flags": "g",
+    "line": 15,
+    "match": "new RegExp('it\\'s', 'g')",
+    "pattern": "it's",
+  },
 ]
 `;
 
@@ -278,48 +229,67 @@ exports[`performance score characterization > zero memory reads as perfect memor
 exports[`redos characterization > detectReDoS(/(.*)+/) 1`] = `
 {
   "detected": true,
-  "reason": "Pattern contains nested quantifiers that could cause exponential backtracking",
+  "reason": "Nested unbounded quantifiers can cause exponential backtracking",
   "severity": "high",
+  "vulnerableGroups": [
+    "(.*)+",
+  ],
 }
 `;
 
 exports[`redos characterization > detectReDoS(/([a-z]+)*@example/i) 1`] = `
 {
-  "detected": false,
-  "reason": "No obvious ReDoS vulnerabilities detected",
-  "severity": "low",
+  "detected": true,
+  "reason": "Nested unbounded quantifiers can cause exponential backtracking",
+  "severity": "high",
+  "vulnerableGroups": [
+    "([a-z]+)*",
+  ],
 }
 `;
 
 exports[`redos characterization > detectReDoS(/(\\w+)*/) 1`] = `
 {
-  "detected": false,
-  "reason": "No obvious ReDoS vulnerabilities detected",
-  "severity": "low",
+  "detected": true,
+  "reason": "Nested unbounded quantifiers can cause exponential backtracking",
+  "severity": "high",
+  "vulnerableGroups": [
+    "(\\w+)*",
+  ],
 }
 `;
 
 exports[`redos characterization > detectReDoS(/(a+)+/) 1`] = `
 {
   "detected": true,
-  "reason": "Pattern contains nested quantifiers that could cause exponential backtracking",
+  "reason": "Nested unbounded quantifiers can cause exponential backtracking",
   "severity": "high",
+  "vulnerableGroups": [
+    "(a+)+",
+  ],
 }
 `;
 
 exports[`redos characterization > detectReDoS(/(a|a)*/) 1`] = `
 {
   "detected": true,
-  "reason": "Pattern contains nested quantifiers that could cause exponential backtracking",
-  "severity": "high",
+  "reason": "Quantified alternation with overlapping branches may backtrack heavily",
+  "severity": "medium",
+  "vulnerableGroups": [
+    "(a|a)*",
+  ],
 }
 `;
 
 exports[`redos characterization > detectReDoS(/(foo(bar+)+)+/) 1`] = `
 {
   "detected": true,
-  "reason": "Pattern matches known ReDoS vulnerability patterns",
+  "reason": "Nested unbounded quantifiers can cause exponential backtracking",
   "severity": "high",
+  "vulnerableGroups": [
+    "(bar+)+",
+    "(foo(bar+)+)+",
+  ],
 }
 `;
 
@@ -345,7 +315,7 @@ exports[`regex test characterization > global match with groups 1`] = `
   "flags": "g",
   "matches": [
     {
-      "column": 5,
+      "column": 6,
       "groups": [
         {
           "end": 8,
@@ -367,7 +337,7 @@ exports[`regex test characterization > global match with groups 1`] = `
       "match": "555-1234",
     },
     {
-      "column": 17,
+      "column": 18,
       "groups": [
         {
           "end": 20,
@@ -398,7 +368,7 @@ exports[`regex test characterization > invalid pattern returns parse error 1`] =
 {
   "errors": [
     {
-      "message": "Invalid regular expression: /[/g: Unterminated character class",
+      "message": "Invalid regular expression: /[/dg: Unterminated character class",
       "type": "parse-error",
     },
   ],
@@ -415,21 +385,21 @@ exports[`regex test characterization > maxMatches caps output 1`] = `
   "flags": "g",
   "matches": [
     {
-      "column": 0,
+      "column": 1,
       "groups": undefined,
       "index": 0,
       "line": 1,
       "match": "1",
     },
     {
-      "column": 1,
+      "column": 2,
       "groups": undefined,
       "index": 1,
       "line": 1,
       "match": "2",
     },
     {
-      "column": 2,
+      "column": 3,
       "groups": undefined,
       "index": 2,
       "line": 1,
@@ -447,21 +417,21 @@ exports[`regex test characterization > multiline positions 1`] = `
   "flags": "gm",
   "matches": [
     {
-      "column": 0,
+      "column": 1,
       "groups": undefined,
       "index": 0,
       "line": 1,
       "match": "first",
     },
     {
-      "column": 0,
+      "column": 1,
       "groups": undefined,
       "index": 6,
       "line": 2,
       "match": "second",
     },
     {
-      "column": 0,
+      "column": 1,
       "groups": undefined,
       "index": 13,
       "line": 3,
@@ -479,19 +449,19 @@ exports[`regex test characterization > named groups are not surfaced 1`] = `
   "flags": "g",
   "matches": [
     {
-      "column": 0,
+      "column": 1,
       "groups": [
         {
           "end": 3,
           "index": 0,
-          "name": undefined,
+          "name": "area",
           "start": 0,
           "value": "555",
         },
         {
           "end": 8,
           "index": 1,
-          "name": undefined,
+          "name": "line",
           "start": 4,
           "value": "1234",
         },
@@ -512,7 +482,7 @@ exports[`regex test characterization > non-global stops after first match 1`] = 
   "flags": "",
   "matches": [
     {
-      "column": 1,
+      "column": 2,
       "groups": undefined,
       "index": 1,
       "line": 1,
@@ -530,13 +500,13 @@ exports[`regex test characterization > repeated group text pins indexOf position
   "flags": "g",
   "matches": [
     {
-      "column": 2,
+      "column": 3,
       "groups": [
         {
-          "end": 4,
+          "end": 6,
           "index": 0,
           "name": undefined,
-          "start": 2,
+          "start": 4,
           "value": "ab",
         },
       ],
@@ -556,28 +526,28 @@ exports[`regex test characterization > zero-width matches do not loop forever 1`
   "flags": "g",
   "matches": [
     {
-      "column": 0,
+      "column": 1,
       "groups": undefined,
       "index": 0,
       "line": 1,
       "match": "",
     },
     {
-      "column": 2,
+      "column": 3,
       "groups": undefined,
       "index": 2,
       "line": 1,
       "match": "",
     },
     {
-      "column": 3,
+      "column": 4,
       "groups": undefined,
       "index": 3,
       "line": 1,
       "match": "",
     },
     {
-      "column": 5,
+      "column": 6,
       "groups": undefined,
       "index": 5,
       "line": 1,

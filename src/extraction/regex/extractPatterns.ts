@@ -1,6 +1,16 @@
+import {
+	compiles,
+	isRegexContext,
+	isValidFlagString,
+	VALID_FLAGS,
+} from './heuristics';
+import { createPositionIndex } from './position';
+
 /**
- * Extract regex patterns from code/text
- * Finds patterns in various formats: /pattern/flags, new RegExp(), etc.
+ * Extract regex patterns from code/text.
+ * Finds patterns as literals (/pattern/flags) and constructor calls
+ * (new RegExp(...) / RegExp(...)), scanning the whole content so
+ * constructors split across lines are found too.
  */
 
 export interface ExtractedRegexPattern {
@@ -11,97 +21,93 @@ export interface ExtractedRegexPattern {
 	readonly match: string; // The full match string (e.g., "/pattern/gi" or "new RegExp(...)")
 }
 
+// Literal regex: /pattern/flags — pattern cannot contain an unescaped
+// slash or newline. Flags are captured greedily and validated after.
+const LITERAL = new RegExp(
+	`\\/(?:[^/\\r\\n\\\\]|\\\\.)+\\/[${VALID_FLAGS}]*`,
+	'dg',
+);
+
+// Constructor: new RegExp('pattern', 'flags') / RegExp("pattern") with
+// proper escaped-quote handling in both arguments. Whitespace (including
+// newlines) allowed everywhere a JS parser allows it.
+const CONSTRUCTOR = new RegExp(
+	'(?<![.\\w$])(?:new\\s+)?RegExp\\s*\\(\\s*' +
+		`(?:'(?<sq>(?:[^'\\\\\\r\\n]|\\\\.)*)'|"(?<dq>(?:[^"\\\\\\r\\n]|\\\\.)*)")` +
+		`\\s*(?:,\\s*(?:'(?<sqf>[${VALID_FLAGS}]*)'|"(?<dqf>[${VALID_FLAGS}]*)")\\s*)?,?\\s*\\)`,
+	'dg',
+);
+
 /**
- * Extract all regex patterns from text content
+ * Extract all regex patterns from text content. Duplicate pattern+flags
+ * pairs are reported once, at their first occurrence (intentional: the
+ * output is a pattern list, not an occurrence list).
  */
 export function extractRegexPatterns(
 	text: string,
 ): readonly ExtractedRegexPattern[] {
 	const patterns: ExtractedRegexPattern[] = [];
-	const lines = text.split(/\r?\n/);
+	const found = new Set<string>();
+	const index = createPositionIndex(text);
 
-	// Track what we've already found to avoid duplicates
-	const foundPatterns = new Set<string>();
-
-	for (let lineIndex = 0; lineIndex < lines.length; lineIndex++) {
-		const line = lines[lineIndex] || '';
-
-		// Pattern 1: Literal regex like /pattern/flags or /pattern/
-		// Match forward slashes with escape handling
-		const literalRegexPattern = /\/(?:[^/\r\n\\]|\\.)+\/[gimsuvy]*/g;
-		let match: RegExpExecArray | null;
-
-		// Reset regex for each line
-		literalRegexPattern.lastIndex = 0;
-		while ((match = literalRegexPattern.exec(line)) !== null) {
-			const fullMatch = match[0] || '';
-			const patternMatch = fullMatch.match(/^\/(.+)\/([gimsuvy]*)$/);
-			if (patternMatch) {
-				const pattern = patternMatch[1] || '';
-				const flags = patternMatch[2] || '';
-				const key = `${pattern}::${flags}`;
-				if (!foundPatterns.has(key)) {
-					foundPatterns.add(key);
-					const matchIndex = match.index || 0;
-					patterns.push(
-						Object.freeze({
-							pattern,
-							flags,
-							line: lineIndex + 1,
-							column: matchIndex + 1,
-							match: fullMatch,
-						}),
-					);
-				}
-			}
+	const push = (
+		pattern: string,
+		flags: string,
+		offset: number,
+		match: string,
+	): void => {
+		const key = `${pattern}::${flags}`;
+		if (found.has(key)) {
+			return;
 		}
+		found.add(key);
+		const { line, column } = index.positionAt(offset);
+		patterns.push(Object.freeze({ pattern, flags, line, column, match }));
+	};
 
-		// Pattern 2: new RegExp('pattern', 'flags') or new RegExp("pattern", "flags")
-		const regExpConstructorPattern =
-			/new\s+RegExp\s*\(\s*['"]([^'"]+)['"]\s*(?:,\s*['"]([gimsuvy]*)['"])?\)/gi;
-		regExpConstructorPattern.lastIndex = 0;
-		while ((match = regExpConstructorPattern.exec(line)) !== null) {
-			const pattern = match[1] || '';
-			const flags = match[2] || '';
-			const key = `${pattern}::${flags}`;
-			if (!foundPatterns.has(key) && pattern.length > 0) {
-				foundPatterns.add(key);
-				const matchIndex = match.index || 0;
-				patterns.push(
-					Object.freeze({
-						pattern,
-						flags,
-						line: lineIndex + 1,
-						column: matchIndex + 1,
-						match: match[0] || '',
-					}),
-				);
-			}
+	LITERAL.lastIndex = 0;
+	let m: RegExpExecArray | null;
+	while ((m = LITERAL.exec(text)) !== null) {
+		const full = m[0];
+		const body = full.slice(1, full.lastIndexOf('/'));
+		const flags = full.slice(full.lastIndexOf('/') + 1);
+		if (!isRegexContext(text, m.index)) {
+			continue;
 		}
-
-		// Pattern 3: RegExp('pattern', 'flags') - without 'new'
-		const regExpCallPattern =
-			/(?:^|[^a-zA-Z])RegExp\s*\(\s*['"]([^'"]+)['"]\s*(?:,\s*['"]([gimsuvy]*)['"])?\)/gi;
-		regExpCallPattern.lastIndex = 0;
-		while ((match = regExpCallPattern.exec(line)) !== null) {
-			const pattern = match[1] || '';
-			const flags = match[2] || '';
-			const key = `${pattern}::${flags}`;
-			if (!foundPatterns.has(key) && pattern.length > 0) {
-				foundPatterns.add(key);
-				const matchIndex = match.index || 0;
-				patterns.push(
-					Object.freeze({
-						pattern,
-						flags,
-						line: lineIndex + 1,
-						column: matchIndex + 1,
-						match: match[0] || '',
-					}),
-				);
-			}
+		if (!isValidFlagString(flags) || !compiles(body, flags)) {
+			continue;
 		}
+		push(body, flags, m.index, full);
 	}
 
+	CONSTRUCTOR.lastIndex = 0;
+	while ((m = CONSTRUCTOR.exec(text)) !== null) {
+		const groups = m.groups ?? {};
+		const body = groups['sq'] ?? groups['dq'] ?? '';
+		const flags = groups['sqf'] ?? groups['dqf'] ?? '';
+		if (body.length === 0) {
+			continue;
+		}
+		// The string literal escapes a level: '\\d' is the pattern \d.
+		const pattern = unescapeStringLiteral(body);
+		if (!compiles(pattern, flags)) {
+			continue;
+		}
+		push(pattern, flags, m.index, m[0]);
+	}
+
+	patterns.sort((a, b) =>
+		a.line !== b.line ? a.line - b.line : a.column - b.column,
+	);
 	return Object.freeze(patterns);
+}
+
+/**
+ * Resolve the JS string-literal escapes that change regex meaning:
+ * doubled backslashes ('\\d' is the pattern \d) and escaped quotes.
+ * Other escapes (\n, \t, \u….) are left intact — as regex source they
+ * match the same characters the string escape would produce.
+ */
+function unescapeStringLiteral(s: string): string {
+	return s.replace(/\\(\\|'|")/g, '$1');
 }

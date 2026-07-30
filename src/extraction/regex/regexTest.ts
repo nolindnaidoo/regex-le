@@ -4,9 +4,12 @@ import type {
 	RegexMatch,
 	RegexTestResult,
 } from '../../types';
+import { createPositionIndex } from './position';
 
 /**
- * Test a regex pattern against text and return matches
+ * Test a regex pattern against text and return matches.
+ * Executes with the 'd' (hasIndices) flag so capture-group positions
+ * come from the engine instead of being guessed with indexOf.
  */
 export function testRegexPattern(
 	pattern: string,
@@ -15,46 +18,35 @@ export function testRegexPattern(
 	maxMatches: number = 1000,
 ): RegexTestResult {
 	try {
-		const regex = new RegExp(pattern, flags);
+		const execFlags = flags.includes('d') ? flags : `${flags}d`;
+		const regex = new RegExp(pattern, execFlags);
+		const groupNames = captureGroupNames(pattern);
+		const positionIndex = createPositionIndex(text);
 		const matches: RegexMatch[] = [];
 		let match: RegExpExecArray | null = null;
 
-		// Use exec for proper global matching with groups
-		let execCount = 0;
 		while ((match = regex.exec(text)) !== null && matches.length < maxMatches) {
-			execCount++;
-
-			// Prevent infinite loops from zero-width matches
-			if (match.index === regex.lastIndex && match[0].length === 0) {
-				regex.lastIndex++;
-				if (execCount > 10000) {
-					break;
-				}
-			}
-
+			const indices = match.indices ?? [];
 			const groups: RegexGroup[] = [];
 
-			// Extract capture groups
 			for (let i = 1; i < match.length; i++) {
-				if (match[i] !== undefined) {
-					const groupName = getGroupName(regex, i - 1);
-					const groupMatchStart = match.index + getGroupStartPosition(match, i);
-					const groupMatchEnd = groupMatchStart + (match[i]?.length || 0);
-
-					groups.push(
-						Object.freeze({
-							index: i - 1,
-							name: groupName,
-							value: match[i] || '',
-							start: groupMatchStart,
-							end: groupMatchEnd,
-						}),
-					);
+				const value = match[i];
+				if (value === undefined) {
+					continue;
 				}
+				const range = indices[i];
+				groups.push(
+					Object.freeze({
+						index: i - 1,
+						name: groupNames[i - 1],
+						value,
+						start: range?.[0] ?? match.index,
+						end: range?.[1] ?? match.index + value.length,
+					}),
+				);
 			}
 
-			// Calculate line and column
-			const { line, column } = getPosition(text, match.index);
+			const { line, column } = positionIndex.positionAt(match.index);
 
 			matches.push(
 				Object.freeze({
@@ -66,13 +58,13 @@ export function testRegexPattern(
 				}),
 			);
 
-			// If not global, break after first match
+			// If not global, exec would loop on the first match forever.
 			if (!flags.includes('g')) {
 				break;
 			}
 
-			// Prevent infinite loop
-			if (regex.lastIndex === match.index && match[0].length === 0) {
+			// Advance past zero-width matches.
+			if (match[0].length === 0) {
 				regex.lastIndex++;
 			}
 		}
@@ -102,45 +94,45 @@ export function testRegexPattern(
 }
 
 /**
- * Get the name of a capture group (if named)
+ * Map capture-group index -> name by scanning the pattern for capturing
+ * parens, skipping escapes and character classes. Unnamed groups map to
+ * undefined.
  */
-function getGroupName(_regex: RegExp, _groupIndex: number): string | undefined {
-	// This is a simplified version - proper implementation would parse the regex
-	// to extract named groups. For now, we'll just return undefined.
-	return undefined;
-}
+function captureGroupNames(pattern: string): ReadonlyArray<string | undefined> {
+	const names: Array<string | undefined> = [];
+	let inClass = false;
 
-/**
- * Calculate the start position of a capture group
- */
-function getGroupStartPosition(
-	match: RegExpExecArray,
-	groupIndex: number,
-): number {
-	// Find where the group starts relative to the match start
-	const target = match[groupIndex];
-	if (!target) {
-		return 0;
+	for (let i = 0; i < pattern.length; i++) {
+		const ch = pattern[i];
+		if (ch === '\\') {
+			i++; // skip escaped char
+			continue;
+		}
+		if (inClass) {
+			if (ch === ']') {
+				inClass = false;
+			}
+			continue;
+		}
+		if (ch === '[') {
+			inClass = true;
+			continue;
+		}
+		if (ch !== '(') {
+			continue;
+		}
+		if (pattern[i + 1] !== '?') {
+			names.push(undefined); // plain capturing group
+			continue;
+		}
+		const named = /^\(\?<([^>=!][^>]*)>/.exec(pattern.slice(i));
+		if (named) {
+			names.push(named[1]);
+		}
+		// (?: (?= (?! (?<= (?<! are non-capturing — no entry
 	}
 
-	// Simplified: assumes group text appears in order within the match
-	const matchText = match[0];
-	const groupStart = matchText.indexOf(target);
-	return groupStart >= 0 ? groupStart : 0;
-}
-
-/**
- * Get line and column from character index
- */
-function getPosition(
-	text: string,
-	index: number,
-): { line: number; column: number } {
-	const beforeMatch = text.substring(0, index);
-	const lines = beforeMatch.split('\n');
-	const line = lines.length;
-	const column = lines[lines.length - 1]?.length || 0;
-	return { line, column };
+	return names;
 }
 
 /**
@@ -165,8 +157,8 @@ export function testRegexWithPerformance(
 		inputSize: text.length,
 		outputSize: testResult.matches.length,
 		itemCount: testResult.matches.length,
-		memoryUsage: 0, // Would need actual measurement
-		cpuUsage: 0, // Would need actual measurement
+		memoryUsage: 0, // Not measured; scoring treats 0 as "no data"
+		cpuUsage: 0, // Not measured
 		warnings: testResult.warnings?.length || 0,
 		errors: testResult.errors.length,
 	});

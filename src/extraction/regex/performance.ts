@@ -162,28 +162,37 @@ export function estimatePatternComplexity(pattern: string): {
 }
 
 /**
- * Calculate maximum nesting depth of parentheses
+ * Calculate maximum nesting depth of parentheses, skipping escaped
+ * parens and character classes.
  */
 function calculateNestedDepth(pattern: string): number {
 	let maxDepth = 0;
 	let currentDepth = 0;
+	let inClass = false;
 
-	for (const char of pattern) {
-		if (char === '(' && !isEscaped(pattern, pattern.indexOf(char))) {
+	for (let i = 0; i < pattern.length; i++) {
+		const char = pattern[i];
+		if (char === '\\') {
+			i++;
+			continue;
+		}
+		if (inClass) {
+			if (char === ']') {
+				inClass = false;
+			}
+			continue;
+		}
+		if (char === '[') {
+			inClass = true;
+			continue;
+		}
+		if (char === '(') {
 			currentDepth++;
 			maxDepth = Math.max(maxDepth, currentDepth);
-		} else if (char === ')' && !isEscaped(pattern, pattern.indexOf(char))) {
+		} else if (char === ')') {
 			currentDepth = Math.max(0, currentDepth - 1);
 		}
 	}
 
 	return maxDepth;
-}
-
-/**
- * Check if a character at index is escaped
- */
-function isEscaped(_pattern: string, _index: number): boolean {
-	// Simplified - would need to account for character escapes
-	return false;
 }
