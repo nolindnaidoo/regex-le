@@ -2,8 +2,8 @@
 	"name": "regex-le",
 	"publisher": "nolindnaidoo",
 	"displayName": "Regex-LE",
-	"description": "Zero-Hassle Regex Extraction & Validation - Test, extract, and validate regular expressions directly inside VS Code with real-time match previews, performance scoring, and built-in ReDoS detection.",
-	"version": "1.7.1",
+	"description": "Zero-Hassle Regex Extraction & Validation - Find, test, and validate the regular expressions in any file, with match reports and built-in ReDoS screening.",
+	"version": "2.0.0",
 	"license": "MIT",
 	"author": {
 		"name": "nolindnaidoo",

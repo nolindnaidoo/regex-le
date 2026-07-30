@@ -1,7 +1,7 @@
 {
   "manifest.command.category": "Regex-LE",
   "manifest.command.test.title": "Test Regex",
-  "manifest.command.extract.title": "Extract Matches",
+  "manifest.command.extract.title": "Extract Patterns",
   "manifest.command.validate.title": "Validate Regex",
   "manifest.command.settings.title": "Open Settings",
   "manifest.command.help.title": "Help & Troubleshooting",
