@@ -89,7 +89,7 @@ integration suite on every CI run.
   it.
 - Release workflow publishes to both the VS Code Marketplace and Open
   VSX (Cursor's marketplace source).
-- Publisher is `nolindnaidoo` (previously `OffensiveEdge`).
+- Publisher is `nolindnaidoo`; all repository links point there.
 
 > Entries below this line predate 2.0.0 and have been condensed: the
 > original release notes claimed features and quality (13 languages,

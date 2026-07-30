@@ -197,6 +197,7 @@
 		"test:watch": "vitest --pool=threads",
 		"test:coverage": "vitest run --coverage --pool=threads",
 		"test:integration": "npm run build && tsc -p tsconfig.it.json && vscode-test",
+		"test:e2e-vsix": "node scripts/e2e-vsix.js",
 		"lint": "biome check .",
 		"lint:fix": "biome check --write .",
 		"vscode:prepublish": "npm run typecheck && npm run build:prod && npm run check:bundle && npm run copy:i18n",
