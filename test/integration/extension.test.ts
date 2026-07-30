@@ -1,7 +1,7 @@
 import * as assert from 'node:assert';
 import * as vscode from 'vscode';
 
-const EXTENSION_ID = 'OffensiveEdge.regex-le';
+const EXTENSION_ID = 'nolindnaidoo.regex-le';
 
 async function openEditor(
 	content: string,

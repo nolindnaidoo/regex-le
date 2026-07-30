@@ -1,22 +1,22 @@
 {
 	"name": "regex-le",
-	"publisher": "OffensiveEdge",
+	"publisher": "nolindnaidoo",
 	"displayName": "Regex-LE",
 	"description": "Zero-Hassle Regex Extraction & Validation - Test, extract, and validate regular expressions directly inside VS Code with real-time match previews, performance scoring, and built-in ReDoS detection.",
 	"version": "1.7.1",
 	"license": "MIT",
 	"author": {
-		"name": "OffensiveEdge",
-		"url": "https://github.com/OffensiveEdge"
+		"name": "nolindnaidoo",
+		"url": "https://github.com/nolindnaidoo"
 	},
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/OffensiveEdge/regex-le.git"
+		"url": "https://github.com/nolindnaidoo/regex-le.git"
 	},
 	"bugs": {
-		"url": "https://github.com/OffensiveEdge/regex-le/issues"
+		"url": "https://github.com/nolindnaidoo/regex-le/issues"
 	},
-	"homepage": "https://github.com/OffensiveEdge/regex-le#readme",
+	"homepage": "https://github.com/nolindnaidoo/regex-le#readme",
 	"engines": {
 		"vscode": "^1.90.0",
 		"node": ">=20.0.0"
