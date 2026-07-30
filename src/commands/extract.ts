@@ -4,7 +4,7 @@ import { extractRegexPatterns } from '../extraction/regex/extractPatterns';
 import type { Telemetry } from '../telemetry/telemetry';
 import type { Notifier } from '../ui/notifier';
 import type { StatusBar } from '../ui/statusBar';
-import { handleSafetyChecks } from '../utils/safety';
+import { checkOutputSafety, handleSafetyChecks } from '../utils/safety';
 
 /**
  * Register the regex extract command
@@ -73,6 +73,16 @@ export function registerExtractCommand(
 							// Format as /pattern/flags with line number
 							const formatted = `/${pattern.pattern}/${pattern.flags}`;
 							outputLines.push(formatted);
+						}
+
+						const outputSafety = checkOutputSafety(outputLines, config);
+						if (!outputSafety.proceed) {
+							if (outputSafety.error) {
+								await deps.notifier.showEnhancedError(outputSafety.error);
+							} else {
+								deps.notifier.showError(outputSafety.message);
+							}
+							return;
 						}
 
 						const output = outputLines.join('\n');
