@@ -1,0 +1,33 @@
+# Manual release: publishes the extension to the VS Code Marketplace
+# (vsce) and Open VSX (ovsx — this is where Cursor/VSCodium pull from).
+# Requires repo secrets VSCE_PAT and OVSX_PAT.
+name: Release
+
+on:
+  workflow_dispatch:
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.2.20
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Lint, typecheck, test
+        run: bun run lint && bun run typecheck && bun run test:coverage
+
+      - name: Package
+        run: bun run package
+
+      - name: Publish to VS Code Marketplace
+        run: bunx vsce publish --packagePath release/*.vsix -p ${{ secrets.VSCE_PAT }}
+
+      - name: Publish to Open VSX
+        run: bunx ovsx publish release/*.vsix -p ${{ secrets.OVSX_PAT }}

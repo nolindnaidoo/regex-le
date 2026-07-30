@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [main, develop]
+    branches: [main]
   pull_request:
     branches: [main]
 
@@ -19,9 +19,9 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Setup Bun
-        uses: oven-sh/setup-bun@v1
+        uses: oven-sh/setup-bun@v2
         with:
-          bun-version: latest
+          bun-version: 1.2.20
 
       - name: Install dependencies
         run: bun install --frozen-lockfile
@@ -29,11 +29,32 @@ jobs:
       - name: Lint
         run: bun run lint
 
-      - name: Build
-        run: bun run build
+      - name: Typecheck
+        run: bun run typecheck
 
-      - name: Test with coverage
+      - name: Unit tests with coverage
         run: bun run test:coverage
 
-      - name: Package extension
+      - name: Build bundle
+        run: bun run build
+
+      - name: Bundle gate
+        run: bun run check:bundle
+
+      - name: Package VSIX
         run: bun run package
+
+      - name: Integration tests (Linux)
+        if: runner.os == 'Linux'
+        run: xvfb-run -a bun run test:integration
+
+      - name: Integration tests (macOS/Windows)
+        if: runner.os != 'Linux'
+        run: bun run test:integration
+
+      - name: Upload VSIX artifact
+        if: runner.os == 'Linux'
+        uses: actions/upload-artifact@v4
+        with:
+          name: regex-le-vsix
+          path: release/*.vsix

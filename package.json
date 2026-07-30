@@ -196,6 +196,7 @@
 		"test": "vitest run --pool=threads",
 		"test:watch": "vitest --pool=threads",
 		"test:coverage": "vitest run --coverage --pool=threads",
+		"test:integration": "npm run build && tsc -p tsconfig.it.json && vscode-test",
 		"lint": "biome check .",
 		"lint:fix": "biome check --write .",
 		"vscode:prepublish": "npm run typecheck && npm run build:prod && npm run check:bundle && npm run copy:i18n",
@@ -204,11 +205,16 @@
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^2.2.5",
+		"@types/mocha": "^10.0.10",
 		"@types/node": "^24.7.1",
 		"@types/vscode": "^1.90.0",
 		"@vitest/coverage-v8": "^3.2.4",
+		"@vscode/test-cli": "^0.0.15",
+		"@vscode/test-electron": "^3.1.0",
 		"@vscode/vsce": "^3.6.2",
 		"esbuild": "^0.28.1",
+		"mocha": "^11.7.6",
+		"ovsx": "^1.0.2",
 		"typescript": "^5.9.3",
 		"vitest": "^3.2.4"
 	}

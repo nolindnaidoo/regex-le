@@ -35,6 +35,7 @@ temp/
 
 # VS Code extension specific
 .vscode-test/
+out-test/
 .vscode-test-electron/
 
 # OS generated files
