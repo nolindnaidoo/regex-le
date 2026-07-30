@@ -1,0 +1,4 @@
+2025-10-29 04:12:03 INFO starting service at /usr/local/bin/service
+request GET /api/v1/users returned 200 in 12ms
+error reading /var/log/app.log on 10/29/2025
+rate 3/4 of requests under 100ms, 1/2 over budget

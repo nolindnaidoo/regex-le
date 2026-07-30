@@ -1,0 +1,590 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`complexity characterization > estimatePatternComplexity(((((a))))) 1`] = `
+{
+  "factors": [
+    "Deeply nested groups",
+  ],
+  "score": 20,
+}
+`;
+
+exports[`complexity characterization > estimatePatternComplexity((a)(b)(c)(d)) 1`] = `
+{
+  "factors": [],
+  "score": 0,
+}
+`;
+
+exports[`complexity characterization > estimatePatternComplexity(\\d+) 1`] = `
+{
+  "factors": [],
+  "score": 0,
+}
+`;
+
+exports[`complexity characterization > estimatePatternComplexity(a*b+c?d{2,3}e*f+g?h{1}i*j+k?) 1`] = `
+{
+  "factors": [
+    "Many quantifiers",
+  ],
+  "score": 22,
+}
+`;
+
+exports[`complexity characterization > estimatePatternComplexity(a|b|c|d|e|f|g) 1`] = `
+{
+  "factors": [
+    "Many alternations",
+  ],
+  "score": 18,
+}
+`;
+
+exports[`complexity characterization > estimatePatternComplexity(foo(?=bar)(?<=baz)) 1`] = `
+{
+  "factors": [
+    "Lookaround assertions",
+  ],
+  "score": 10,
+}
+`;
+
+exports[`extraction characterization > extractRegexPatterns on log.txt 1`] = `
+[
+  {
+    "column": 46,
+    "flags": "",
+    "line": 1,
+    "match": "/usr/",
+    "pattern": "usr",
+  },
+  {
+    "column": 56,
+    "flags": "s",
+    "line": 1,
+    "match": "/bin/s",
+    "pattern": "bin",
+  },
+  {
+    "column": 13,
+    "flags": "v",
+    "line": 2,
+    "match": "/api/v",
+    "pattern": "api",
+  },
+  {
+    "column": 15,
+    "flags": "",
+    "line": 3,
+    "match": "/var/",
+    "pattern": "var",
+  },
+  {
+    "column": 23,
+    "flags": "",
+    "line": 3,
+    "match": "/app.log on 10/",
+    "pattern": "app.log on 10",
+  },
+  {
+    "column": 7,
+    "flags": "",
+    "line": 4,
+    "match": "/4 of requests under 100ms, 1/",
+    "pattern": "4 of requests under 100ms, 1",
+  },
+]
+`;
+
+exports[`extraction characterization > extractRegexPatterns on multiline.js 1`] = `
+[
+  {
+    "column": 17,
+    "flags": "g",
+    "line": 8,
+    "match": "new RegExp('\\\\d{2}:\\\\d{2}', 'g')",
+    "pattern": "\\\\d{2}:\\\\d{2}",
+  },
+]
+`;
+
+exports[`extraction characterization > extractRegexPatterns on patterns.js 1`] = `
+[
+  {
+    "column": 16,
+    "flags": "g",
+    "line": 2,
+    "match": "/\\d+/g",
+    "pattern": "\\d+",
+  },
+  {
+    "column": 14,
+    "flags": "i",
+    "line": 3,
+    "match": "/\\w+/i",
+    "pattern": "\\w+",
+  },
+  {
+    "column": 18,
+    "flags": "",
+    "line": 4,
+    "match": "/^[a-z]+$/",
+    "pattern": "^[a-z]+$",
+  },
+  {
+    "column": 22,
+    "flags": "g",
+    "line": 5,
+    "match": "/foo\\/bar/g",
+    "pattern": "foo\\/bar",
+  },
+  {
+    "column": 19,
+    "flags": "gim",
+    "line": 6,
+    "match": "/[abc]/gim",
+    "pattern": "[abc]",
+  },
+  {
+    "column": 14,
+    "flags": "g",
+    "line": 9,
+    "match": "new RegExp('\\\\d{3}-\\\\d{4}', 'g')",
+    "pattern": "\\\\d{3}-\\\\d{4}",
+  },
+  {
+    "column": 21,
+    "flags": "",
+    "line": 10,
+    "match": "new RegExp('hello')",
+    "pattern": "hello",
+  },
+  {
+    "column": 13,
+    "flags": "i",
+    "line": 11,
+    "match": " RegExp('world', 'i')",
+    "pattern": "world",
+  },
+  {
+    "column": 17,
+    "flags": "",
+    "line": 17,
+    "match": "/ b /",
+    "pattern": " b ",
+  },
+  {
+    "column": 21,
+    "flags": "",
+    "line": 20,
+    "match": "/example.com/",
+    "pattern": "example.com",
+  },
+  {
+    "column": 38,
+    "flags": "",
+    "line": 20,
+    "match": "/to/",
+    "pattern": "to",
+  },
+]
+`;
+
+exports[`extraction characterization > extractRegexPatterns on patterns.ts 1`] = `
+[
+  {
+    "column": 15,
+    "flags": "u",
+    "line": 2,
+    "match": "/(?<year>\\d{4})-(?<month>\\d{2})/u",
+    "pattern": "(?<year>\\d{4})-(?<month>\\d{2})",
+  },
+  {
+    "column": 16,
+    "flags": "y",
+    "line": 3,
+    "match": "/abc/y",
+    "pattern": "abc",
+  },
+  {
+    "column": 16,
+    "flags": "s",
+    "line": 4,
+    "match": "/a.b/s",
+    "pattern": "a.b",
+  },
+  {
+    "column": 19,
+    "flags": "",
+    "line": 7,
+    "match": "/foo(?=bar)/",
+    "pattern": "foo(?=bar)",
+  },
+  {
+    "column": 20,
+    "flags": "",
+    "line": 8,
+    "match": "/(?<=\\$)\\d+/",
+    "pattern": "(?<=\\$)\\d+",
+  },
+  {
+    "column": 14,
+    "flags": "",
+    "line": 11,
+    "match": "new RegExp('^[A-Z][a-z]+$')",
+    "pattern": "^[A-Z][a-z]+$",
+  },
+  {
+    "column": 19,
+    "flags": "gi",
+    "line": 12,
+    "match": "new RegExp('a|b|c', 'gi')",
+    "pattern": "a|b|c",
+  },
+]
+`;
+
+exports[`performance score characterization > fast small input 1`] = `
+{
+  "complexity": 100,
+  "description": "Excellent performance",
+  "executionTime": 100,
+  "memoryUsage": 100,
+  "overall": 100,
+}
+`;
+
+exports[`performance score characterization > slow large input 1`] = `
+{
+  "complexity": 2,
+  "description": "Poor performance - consider optimization",
+  "executionTime": 95,
+  "memoryUsage": 0,
+  "overall": 34,
+}
+`;
+
+exports[`performance score characterization > zero memory reads as perfect memory score 1`] = `
+{
+  "complexity": 50,
+  "description": "Good performance",
+  "executionTime": 100,
+  "memoryUsage": 100,
+  "overall": 80,
+}
+`;
+
+exports[`redos characterization > detectReDoS(/(.*)+/) 1`] = `
+{
+  "detected": true,
+  "reason": "Pattern contains nested quantifiers that could cause exponential backtracking",
+  "severity": "high",
+}
+`;
+
+exports[`redos characterization > detectReDoS(/([a-z]+)*@example/i) 1`] = `
+{
+  "detected": false,
+  "reason": "No obvious ReDoS vulnerabilities detected",
+  "severity": "low",
+}
+`;
+
+exports[`redos characterization > detectReDoS(/(\\w+)*/) 1`] = `
+{
+  "detected": false,
+  "reason": "No obvious ReDoS vulnerabilities detected",
+  "severity": "low",
+}
+`;
+
+exports[`redos characterization > detectReDoS(/(a+)+/) 1`] = `
+{
+  "detected": true,
+  "reason": "Pattern contains nested quantifiers that could cause exponential backtracking",
+  "severity": "high",
+}
+`;
+
+exports[`redos characterization > detectReDoS(/(a|a)*/) 1`] = `
+{
+  "detected": true,
+  "reason": "Pattern contains nested quantifiers that could cause exponential backtracking",
+  "severity": "high",
+}
+`;
+
+exports[`redos characterization > detectReDoS(/(foo(bar+)+)+/) 1`] = `
+{
+  "detected": true,
+  "reason": "Pattern matches known ReDoS vulnerability patterns",
+  "severity": "high",
+}
+`;
+
+exports[`redos characterization > detectReDoS(/[unclosed/) 1`] = `
+{
+  "detected": false,
+  "reason": "Pattern is invalid",
+  "severity": "low",
+}
+`;
+
+exports[`redos characterization > detectReDoS(/\\d+/g) 1`] = `
+{
+  "detected": false,
+  "reason": "No obvious ReDoS vulnerabilities detected",
+  "severity": "low",
+}
+`;
+
+exports[`regex test characterization > global match with groups 1`] = `
+{
+  "errors": [],
+  "flags": "g",
+  "matches": [
+    {
+      "column": 5,
+      "groups": [
+        {
+          "end": 8,
+          "index": 0,
+          "name": undefined,
+          "start": 5,
+          "value": "555",
+        },
+        {
+          "end": 13,
+          "index": 1,
+          "name": undefined,
+          "start": 9,
+          "value": "1234",
+        },
+      ],
+      "index": 5,
+      "line": 1,
+      "match": "555-1234",
+    },
+    {
+      "column": 17,
+      "groups": [
+        {
+          "end": 20,
+          "index": 0,
+          "name": undefined,
+          "start": 17,
+          "value": "555",
+        },
+        {
+          "end": 25,
+          "index": 1,
+          "name": undefined,
+          "start": 21,
+          "value": "9876",
+        },
+      ],
+      "index": 17,
+      "line": 1,
+      "match": "555-9876",
+    },
+  ],
+  "pattern": "(\\d{3})-(\\d{4})",
+  "success": true,
+}
+`;
+
+exports[`regex test characterization > invalid pattern returns parse error 1`] = `
+{
+  "errors": [
+    {
+      "message": "Invalid regular expression: /[/g: Unterminated character class",
+      "type": "parse-error",
+    },
+  ],
+  "flags": "g",
+  "matches": [],
+  "pattern": "[",
+  "success": false,
+}
+`;
+
+exports[`regex test characterization > maxMatches caps output 1`] = `
+{
+  "errors": [],
+  "flags": "g",
+  "matches": [
+    {
+      "column": 0,
+      "groups": undefined,
+      "index": 0,
+      "line": 1,
+      "match": "1",
+    },
+    {
+      "column": 1,
+      "groups": undefined,
+      "index": 1,
+      "line": 1,
+      "match": "2",
+    },
+    {
+      "column": 2,
+      "groups": undefined,
+      "index": 2,
+      "line": 1,
+      "match": "3",
+    },
+  ],
+  "pattern": "\\d",
+  "success": true,
+}
+`;
+
+exports[`regex test characterization > multiline positions 1`] = `
+{
+  "errors": [],
+  "flags": "gm",
+  "matches": [
+    {
+      "column": 0,
+      "groups": undefined,
+      "index": 0,
+      "line": 1,
+      "match": "first",
+    },
+    {
+      "column": 0,
+      "groups": undefined,
+      "index": 6,
+      "line": 2,
+      "match": "second",
+    },
+    {
+      "column": 0,
+      "groups": undefined,
+      "index": 13,
+      "line": 3,
+      "match": "third",
+    },
+  ],
+  "pattern": "^\\w+",
+  "success": true,
+}
+`;
+
+exports[`regex test characterization > named groups are not surfaced 1`] = `
+{
+  "errors": [],
+  "flags": "g",
+  "matches": [
+    {
+      "column": 0,
+      "groups": [
+        {
+          "end": 3,
+          "index": 0,
+          "name": undefined,
+          "start": 0,
+          "value": "555",
+        },
+        {
+          "end": 8,
+          "index": 1,
+          "name": undefined,
+          "start": 4,
+          "value": "1234",
+        },
+      ],
+      "index": 0,
+      "line": 1,
+      "match": "555-1234",
+    },
+  ],
+  "pattern": "(?<area>\\d{3})-(?<line>\\d{4})",
+  "success": true,
+}
+`;
+
+exports[`regex test characterization > non-global stops after first match 1`] = `
+{
+  "errors": [],
+  "flags": "",
+  "matches": [
+    {
+      "column": 1,
+      "groups": undefined,
+      "index": 1,
+      "line": 1,
+      "match": "1",
+    },
+  ],
+  "pattern": "\\d+",
+  "success": true,
+}
+`;
+
+exports[`regex test characterization > repeated group text pins indexOf position bug 1`] = `
+{
+  "errors": [],
+  "flags": "g",
+  "matches": [
+    {
+      "column": 2,
+      "groups": [
+        {
+          "end": 4,
+          "index": 0,
+          "name": undefined,
+          "start": 2,
+          "value": "ab",
+        },
+      ],
+      "index": 2,
+      "line": 1,
+      "match": "abab",
+    },
+  ],
+  "pattern": "ab(ab)",
+  "success": true,
+}
+`;
+
+exports[`regex test characterization > zero-width matches do not loop forever 1`] = `
+{
+  "errors": [],
+  "flags": "g",
+  "matches": [
+    {
+      "column": 0,
+      "groups": undefined,
+      "index": 0,
+      "line": 1,
+      "match": "",
+    },
+    {
+      "column": 2,
+      "groups": undefined,
+      "index": 2,
+      "line": 1,
+      "match": "",
+    },
+    {
+      "column": 3,
+      "groups": undefined,
+      "index": 3,
+      "line": 1,
+      "match": "",
+    },
+    {
+      "column": 5,
+      "groups": undefined,
+      "index": 5,
+      "line": 1,
+      "match": "",
+    },
+  ],
+  "pattern": "\\b",
+  "success": true,
+}
+`;
