@@ -1,47 +1,12 @@
-# Security: Exclude coverage files that expose development paths
-coverage/
-*.lcov
-lcov-report/
+# Allow-list packaging: everything is excluded except what the extension
+# needs at runtime. dist/extension.js is a self-contained esbuild bundle
+# (node_modules must NOT be needed — enforced by scripts/check-bundle.js).
+**
 
-# Build artifacts and development files
-.vscodeignore
-.gitignore
-.gitattributes
-.cursorignore
-.cursorrules
-biome.json
-codecov.yml
-package-lock.json
-bun.lock
-tsconfig.json
-vitest.config.ts
-
-# Development directories
-.github/
-docs/
-test/
-scripts/
-
-# Source files (only include compiled dist/)
-src/
-!src/assets/images/*.png
-!src/assets/images/*.gif
-src/**/*.test.ts
-
-# Build artifacts
-dist/**/*.js.map
-dist/__mocks__/
-
-# Environment files
-.env
-.env.*
-
-# Sample/demo files
-sample/
-
-# Node modules (will be bundled if needed)
-node_modules/
-
-# Release packages
-release/
-
+!dist/extension.js
+!package.nls.json
+!package.nls.*.json
+!src/assets/images/icon.png
+!README.md
+!CHANGELOG.md
+!LICENSE

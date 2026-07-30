@@ -1,29 +1,24 @@
 {
-    "compilerOptions": {
-        "module": "commonjs",
-        "target": "ES2020",
-        "outDir": "dist",
-        "lib": [
-            "ES2020"
-        ],
-        "sourceMap": true,
-        "rootDir": "src",
-        "strict": true,
-        "noUncheckedIndexedAccess": true,
-        "exactOptionalPropertyTypes": true,
-        "noImplicitReturns": true,
-        "noUnusedLocals": true,
-        "noUnusedParameters": true,
-        "skipLibCheck": true,
-        "esModuleInterop": true
-    },
-    "exclude": [
-        "node_modules",
-        ".vscode-test",
-        "src/__mocks__/**/*",
-        "test/**/*",
-        "vitest.config.ts",
-        "**/*.test.ts",
-        "sample/**/*"
-    ]
+	"compilerOptions": {
+		"target": "ES2022",
+		"module": "ESNext",
+		"lib": ["ES2022"],
+		"moduleResolution": "Bundler",
+		"noEmit": true,
+		"strict": true,
+		"noUncheckedIndexedAccess": true,
+		"exactOptionalPropertyTypes": true,
+		"esModuleInterop": true,
+		"skipLibCheck": true,
+		"forceConsistentCasingInFileNames": true,
+		"resolveJsonModule": true,
+		"noImplicitReturns": true,
+		"noUnusedLocals": true,
+		"noUnusedParameters": true,
+		"noImplicitOverride": true,
+		"allowUnusedLabels": false,
+		"allowUnreachableCode": false
+	},
+	"include": ["src/**/*", "vitest.config.ts"],
+	"exclude": ["node_modules", "dist", "coverage", "release"]
 }

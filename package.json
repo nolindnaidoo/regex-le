@@ -215,30 +215,32 @@
 		}
 	},
 	"scripts": {
-		"build": "tsc -p ./",
-		"clean": "rm -rf dist coverage",
-		"clean:i18n": "node -e \"const fs=require('fs');fs.readdirSync('.').filter(f=>f.startsWith('package.nls.')&&f.endsWith('.json')&&f!=='package.nls.json').forEach(f=>fs.unlinkSync(f));try{fs.rmSync('vsix',{recursive:true})}catch(e){}\"",
-		"copy:i18n": "cp src/i18n/package.nls*.json . 2>/dev/null || true",
-		"watch": "tsc -watch -p ./",
+		"clean": "node -e \"const fs=require('fs');['dist','coverage','release'].forEach(d=>fs.rmSync(d,{recursive:true,force:true}))\"",
+		"clean:i18n": "node -e \"const fs=require('fs');fs.readdirSync('.').filter(f=>f.startsWith('package.nls.')&&f.endsWith('.json')&&f!=='package.nls.json').forEach(f=>fs.unlinkSync(f))\"",
+		"copy:i18n": "node -e \"const fs=require('fs');fs.readdirSync('src/i18n').forEach(f=>fs.copyFileSync('src/i18n/'+f,f))\"",
+		"build": "esbuild src/extension.ts --bundle --outfile=dist/extension.js --external:vscode --format=cjs --platform=node --target=node20 --main-fields=module,main --sourcemap",
+		"build:prod": "esbuild src/extension.ts --bundle --outfile=dist/extension.js --external:vscode --format=cjs --platform=node --target=node20 --main-fields=module,main --minify --sourcemap=external",
+		"watch": "esbuild src/extension.ts --bundle --outfile=dist/extension.js --external:vscode --format=cjs --platform=node --target=node20 --main-fields=module,main --sourcemap --watch",
+		"typecheck": "tsc --noEmit",
+		"check:bundle": "node scripts/check-bundle.js",
 		"test": "vitest run --pool=threads",
 		"test:watch": "vitest --pool=threads",
 		"test:coverage": "vitest run --coverage --pool=threads",
-		"test:ui": "vitest --ui",
 		"lint": "biome check .",
 		"lint:fix": "biome check --write .",
-		"vscode:prepublish": "bun run build && bun run copy:i18n",
-		"package": "bun run copy:i18n && mkdir -p release && bun x vsce package --out release/${npm_package_name}-${npm_package_version}.vsix && bun run clean:i18n",
-		"package:ls": "vsce ls release/${npm_package_name}-${npm_package_version}.vsix --tree | cat",
+		"vscode:prepublish": "npm run typecheck && npm run build:prod && npm run check:bundle && npm run copy:i18n",
+		"package": "node -e \"require('fs').mkdirSync('release',{recursive:true})\" && vsce package --out release/ && npm run clean:i18n",
 		"publish": "vsce publish"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^2.2.5",
 		"@types/node": "^24.7.1",
 		"@types/vscode": "^1.70.0",
-		"@vscode/test-electron": "^2.3.0",
-		"@vscode/vsce": "^3.6.2",
 		"@vitest/coverage-v8": "^3.2.4",
 		"@vitest/ui": "^3.2.4",
+		"@vscode/test-electron": "^2.3.0",
+		"@vscode/vsce": "^3.6.2",
+		"esbuild": "^0.28.1",
 		"tsx": "^4.20.6",
 		"typescript": "^5.9.3",
 		"vitest": "^3.2.4"
@@ -247,4 +249,3 @@
 		"vscode-nls": "^5.2.0"
 	}
 }
-

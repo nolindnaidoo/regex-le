@@ -22,8 +22,9 @@ vi.mock('../ui/notifier', () => ({
 }));
 vi.mock('../ui/statusBar', () => ({
 	createStatusBar: vi.fn(() => ({
-		showProgress: vi.fn(),
-		hideProgress: vi.fn(),
+		show: vi.fn(),
+		hide: vi.fn(),
+		updateText: vi.fn(),
 		dispose: vi.fn(),
 	})),
 }));
@@ -122,7 +123,7 @@ describe('serviceFactory', () => {
 			// Verify all services have expected methods
 			expect(typeof services.telemetry.event).toBe('function');
 			expect(typeof services.notifier.showInfo).toBe('function');
-			expect(typeof services.statusBar.showProgress).toBe('function');
+			expect(typeof services.statusBar.updateText).toBe('function');
 			expect(typeof services.localizer.localize).toBe('function');
 			expect(typeof services.performanceMonitor.startOperation).toBe(
 				'function',
