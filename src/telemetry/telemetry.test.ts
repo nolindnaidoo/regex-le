@@ -29,7 +29,7 @@ describe('telemetry', () => {
 			expect(typeof telemetry.dispose).toBe('function');
 		});
 
-		it('should create output channel when telemetry is enabled', () => {
+		it('should create output channel lazily on first event when enabled', () => {
 			const createOutputChannelSpy = vi.mocked(
 				vscode.window.createOutputChannel,
 			);
@@ -39,7 +39,9 @@ describe('telemetry', () => {
 			} as any);
 
 			const telemetry = createTelemetry();
+			expect(createOutputChannelSpy).not.toHaveBeenCalled();
 
+			telemetry.event('first');
 			expect(createOutputChannelSpy).toHaveBeenCalledWith(
 				expect.stringContaining('Telemetry'),
 			);
@@ -87,9 +89,28 @@ describe('telemetry', () => {
 			} as any);
 
 			const telemetry = createTelemetry();
+			telemetry.event('creates-channel');
 			telemetry.dispose();
 
 			expect(disposeSpy).toHaveBeenCalled();
+		});
+
+		it('stops logging when telemetry is disabled at runtime', () => {
+			const appendLineSpy = vi.fn();
+			vi.mocked(vscode.window.createOutputChannel).mockReturnValue({
+				appendLine: appendLineSpy,
+				dispose: vi.fn(),
+			} as any);
+
+			const telemetry = createTelemetry();
+			telemetry.event('while-enabled');
+			expect(appendLineSpy).toHaveBeenCalledTimes(1);
+
+			vi.mocked(getConfiguration).mockReturnValue({
+				telemetryEnabled: false,
+			} as any);
+			telemetry.event('while-disabled');
+			expect(appendLineSpy).toHaveBeenCalledTimes(1);
 		});
 
 		it('should handle events without properties', () => {
