@@ -18,7 +18,7 @@
 	},
 	"homepage": "https://github.com/OffensiveEdge/regex-le#readme",
 	"engines": {
-		"vscode": "^1.70.0",
+		"vscode": "^1.90.0",
 		"node": ">=20.0.0"
 	},
 	"categories": [
@@ -42,13 +42,6 @@
 	],
 	"icon": "src/assets/images/icon.png",
 	"main": "./dist/extension.js",
-	"activationEvents": [
-		"onCommand:regex-le.test",
-		"onCommand:regex-le.extract",
-		"onCommand:regex-le.validate",
-		"onCommand:regex-le.openSettings",
-		"onCommand:regex-le.help"
-	],
 	"capabilities": {
 		"virtualWorkspaces": {
 			"supported": "limited",
@@ -176,28 +169,6 @@
 					"default": false,
 					"description": "%manifest.settings.telemetry.desc%"
 				},
-				"regex-le.performance.enabled": {
-					"type": "boolean",
-					"default": true,
-					"description": "%manifest.settings.performance.enabled.desc%"
-				},
-				"regex-le.performance.maxDuration": {
-					"type": "number",
-					"default": 5000,
-					"minimum": 1000,
-					"description": "%manifest.settings.performance.max-duration.desc%"
-				},
-				"regex-le.performance.maxMemoryUsage": {
-					"type": "number",
-					"default": 104857600,
-					"minimum": 1048576,
-					"description": "%manifest.settings.performance.max-memory.desc%"
-				},
-				"regex-le.regex.realtimePreviewEnabled": {
-					"type": "boolean",
-					"default": true,
-					"description": "%manifest.settings.regex.realtime-preview.desc%"
-				},
 				"regex-le.regex.redosDetectionEnabled": {
 					"type": "boolean",
 					"default": true,
@@ -234,7 +205,7 @@
 	"devDependencies": {
 		"@biomejs/biome": "^2.2.5",
 		"@types/node": "^24.7.1",
-		"@types/vscode": "^1.70.0",
+		"@types/vscode": "^1.90.0",
 		"@vitest/coverage-v8": "^3.2.4",
 		"@vscode/vsce": "^3.6.2",
 		"esbuild": "^0.28.1",

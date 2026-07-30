@@ -34,9 +34,9 @@ function buildHelpContent(): string {
 	const commands =
 		'**Test**: Test a regex pattern against the active editor content\n**Extract**: Extract all matches from the active editor\n**Validate**: Validate a regex pattern and check for ReDoS vulnerabilities\n**Settings**: Configure extension options';
 	const troubleshooting =
-		'**No matches found?** Check your pattern syntax and flags\n**Performance issues?** Enable performance monitoring in settings\n**ReDoS warnings?** Review the pattern for nested quantifiers or exponential backtracking\n**Need help?** Check Output panel for details';
+		'**No matches found?** Check your pattern syntax and flags\n**ReDoS warnings?** Review the pattern for nested quantifiers or exponential backtracking\n**Need help?** Check Output panel for details';
 	const settings =
-		'Access via Command Palette: "Regex-LE: Open Settings"\nKey settings: ReDoS detection, performance monitoring, match limits, real-time preview';
+		'Access via Command Palette: "Regex-LE: Open Settings"\nKey settings: ReDoS detection, match limits, safety thresholds, notification level';
 	const support =
 		'GitHub Issues: https://github.com/OffensiveEdge/regex-le/issues';
 

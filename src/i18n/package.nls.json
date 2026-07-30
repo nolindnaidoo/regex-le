@@ -1,6 +1,4 @@
 {
-  "manifest.ext.name": "Regex-LE",
-  "manifest.ext.description": "Zero-Hassle Regex Extraction & Validation - Test, extract, and validate regular expressions directly inside VS Code with real-time match previews, performance scoring, and built-in ReDoS detection.",
   "manifest.command.category": "Regex-LE",
   "manifest.command.test.title": "Test Regex",
   "manifest.command.extract.title": "Extract Matches",
@@ -19,10 +17,6 @@
   "manifest.settings.safety.warn.large-output.desc": "Warn before opening/copying when result lines exceed this threshold",
   "manifest.settings.statusbar.enabled.desc": "Show Regex-LE status bar entry for quick access",
   "manifest.settings.telemetry.desc": "Enable local-only telemetry logs to the Output panel",
-  "manifest.settings.performance.enabled.desc": "Enable performance monitoring",
-  "manifest.settings.performance.max-duration.desc": "Maximum allowed operation duration in milliseconds",
-  "manifest.settings.performance.max-memory.desc": "Maximum allowed memory usage in bytes",
-  "manifest.settings.regex.realtime-preview.desc": "Enable real-time regex match preview (future feature)",
   "manifest.settings.regex.redos-detection.desc": "Enable ReDoS (Regular Expression Denial of Service) vulnerability detection",
   "manifest.settings.regex.max-match-limit.desc": "Maximum number of matches to return (prevents excessive memory usage)",
   "manifest.capability.untrusted-workspaces.desc": "Limited functionality in untrusted workspaces"
