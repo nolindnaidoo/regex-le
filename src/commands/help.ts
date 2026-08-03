@@ -38,7 +38,7 @@ function buildHelpContent(): string {
 	const settings =
 		'Access via Command Palette: "Regex-LE: Open Settings"\nKey settings: ReDoS detection, match limits, safety thresholds, notification level';
 	const support =
-		'GitHub Issues: https://github.com/nolindnaidoo/regex-le/issues';
+		'- GitHub Issues: https://github.com/nolindnaidoo/regex-le/issues\n- Documentation: https://github.com/nolindnaidoo/regex-le#readme\n- LE Tools: https://letools.dev\n\nBuilt by nolindnaidoo (https://github.com/nolindnaidoo) — MIT licensed.';
 
 	return `# ${title}
 

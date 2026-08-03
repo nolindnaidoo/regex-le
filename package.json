@@ -16,7 +16,7 @@
 	"bugs": {
 		"url": "https://github.com/nolindnaidoo/regex-le/issues"
 	},
-	"homepage": "https://github.com/nolindnaidoo/regex-le#readme",
+	"homepage": "https://letools.dev",
 	"engines": {
 		"vscode": "^1.90.0",
 		"node": ">=20.0.0"
