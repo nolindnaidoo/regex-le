@@ -50,6 +50,13 @@ jobs:
       - name: Unit tests with coverage
         run: bun run test:coverage
 
+      # The README's Testing section is generated from the coverage summary.
+      # Failing here means the committed numbers no longer match a real run —
+      # which is exactly how the pre-2.0 READMEs drifted into fiction.
+      - name: README coverage section is current
+        if: runner.os == 'Linux'
+        run: bun run coverage:readme:check
+
       - name: Build bundle
         run: bun run build
 
