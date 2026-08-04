@@ -5,6 +5,20 @@ All notable changes to Regex-LE will be documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.2] - 2026-08-04
+
+### Added
+
+- Dependency review on pull requests, failing on a high-severity addition
+  before Dependabot's auto-merge can act.
+
+### Changed
+
+- CI gains fleet-wide checks that no single repo can perform: shared config is
+  compared across all ten extensions, and every README link is verified —
+  including Open VSX links, which are checked against the API because
+  open-vsx.org answers HTTP 200 for extensions that do not exist.
+
 ## [2.0.1] - 2026-08-04
 
 ### Fixed

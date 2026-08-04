@@ -41,6 +41,14 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
+      # PR-only: shows what a dependency change actually pulls in, and fails on
+      # a known-vulnerable addition — before Dependabot's auto-merge can act.
+      - name: Dependency review
+        if: github.event_name == 'pull_request' && runner.os == 'Linux'
+        uses: actions/dependency-review-action@2031cfc080254a8a887f58cffee85186f0e49e48 # v4.9.0
+        with:
+          fail-on-severity: high
+
       - name: Lint
         run: bun run lint
 
