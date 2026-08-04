@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Marketplace categories re-targeted for discovery. `Other` is dropped
   (65,992 extensions, no discovery value); each extension now sits in
   categories matching how it is actually used.
+- Search keywords widened to 30, targeting the terms users actually type
+  rather than internal vocabulary.
 
 ### Added
 
