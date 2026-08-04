@@ -1,0 +1,22 @@
+# CodeQL scope. Identical in every *-le repo.
+#
+# Test files and fixtures are excluded deliberately. They contain inputs that
+# are supposed to look dangerous — deliberately catastrophic regexes for the
+# ReDoS screener to catch, http:// URLs for the URL extractor to find — and
+# scanning them produces findings that can only ever be dismissed. Suppressing
+# per-alert leaves a permanent backlog of "known false" entries and every new
+# fixture adds another; excluding the paths keeps the alert list meaningful.
+#
+# Production source is fully in scope.
+name: "LE extension CodeQL config"
+
+paths-ignore:
+  - "**/*.test.ts"
+  - "**/__fixtures__/**"
+  - "**/__snapshots__/**"
+  - "**/__mocks__/**"
+  - "**/__performance__/**"
+  - "**/__data__/**"
+  - "test/**"
+  - "out-test/**"
+  - "dist/**"
