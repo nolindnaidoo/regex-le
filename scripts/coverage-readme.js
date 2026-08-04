@@ -84,14 +84,59 @@ if (startIdx === -1 || endIdx === -1) {
 const next =
 	readme.slice(0, startIdx) + block + readme.slice(endIdx + END.length);
 
+// Coverage percentages are not bit-identical across environments — v8
+// attributes a little differently depending on timing, and a worker-thread
+// test that is terminated mid-run varies by fractions of a point. Comparing
+// the rendered text exactly makes CI fail on ~0.1pp of noise, so --check
+// compares numerically with a tolerance instead. The point of the gate is to
+// catch a README that claims 93% when the truth is 82%, or 289 tests when
+// there are 142 — not to police the second decimal place.
+const TOLERANCE_PP = 1;
+
+function readMetrics(text) {
+	const metrics = {};
+	for (const name of ['Statements', 'Branches', 'Functions', 'Lines']) {
+		const m = text.match(new RegExp(`\\|\\s*${name}\\s*\\|\\s*([\\d.]+)%\\s*\\|`));
+		if (m) metrics[name] = Number.parseFloat(m[1]);
+	}
+	const counts = text.match(/(\d+) test cases across (\d+) files/);
+	if (counts) {
+		metrics.cases = Number.parseInt(counts[1], 10);
+		metrics.files = Number.parseInt(counts[2], 10);
+	}
+	return metrics;
+}
+
 if (process.argv.includes('--check')) {
-	if (next !== readme) {
-		console.error(
-			`README testing section is out of date for ${pkg.name}. Run \`bun run coverage:readme\` and commit the result.`,
-		);
+	const committed = readMetrics(readme.slice(startIdx, endIdx));
+	const fresh = readMetrics(block);
+	const problems = [];
+
+	// Test counts come from source and are deterministic — exact match.
+	for (const key of ['cases', 'files']) {
+		if (committed[key] !== fresh[key]) {
+			problems.push(`${key}: README says ${committed[key]}, actual is ${fresh[key]}`);
+		}
+	}
+	for (const key of ['Statements', 'Branches', 'Functions', 'Lines']) {
+		const a = committed[key];
+		const b = fresh[key];
+		if (a === undefined || Math.abs(a - b) > TOLERANCE_PP) {
+			problems.push(
+				`${key}: README says ${a ?? '(missing)'}%, actual is ${b.toFixed(2)}%`,
+			);
+		}
+	}
+
+	if (problems.length > 0) {
+		console.error(`README testing section is out of date for ${pkg.name}:`);
+		for (const p of problems) console.error(`  ${p}`);
+		console.error('Run `bun run coverage:readme` and commit the result.');
 		process.exit(1);
 	}
-	console.log(`README testing section is current for ${pkg.name}.`);
+	console.log(
+		`README testing section is current for ${pkg.name} (within ${TOLERANCE_PP}pp).`,
+	);
 	process.exit(0);
 }
 
