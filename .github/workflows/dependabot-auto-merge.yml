@@ -1,0 +1,90 @@
+# Auto-merge for Dependabot PRs. Identical in every *-le repo.
+#
+# main has no required status checks by design — direct pushes must stay
+# frictionless — so GitHub's native auto-merge would merge these the instant
+# they open, before CI has even started. This workflow does the gating itself:
+# it waits for the CI run on the PR head to conclude and merges only on success.
+#
+# Scope is deliberately narrow. Runtime dependencies are bundled into
+# dist/extension.js and ship to every install, so they are never merged
+# unreviewed. Majors are never merged unreviewed either.
+name: Dependabot auto-merge
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  auto-merge:
+    if: github.actor == 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Fetch Dependabot metadata
+        id: meta
+        uses: dependabot/fetch-metadata@v2
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Decide eligibility
+        id: gate
+        env:
+          UPDATE_TYPE: ${{ steps.meta.outputs.update-type }}
+          DEP_TYPE: ${{ steps.meta.outputs.dependency-type }}
+        run: |
+          eligible=false
+          if [ "$DEP_TYPE" = "direct:development" ] && \
+             { [ "$UPDATE_TYPE" = "version-update:semver-patch" ] || \
+               [ "$UPDATE_TYPE" = "version-update:semver-minor" ]; }; then
+            eligible=true
+          fi
+          echo "eligible=$eligible" >> "$GITHUB_OUTPUT"
+          echo "dependency-type: $DEP_TYPE"
+          echo "update-type:     $UPDATE_TYPE"
+          echo "eligible:        $eligible"
+
+      # Poll the CI run for this PR head until it concludes. Merging before CI
+      # finishes is the whole failure mode this workflow exists to avoid.
+      - name: Wait for CI to conclude
+        if: steps.gate.outputs.eligible == 'true'
+        id: ci
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SHA: ${{ github.event.pull_request.head.sha }}
+          REPO: ${{ github.repository }}
+        run: |
+          for i in $(seq 1 60); do
+            runs=$(gh api "repos/$REPO/actions/runs?head_sha=$SHA" \
+                   --jq '[.workflow_runs[] | select(.name == "CI")]')
+            total=$(echo "$runs" | jq 'length')
+            if [ "$total" = "0" ]; then sleep 20; continue; fi
+            pending=$(echo "$runs" | jq '[.[] | select(.status != "completed")] | length')
+            if [ "$pending" = "0" ]; then
+              bad=$(echo "$runs" | jq '[.[] | select(.conclusion != "success")] | length')
+              if [ "$bad" = "0" ]; then echo "result=success" >> "$GITHUB_OUTPUT"; exit 0; fi
+              echo "result=failure" >> "$GITHUB_OUTPUT"
+              echo "::error::CI did not succeed for $SHA; leaving the PR open."
+              exit 0
+            fi
+            sleep 20
+          done
+          echo "result=timeout" >> "$GITHUB_OUTPUT"
+          echo "::error::Timed out waiting for CI on $SHA; leaving the PR open."
+
+      - name: Merge
+        if: steps.gate.outputs.eligible == 'true' && steps.ci.outputs.result == 'success'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR: ${{ github.event.pull_request.html_url }}
+        run: gh pr merge --squash "$PR"
+
+      - name: Explain a skip
+        if: steps.gate.outputs.eligible != 'true'
+        run: |
+          echo "Left for manual review: only patch/minor devDependency updates"
+          echo "are merged automatically. Runtime dependencies bundle into the"
+          echo "shipped VSIX, and majors need a human."

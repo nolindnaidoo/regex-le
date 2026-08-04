@@ -1,0 +1,52 @@
+# Weekly grouped dependency PRs. Identical in every *-le repo.
+#
+# The ecosystem is "bun", not "npm": the npm updater edits package.json without
+# regenerating bun.lock, so its PRs can never pass the CI frozen-lockfile gate.
+# The bun updater maintains the lockfile.
+#
+# Grouping keeps this to roughly one PR per ecosystem per week. Ungrouped, ten
+# repos with a dozen stale packages each produce well over a hundred PRs.
+#
+# Auto-merge is handled by .github/workflows/dependabot-auto-merge.yml, which
+# merges only patch/minor devDependency updates and only after CI concludes
+# green. Everything ignored below is a deliberate migration, not a merge.
+version: 2
+updates:
+  - package-ecosystem: "bun"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    groups:
+      dev-minor-patch:
+        applies-to: version-updates
+        dependency-type: "development"
+        update-types: ["minor", "patch"]
+      runtime-minor-patch:
+        applies-to: version-updates
+        dependency-type: "production"
+        update-types: ["minor", "patch"]
+    ignore:
+      # Must track engines.vscode. Raising this raises the supported VS Code
+      # floor and drops users below it — a product decision, not a bump.
+      - dependency-name: "@types/vscode"
+      # Toolchain majors are deliberate migrations. Remove an entry to take one
+      # on purpose; typescript 5->7 and vitest 3->4 were both done by hand.
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "vitest"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@vitest/coverage-v8"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@vitest/coverage-istanbul"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@vitest/ui"
+        update-types: ["version-update:semver-major"]
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    groups:
+      actions:
+        patterns: ["*"]
