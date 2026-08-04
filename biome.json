@@ -1,5 +1,5 @@
 {
-	"$schema": "https://biomejs.dev/schemas/2.3.1/schema.json",
+	"$schema": "https://biomejs.dev/schemas/2.5.7/schema.json",
 	"vcs": {
 		"enabled": false,
 		"clientKind": "git",
@@ -7,7 +7,18 @@
 	},
 	"files": {
 		"ignoreUnknown": false,
-		"includes": ["src/**/*.ts", "!src/**/__mocks__", "!src/**/sample"]
+		"includes": [
+			"src/**/*.ts",
+			"vitest.config.ts",
+			"!src/**/__performance__",
+			"!src/**/__data__",
+			"!src/**/__mocks__",
+			"!src/**/sample",
+			"!src/**/test-fixtures",
+			"!src/**/*.bench.ts",
+			"!src/**/*.bench.js",
+			"!src/**/scripts"
+		]
 	},
 	"formatter": {
 		"enabled": true,
@@ -29,6 +40,23 @@
 	},
 	"overrides": [
 		{
+			"includes": [
+				"**/__performance__/**",
+				"**/__data__/**",
+				"**/__fixtures__/**",
+				"**/__snapshots__/**"
+			],
+			"linter": {
+				"enabled": false
+			},
+			"formatter": {
+				"enabled": false
+			},
+			"assist": {
+				"enabled": false
+			}
+		},
+		{
 			"includes": ["**/*.test.ts", "**/__mocks__/**"],
 			"linter": {
 				"rules": {
@@ -41,18 +69,6 @@
 						"noUnusedFunctionParameters": "off"
 					}
 				}
-			}
-		},
-		{
-			"includes": ["**/__fixtures__/**", "**/__snapshots__/**"],
-			"linter": {
-				"enabled": false
-			},
-			"formatter": {
-				"enabled": false
-			},
-			"assist": {
-				"enabled": false
 			}
 		}
 	],

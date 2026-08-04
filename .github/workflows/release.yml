@@ -21,9 +21,20 @@ on:
         type: boolean
         default: false
 
+# Publishing needs no write access to the repo itself; the registry tokens do
+# all the privileged work and come from secrets.
+permissions:
+  contents: read
+
+# Never let two publishes of the same ref race each other.
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   release:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v5
 

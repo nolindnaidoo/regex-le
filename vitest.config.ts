@@ -1,22 +1,31 @@
 import { defineConfig } from 'vitest/config';
 
+// Identical in every *-le repo. Paths are glob-based rather than repo-specific
+// so this file can be copied across without edits; coverage is measured and
+// reported but not gated.
 export default defineConfig({
 	test: {
 		environment: 'node',
 		globals: true,
 		pool: 'threads',
+		include: ['src/**/*.test.ts'],
+		exclude: ['node_modules/**', 'dist/**', 'out-test/**'],
 		coverage: {
 			provider: 'v8',
 			reporter: ['text', 'json', 'html', 'lcov'],
 			include: ['src/**/*.ts'],
 			exclude: [
 				'src/**/*.test.ts',
-				'src/**/*.spec.ts',
-				'src/__mocks__/**',
-				'src/extraction/regex/__fixtures__/**',
+				'src/**/*.bench.ts',
+				'src/**/__mocks__/**',
+				'src/**/__fixtures__/**',
+				'src/**/__snapshots__/**',
+				'src/**/__performance__/**',
+				'src/**/__data__/**',
+				'src/i18n/**',
+				'src/types.ts',
 			],
 		},
-		include: ['src/**/*.test.ts', 'src/**/*.spec.ts'],
 	},
 	resolve: {
 		alias: {

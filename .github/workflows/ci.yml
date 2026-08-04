@@ -1,3 +1,6 @@
+# Identical in every *-le repo. The artifact name is derived from the repo
+# rather than hardcoded, so this file is byte-for-byte the same everywhere and
+# a change can be copied across without a per-repo edit.
 name: CI
 
 on:
@@ -6,10 +9,22 @@ on:
   pull_request:
     branches: [main]
 
+# Least privilege: CI reads the repo and nothing else.
+permissions:
+  contents: read
+
+# A newer push supersedes an in-flight run instead of both burning a 3-OS matrix.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   ci:
     name: CI on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
+    # Integration tests drive a real extension host; without a cap a hung
+    # vscode-test sits for the 6h runner default.
+    timeout-minutes: 20
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
@@ -52,9 +67,17 @@ jobs:
         if: runner.os != 'Linux'
         run: bun run test:integration
 
+      # The only test that exercises the artifact users actually install.
+      # Linux only: it drives a second VS Code instance and needs xvfb.
+      - name: Installed-VSIX end-to-end (Linux)
+        if: runner.os == 'Linux'
+        run: xvfb-run -a bun run test:e2e-vsix
+
       - name: Upload VSIX artifact
         if: runner.os == 'Linux'
         uses: actions/upload-artifact@v7
         with:
-          name: regex-le-vsix
+          name: ${{ github.event.repository.name }}-vsix
           path: release/*.vsix
+          if-no-files-found: error
+          retention-days: 14
