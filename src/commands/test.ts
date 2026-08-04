@@ -186,7 +186,7 @@ async function testSinglePattern(
 		};
 	}
 
-	const testResult = testRegexWithPerformance(
+	const testResult = await testRegexWithPerformance(
 		pattern,
 		flags,
 		text,
@@ -336,7 +336,7 @@ async function testAllPatterns(
 		});
 
 		const startTime = performance.now();
-		const testResult = testRegexWithPerformance(
+		const testResult = await testRegexWithPerformance(
 			p.pattern,
 			p.flags,
 			text,

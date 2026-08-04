@@ -4,7 +4,16 @@ import type {
 	RegexMatch,
 	RegexTestResult,
 } from '../../types';
+import { execWithTimeout, type RawMatch } from './guardedExec';
 import { createPositionIndex } from './position';
+
+/**
+ * How long a single test run may spend matching before it is abandoned.
+ * A catastrophic pattern blocks inside one `regex.exec()` call, so this is
+ * enforced by terminating a worker thread rather than by checking a clock
+ * between matches — see guardedExec.ts.
+ */
+export const MATCH_TIMEOUT_MS = 2000;
 
 /**
  * Test a regex pattern against text and return matches.
@@ -136,16 +145,100 @@ function captureGroupNames(pattern: string): ReadonlyArray<string | undefined> {
 }
 
 /**
- * Test regex with performance tracking
+ * Enrich worker-produced raw matches with group names and line/column, using
+ * the same text the worker matched against.
  */
-export function testRegexWithPerformance(
+function enrich(
+	pattern: string,
+	text: string,
+	raw: readonly RawMatch[],
+): readonly RegexMatch[] {
+	const groupNames = captureGroupNames(pattern);
+	const positionIndex = createPositionIndex(text);
+
+	return Object.freeze(
+		raw.map((r) => {
+			const groups: RegexGroup[] = [];
+			for (let i = 0; i < r.groupValues.length; i++) {
+				const value = r.groupValues[i];
+				if (value === undefined) {
+					continue;
+				}
+				const range = r.groupRanges[i];
+				groups.push(
+					Object.freeze({
+						index: i,
+						name: groupNames[i],
+						value,
+						start: range?.[0] ?? r.index,
+						end: range?.[1] ?? r.index + value.length,
+					}),
+				);
+			}
+			const { line, column } = positionIndex.positionAt(r.index);
+			return Object.freeze({
+				match: r.match,
+				index: r.index,
+				groups: groups.length > 0 ? Object.freeze(groups) : undefined,
+				line,
+				column,
+			});
+		}),
+	);
+}
+
+/**
+ * Test regex with performance tracking.
+ *
+ * Matching runs on a worker thread with a hard timeout: the ReDoS pre-screen
+ * in the test command is a heuristic and the user may choose to proceed past
+ * its warning, so without this a catastrophic pattern freezes the extension
+ * host with no way back.
+ */
+export async function testRegexWithPerformance(
 	pattern: string,
 	flags: string,
 	text: string,
 	maxMatches: number,
 	startTime: number,
-): RegexTestResult & { performance: PerformanceMetrics } {
-	const testResult = testRegexPattern(pattern, flags, text, maxMatches);
+	timeoutMs: number = MATCH_TIMEOUT_MS,
+): Promise<RegexTestResult & { performance: PerformanceMetrics }> {
+	const outcome = await execWithTimeout(
+		pattern,
+		flags,
+		text,
+		maxMatches,
+		timeoutMs,
+	);
+
+	let testResult: RegexTestResult;
+	if (outcome.kind === 'ok') {
+		testResult = Object.freeze({
+			success: true,
+			pattern,
+			flags,
+			matches: enrich(pattern, text, outcome.matches),
+			errors: Object.freeze([]),
+		});
+	} else {
+		const message =
+			outcome.kind === 'timeout'
+				? `Matching exceeded ${outcome.ms}ms and was stopped. The pattern is likely catastrophically backtracking on this input.`
+				: outcome.message;
+		testResult = Object.freeze({
+			success: false,
+			pattern,
+			flags,
+			matches: Object.freeze([]),
+			errors: Object.freeze([
+				Object.freeze({
+					type: 'parse-error' as const,
+					message,
+				}),
+			]),
+		});
+	}
+
 	const endTime = performance.now();
 	const duration = endTime - startTime;
 
