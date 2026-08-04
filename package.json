@@ -22,9 +22,10 @@
 		"node": ">=20.0.0"
 	},
 	"categories": [
-		"Other",
-		"Programming Languages",
-		"Linters"
+		"Linters",
+		"Testing",
+		"Debuggers",
+		"Programming Languages"
 	],
 	"keywords": [
 		"regex",

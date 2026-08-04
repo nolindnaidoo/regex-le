@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [2.0.1] - 2026-08-03
 
+### Changed
+
+- Marketplace categories re-targeted for discovery. `Other` is dropped
+  (65,992 extensions, no discovery value); each extension now sits in
+  categories matching how it is actually used.
+
 ### Added
 
 - Rating links in the in-extension help output, for both the VS Code
