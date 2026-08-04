@@ -1,10 +1,25 @@
-# Manual release: publishes the extension to the VS Code Marketplace
-# (vsce) and Open VSX (ovsx — this is where Cursor/VSCodium pull from).
-# Requires repo secrets VSCE_PAT and OVSX_PAT.
+# Manual release. Each registry is a separate opt-in, because the two cannot
+# be retried together: once a version is published it cannot be republished,
+# so a run that publishes one registry and fails on the other is only
+# recoverable by re-running with the failed target selected alone.
+#
+# Open VSX defaults to OFF. `ovsx publish` takes no namespace argument — it
+# derives the namespace from `publisher` in the VSIX — so enabling it publishes
+# to whatever `package.json` currently names, with no confirmation prompt.
+# Turn it on deliberately, once that namespace is the intended one.
 name: Release
 
 on:
   workflow_dispatch:
+    inputs:
+      marketplace:
+        description: Publish to the VS Code Marketplace
+        type: boolean
+        default: true
+      openvsx:
+        description: Publish to Open VSX (check the target namespace first)
+        type: boolean
+        default: false
 
 jobs:
   release:
@@ -20,14 +35,60 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
+      # Runs before anything irreversible. A token discovered missing after a
+      # publish leaves the release half-done and unrepeatable.
+      - name: Check publish targets and credentials
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+          OVSX_PAT: ${{ secrets.OVSX_PAT }}
+          MARKETPLACE: ${{ inputs.marketplace }}
+          OPENVSX: ${{ inputs.openvsx }}
+        run: |
+          fail=0
+          if [ "$MARKETPLACE" != "true" ] && [ "$OPENVSX" != "true" ]; then
+            echo "::error::No publish target selected."
+            fail=1
+          fi
+          if [ "$MARKETPLACE" = "true" ] && [ -z "$VSCE_PAT" ]; then
+            echo "::error::Marketplace publishing requested but VSCE_PAT is not set."
+            fail=1
+          fi
+          if [ "$OPENVSX" = "true" ] && [ -z "$OVSX_PAT" ]; then
+            echo "::error::Open VSX publishing requested but OVSX_PAT is not set."
+            fail=1
+          fi
+          exit $fail
+
       - name: Lint, typecheck, test
         run: bun run lint && bun run typecheck && bun run test:coverage
 
       - name: Package
         run: bun run package
 
+      - name: Resolve the built VSIX
+        id: vsix
+        run: |
+          count=$(ls -1 release/*.vsix 2>/dev/null | wc -l | tr -d ' ')
+          if [ "$count" != "1" ]; then
+            echo "::error::Expected exactly one VSIX in release/, found $count."
+            exit 1
+          fi
+          path=$(ls release/*.vsix)
+          echo "path=$path" >> "$GITHUB_OUTPUT"
+          echo "Publishing $path"
+          echo "  version:   $(node -p "require('./package.json').version")"
+          echo "  publisher: $(node -p "require('./package.json').publisher")"
+
+      # Secrets go through the environment: both tools read these names, and
+      # argv is readable from the runner's process table.
       - name: Publish to VS Code Marketplace
-        run: bunx vsce publish --packagePath release/*.vsix -p ${{ secrets.VSCE_PAT }}
+        if: inputs.marketplace
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+        run: bunx vsce publish --packagePath "${{ steps.vsix.outputs.path }}"
 
       - name: Publish to Open VSX
-        run: bunx ovsx publish release/*.vsix -p ${{ secrets.OVSX_PAT }}
+        if: inputs.openvsx
+        env:
+          OVSX_PAT: ${{ secrets.OVSX_PAT }}
+        run: bunx ovsx publish "${{ steps.vsix.outputs.path }}"
