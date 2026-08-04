@@ -215,6 +215,8 @@
 		"test": "vitest run --pool=threads",
 		"test:watch": "vitest --pool=threads",
 		"test:coverage": "vitest run --coverage --pool=threads",
+		"benchmark": "bun scripts/benchmark.ts",
+		"perf:readme": "node scripts/perf-readme.js",
 		"coverage:readme": "node scripts/coverage-readme.js",
 		"coverage:readme:check": "node scripts/coverage-readme.js --check",
 		"test:integration": "npm run build && tsc -p tsconfig.it.json && vscode-test",

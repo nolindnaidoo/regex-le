@@ -80,3 +80,4 @@ package.nls.zh-cn.json
 # Keep source i18n files
 !src/i18n/*.*
 
+benchmark-results.json
