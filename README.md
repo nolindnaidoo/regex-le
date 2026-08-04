@@ -155,13 +155,12 @@ Every tool in the family, one page: **[letools.dev](https://letools.dev)**
 
 ## Also by nolindnaidoo
 
-**Rust** — [pixelcoords](https://github.com/nolindnaidoo/pixelcoords) marks pixel-exact
-coordinates machines can use · [pixelactions](https://github.com/nolindnaidoo/pixelactions)
-performs and verifies the interaction ·
-[pixelcoords.dev](https://pixelcoords.dev) · [pixelactions.dev](https://pixelactions.dev)
+**Rust**
 
-**Elsewhere** — [GitHub](https://github.com/nolindnaidoo) ·
-[LinkedIn](https://www.linkedin.com/in/nolindnaidoo/)
+- **[pixelcoords](https://github.com/nolindnaidoo/pixelcoords)** - Mark pixel-exact coordinates machines can use · [pixelcoords.dev](https://pixelcoords.dev)
+- **[pixelactions](https://github.com/nolindnaidoo/pixelactions)** - Perform the interaction and confirm it landed · [pixelactions.dev](https://pixelactions.dev)
+
+**Contact Developer** — [GitHub](https://github.com/nolindnaidoo) · [LinkedIn](https://www.linkedin.com/in/nolindnaidoo/)
 
 ## License
 
