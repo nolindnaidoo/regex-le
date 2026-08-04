@@ -5,7 +5,16 @@ All notable changes to Regex-LE will be documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [2.0.1] - 2026-08-03
+## [2.0.1] - 2026-08-04
+
+### Fixed
+
+- A catastrophically backtracking pattern can no longer hang the extension
+  host. The ReDoS pre-screen is a heuristic and can be declined or turned
+  off; past that point nothing bounded the match, because the match-limit
+  caps how many matches are collected, not how long a single `exec()`
+  runs. Matching now happens on a worker thread with a 2s budget, which is
+  the only mechanism that can interrupt an in-flight regex.
 
 ### Changed
 
@@ -14,6 +23,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   categories matching how it is actually used.
 - Search keywords widened to 30, targeting the terms users actually type
   rather than internal vocabulary.
+- Toolchain moved to current: TypeScript 7, vitest 4, Biome 2.5.7,
+  @types/node 26. `@types/vscode` is now pinned exactly to the
+  `engines.vscode` floor — the caret had let the type surface drift 15
+  minors ahead of the version actually supported.
+- Runtime dependencies updated across majors where present: csv-parse 7,
+  ini 7, js-yaml 5. Extraction output is unchanged, verified against the
+  characterization goldens.
+- Packaging no longer walks the npm tree (`vsce package --no-dependencies`).
+  The bundle is self-contained, so the walk served no purpose and failed
+  after any dependency change. Scrape-LE keeps it, since it genuinely
+  ships `playwright-core`.
+- Documentation claims corrected against the code. Removed: Numbers-LE
+  "with statistics", EnvSync-LE "visual diffs", Regex-LE "live feedback",
+  String-LE "and validation" — none of those features exist.
 
 ### Added
 
@@ -21,6 +44,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Marketplace and Open VSX. Acquisitions exceed listing page views, so most
   users never see the listing's rating control; help is the surface they do
   reach.
+- README now carries measured Performance and Testing sections, both
+  generated rather than written — from `scripts/benchmark.ts` and from the
+  coverage summary. CI fails if the coverage numbers drift from a real run.
+- Coverage thresholds enforced at 75 lines / 80 functions / 60 branches /
+  75 statements.
+- CodeQL scanning, Dependabot with grouped weekly updates, and auto-merge
+  limited to patch and minor devDependency bumps that pass CI.
 
 ## [2.0.0] - 2026-07-29
 
