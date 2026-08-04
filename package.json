@@ -220,7 +220,7 @@
 		"lint": "biome check .",
 		"lint:fix": "biome check --write .",
 		"vscode:prepublish": "npm run typecheck && npm run build:prod && npm run check:bundle && npm run copy:i18n",
-		"package": "node -e \"require('fs').mkdirSync('release',{recursive:true})\" && vsce package --out release/ && npm run clean:i18n",
+		"package": "node -e \"require('fs').mkdirSync('release',{recursive:true})\" && vsce package --no-dependencies --out release/ && npm run clean:i18n",
 		"publish": "vsce publish"
 	},
 	"devDependencies": {
