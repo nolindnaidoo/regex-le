@@ -5,6 +5,15 @@ All notable changes to Regex-LE will be documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- Rating links in the in-extension help output, for both the VS Code
+  Marketplace and Open VSX. Acquisitions exceed listing page views, so most
+  users never see the listing's rating control; help is the surface they do
+  reach.
+
 ## [2.0.0] - 2026-07-29
 
 Full rehabilitation release. The headline: **v1.x VSIXes built from this
