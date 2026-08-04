@@ -168,7 +168,7 @@
 				},
 				"regex-le.safety.fileSizeWarnBytes": {
 					"type": "number",
-					"default": 1000000,
+					"default": 1e6,
 					"minimum": 1000,
 					"description": "%manifest.settings.safety.warn.file-size.desc%"
 				},
@@ -197,7 +197,7 @@
 					"type": "number",
 					"default": 1000,
 					"minimum": 10,
-					"maximum": 10000,
+					"maximum": 1e4,
 					"description": "%manifest.settings.regex.max-match-limit.desc%"
 				}
 			}
@@ -224,18 +224,18 @@
 		"publish": "vsce publish"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "^2.2.5",
+		"@biomejs/biome": "^2.5.7",
 		"@types/mocha": "^10.0.10",
-		"@types/node": "^24.7.1",
-		"@types/vscode": "^1.90.0",
-		"@vitest/coverage-v8": "^3.2.4",
+		"@types/node": "^24.13.3",
+		"@types/vscode": "1.90.0",
+		"@vitest/coverage-v8": "^3.2.7",
 		"@vscode/test-cli": "^0.0.15",
 		"@vscode/test-electron": "^3.1.0",
-		"@vscode/vsce": "^3.6.2",
+		"@vscode/vsce": "^3.9.2",
 		"esbuild": "^0.28.1",
-		"mocha": "^11.7.6",
-		"ovsx": "^1.0.2",
-		"typescript": "^5.9.3",
-		"vitest": "^3.2.4"
+		"mocha": "^11.8.0",
+		"ovsx": "^1.1.0",
+		"typescript": "^7.0.2",
+		"vitest": "^3.2.7"
 	}
 }
