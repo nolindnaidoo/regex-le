@@ -1,23 +1,18 @@
 # CLAUDE.md
 
-[AGENTS.md](AGENTS.md) is the technical source of truth for this repo —
-architecture, invariants, toolchain, security automation, release. README.md
-is user-facing and partly generated.
-
-**[../AGENTS.md](../AGENTS.md) is the fleet-wide engineering standard** —
-control flow, error handling, immutability, structure. It governs every change
-here; this repo's AGENTS.md covers only what is specific to it. Read it before
-writing code.
+[AGENTS.md](AGENTS.md) is the technical source of truth for this repo: the
+engineering standard the code is held to — control flow, error handling,
+immutability, structure — plus this repo's architecture, invariants, toolchain
+and release. Read it before writing code. README.md is user-facing and partly
+generated.
 
 ## Where to look
 
 | Question | File |
 |---|---|
-| How should this code be written? | [../AGENTS.md](../AGENTS.md) — the fleet standard, applies to every change here |
-| How does this extension work? | [AGENTS.md](AGENTS.md) — architecture, invariants, known limits |
+| How should this code be written? | [AGENTS.md](AGENTS.md) — the standard, plus this repo's architecture and invariants |
 | What does the user see? | [README.md](README.md) — Testing and Performance are generated |
 | What changed? | [CHANGELOG.md](CHANGELOG.md) |
-| How do the other nine do it? | [../CLAUDE.md](../CLAUDE.md) — fleet map |
 
 ## Gates
 

@@ -32,34 +32,160 @@ Conventions: factory functions + `Object.freeze` (no classes), guard clauses, de
 
 ## Code style
 
-The full standard, with the reasoning behind each rule, is
-[`../AGENTS.md`](../AGENTS.md). It is not optional and it applies to every
-change in this repo. In short:
+These are not preferences to weigh against convenience. They are the shape the
+code is expected to take, and a review rejects work that ignores them. The
+reason each one exists is stated, because a rule without a reason gets
+cargo-culted into places it does not belong.
 
-- **Guard clauses first, then the work.** Preconditions return immediately; the
-  happy path runs at one indent level.
-- **No `else`, no `else if`.** Two branches are an early return; many are a
-  lookup table or a `switch` that returns from every arm.
-- **Two levels of nesting, maximum.** A third means the inner block wants to be
-  its own named function.
-- **Truthy checks** (`if (!value)`) — except where `0`, `''` or `false` are
-  legitimate values, which are tested explicitly. All three have been live bugs
-  here.
-- **Immutable by default:** `readonly` fields, `ReadonlyArray`, `Object.freeze`
-  on returned objects, never mutate a parameter.
-- **Composition, never inheritance.** Factory functions returning frozen
-  objects; dependencies arrive as a typed bag so tests need no framework.
-- **Logic and presentation stay apart.** Extraction, analysis and conversion
-  return data and never touch `vscode.window.*`; `ui/` renders, `commands/`
-  orchestrates. A logic module should be testable without the `vscode` mock.
-- **Commands are thin** — read config, call logic, hand off to the UI layer,
-  handle failure.
-- **No god files** (~300 lines is the smell), and `types.ts` holds types only.
-- **Define it once.** Duplicate regexes and helpers have each shipped as a bug
-  here, because copies drift and only one copy gets fixed.
-- **Complete, descriptive error handling.** Never swallow, never report success
-  you did not achieve — check what the API returned.
-- **Comments explain why, never what.**
+### Control flow
+
+**Guard clauses first, then the work.** Every function opens with its
+preconditions, each one returning immediately. The body that follows is the
+happy path at a single indent level, and it reads top to bottom.
+
+```ts
+// Yes — preconditions leave, then the real work runs unindented.
+function extract(document: TextDocument, config: Configuration): Result {
+	if (!document) return EMPTY;
+	if (!isSupported(document.languageId)) return unsupported(document.languageId);
+
+	const text = document.getText();
+	if (!text.trim()) return EMPTY;
+
+	return runExtraction(text, config);
+}
+```
+
+**No `else`. No `else if`.** An `else` is a guard clause that has not been
+extracted yet. Two branches become an early return; many branches become a
+lookup table or a `switch` that returns from every arm. This is the rule that
+does the most work in practice — it is what keeps nesting flat, keeps diffs
+small, and stops a function growing a second responsibility inside its own
+`else`.
+
+```ts
+// No.
+if (kind === 'hex') {
+	return parseHex(value);
+} else if (kind === 'rgb') {
+	return parseRgb(value);
+} else {
+	return null;
+}
+
+// Yes — a table. Adding a format touches one line and no control flow.
+const PARSERS: Readonly<Record<ColorKind, Parser>> = Object.freeze({
+	hex: parseHex,
+	rgb: parseRgb,
+	hsl: parseHsl,
+});
+
+function parse(kind: ColorKind, value: string): Color | null {
+	const parser = PARSERS[kind];
+	if (!parser) return null;
+	return parser(value);
+}
+```
+
+**Maximum nesting is two levels inside a function.** A third level means the
+inner block wants to be its own named function. Loops containing conditionals
+containing conditionals are where bugs hide, because no reader holds all three
+conditions at once.
+
+**Truthy checks.** `if (!value)` rather than
+`if (value === undefined || value === null || value === '')`. The exception is
+real and must be respected: when `0`, `''` or `false` are legitimate values,
+test explicitly (`value === undefined`, `Number.isFinite(value)`). A threshold
+of `0`, an empty string that means "cleared", and `false` from `applyEdit` have
+all been live bugs in this family — the terse form is the default, not a
+licence to ignore the domain.
+
+### Errors
+
+**Every error path is handled and says something true.** A message names what
+failed, why, and what state the user is now in. "Extraction failed" is not a
+message; "Could not replace the document contents: the edit was rejected" is.
+
+**Never swallow.** No empty `catch`, no `catch { return null }` that erases a
+cause the caller needed, no `|| true`, no `continue-on-error`. If a failure is
+genuinely ignorable, the `catch` says why in a comment.
+
+**Failures are values where the caller must react.** A parse failure that the
+user should see is reported through the callback or return value the caller
+supplied — not thrown past it, and never turned into a silent empty result.
+Reserve `throw` for programmer error and for unwinding to a command's outer
+handler, which is the one place that decides what the user sees.
+
+**Never report success you did not achieve.** Check what the API returned.
+`vscode.workspace.applyEdit` resolves `false` for a read-only document; a
+cancelled operation delivers nothing. Announcing a count over work that never
+happened is the single most repeated defect in this family's history.
+
+### Data
+
+**Immutable by default.** `readonly` on every interface field, `ReadonlyArray`
+on every collection you do not own, `Object.freeze` on returned config and
+result objects. Never mutate a parameter. Build a new value and return it.
+Where a mutable working copy is genuinely needed, derive the mutable type
+(`type Draft<T> = { -readonly [K in keyof T]: T[K] }`) rather than
+hand-maintaining a second parallel interface that drifts.
+
+**Composition over inheritance.** Factory functions returning frozen objects,
+not classes and not `extends`. Dependencies arrive as a parameter — a typed
+deps bag — so a test supplies a fake without a framework. There is no
+inheritance hierarchy anywhere in this fleet and there should never be one.
+
+```ts
+export function createNotifier(deps: Readonly<{ config: Configuration }>): Notifier {
+	return Object.freeze({
+		showInfo: (message: string) => { /* ... */ },
+		showError: (message: string) => { /* ... */ },
+	});
+}
+```
+
+### Structure
+
+**Logic and presentation are separate, always.** Extraction, analysis and
+conversion modules compute and return data. They never call
+`vscode.window.*`, never format a user-facing sentence, never decide whether a
+notification is shown. `ui/` renders; `commands/` orchestrates. The test for
+whether you got this right: a logic module should be unit-testable without the
+`vscode` mock at all.
+
+**Where a UI framework is involved, the same rule applies to the render.**
+Compute above, return markup below. A render body holds no conditionals beyond
+a trivial ternary, no data shaping, no derivation — those are named values or
+functions above it. Anything else produces JSX no one can read, and it hides
+the logic from the tests.
+
+**Commands are thin.** A command reads config, calls logic, hands the result to
+the UI layer, and handles failure. When a command file grows a parser or a
+formatter, that code belongs in `extraction/` or `ui/`.
+
+**No god files.** Past ~300 lines, a file is doing more than one job and wants
+splitting along the seam that is already visible in its exports. `types.ts`
+holds types only — no logic, ever.
+
+**Separation of concerns, without ceremony.** One module per real concept, not
+one per function. A `utils/` folder of single-line files is as unmaintainable
+as a god file; both make you read the whole tree to understand one path.
+
+**Define it once.** Duplicate regexes, duplicate `fullDocumentRange`,
+duplicate "is this a supported scheme" checks — each has already shipped as a
+bug in this family, because copies drift and only one copy gets fixed. When you
+find yourself writing something that exists elsewhere, move it to a shared
+module in the same commit.
+
+### Comments
+
+Comments explain **why**, never what. A comment restating the code is noise
+that goes stale. A comment recording the reason a non-obvious choice was made —
+the constraint, the bug it prevents, the API quirk it works around — is the
+most valuable line in the file, and it is what keeps the next person from
+"simplifying" it back into a defect.
+
+---
 
 ## Invariants (things that were once broken — keep them true)
 
@@ -98,6 +224,13 @@ The pre-2.0 README carried hand-written test counts and throughput figures that 
 - **Actions are pinned to commit SHAs.** A tag is mutable and this repo holds a publish token. The trailing `# vX.Y.Z` comment is what Dependabot reads and rewrites.
 - **Branch safety:** a `main-safety` ruleset blocks deletion and force-push. Pushes to `main` are otherwise unrestricted by design.
 - Secret scanning and push protection are enabled. `VSCE_PAT` and `OVSX_PAT` live in repo secrets and in Doppler (`extensions` / `prd`).
+
+## Commits
+
+Subjects use a conventional prefix — `feat:`, `fix:`, `docs:`, `test:`, `ci:`,
+`build:`, `chore:`, `refactor:` — followed by an imperative summary. The body
+says why the change was needed and what it prevents; a subject alone is rarely
+enough to reconstruct a decision six months later.
 
 ## Release
 

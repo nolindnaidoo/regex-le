@@ -2,9 +2,11 @@ import * as vscode from 'vscode';
 import type { Configuration } from '../types';
 
 /**
- * Fallback values, kept identical to the defaults declared in
- * package.json contributes.configuration. A unit test asserts parity so
- * the two can never drift again.
+ * The defaults, exported for the parity gate.
+ *
+ * Nothing else imports this: `config.test.ts` asserts it matches every
+ * default declared in package.json, which is the invariant that stops the
+ * two drifting apart. The export is the seam that test needs.
  */
 export const CONFIG_DEFAULTS = Object.freeze({
 	copyToClipboardEnabled: false,
