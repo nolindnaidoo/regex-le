@@ -26,6 +26,30 @@ if (!fs.existsSync(summaryPath)) {
 	process.exit(1);
 }
 
+// A summary older than the code it describes makes both modes lie: the rewrite
+// reproduces stale numbers, and --check then compares the README against the
+// same stale file and reports it current. That is how a green local gate and a
+// red CI run happened — CI always runs coverage fresh.
+function newestSourceTime(dir) {
+	let newest = 0;
+	for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+		if (entry.name === '__snapshots__' || entry.name === '__fixtures__') continue;
+		const full = path.join(dir, entry.name);
+		const time = entry.isDirectory()
+			? newestSourceTime(full)
+			: fs.statSync(full).mtimeMs;
+		if (time > newest) newest = time;
+	}
+	return newest;
+}
+
+if (newestSourceTime(path.join(root, 'src')) > fs.statSync(summaryPath).mtimeMs) {
+	console.error(
+		'coverage/coverage-summary.json is older than src/ — run `bun run test:coverage` first.',
+	);
+	process.exit(1);
+}
+
 const total = JSON.parse(fs.readFileSync(summaryPath, 'utf8')).total;
 const pkg = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
 
