@@ -225,6 +225,28 @@ The pre-2.0 README carried hand-written test counts and throughput figures that 
 - **Branch safety:** a `main-safety` ruleset blocks deletion and force-push. Pushes to `main` are otherwise unrestricted by design.
 - Secret scanning and push protection are enabled. `VSCE_PAT` and `OVSX_PAT` live in repo secrets and in Doppler (`extensions` / `prd`).
 
+## Agent and editor instructions
+
+Every major coding assistant looks for its own instruction file, so each one is
+present and each is a thin pointer to this document:
+
+| File | Tool |
+|---|---|
+| `AGENTS.md` | the standard itself — OpenAI Codex and others read this directly |
+| `CLAUDE.md` | Claude Code |
+| `GEMINI.md` | Gemini CLI |
+| `.cursorrules`, `.cursor/rules/project.mdc` | Cursor (legacy and current formats) |
+| `.windsurfrules` | Windsurf |
+| `.clinerules` | Cline |
+| `.github/copilot-instructions.md` | GitHub Copilot |
+
+**Keep them thin.** They restate the non-negotiables and route the reader here;
+they must never grow a second copy of the standard, because a copy drifts and
+then two tools disagree about the same repository. Change the standard here,
+and only the pointer's short list if a non-negotiable itself changed.
+
+None of them ship: `.vscodeignore` is an allow-list, so the VSIX is unaffected.
+
 ## Commits
 
 Subjects use a conventional prefix — `feat:`, `fix:`, `docs:`, `test:`, `ci:`,
