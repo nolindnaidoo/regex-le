@@ -26,8 +26,19 @@ import type { ToolDefinition } from './transport';
  *
  * No tool touches the filesystem. The agent already has file-read tools;
  * duplicating them here would add a path-traversal surface for no capability.
+ *
+ * **The description is the API.** A model reads it to decide whether to call
+ * this tool at all, so it states plainly what the tool handles rather than
+ * gesturing at "many formats" — a model cannot reason about a vague claim, and
+ * the cost is either a call that returns nothing or a tool never tried. The
+ * same reasoning governs argument descriptions: each says what the value does,
+ * not what type it is, because the type is already in the schema.
  */
 
+// Advertised in the schema with its default visible, rather than silently
+// enforced. A model that can see the cap can raise it when it genuinely needs
+// more, and can read `meta.truncated` to know it should. A hidden cap just
+// produces quietly incomplete answers.
 const MAX_RESULTS_SCHEMA = {
 	type: 'integer',
 	minimum: 1,

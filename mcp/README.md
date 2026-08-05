@@ -131,6 +131,24 @@ filesystem. Every one is on npm as `<name>-mcp` and in the MCP registry as
 
 Every tool in the family, one page: **[letools.dev](https://letools.dev)**
 
+## Built by
+
+**[Nolin Naidoo](https://nolindnaidoo.com)** — Chief Engineer, AI/ML & Platform
+Architecture. [nolindnaidoo.com](https://nolindnaidoo.com) ·
+[GitHub](https://github.com/nolindnaidoo) ·
+[LinkedIn](https://www.linkedin.com/in/nolindnaidoo/)
+
+### Also from the same workshop
+
+Two Rust desktop tools that make up one loop — pixelcoords answers *where*,
+pixelactions *acts* there. Both are MCP-adjacent in spirit: small, single-purpose,
+and built so a machine can drive them.
+
+| | | |
+|---|---|---|
+| **[pixelcoords](https://github.com/nolindnaidoo/pixelcoords)** | Freeze your screen, mark regions, get pixel-exact coordinates and crops | [site](https://pixelcoords.dev) · [crates.io](https://crates.io/crates/pixelcoords) · [docs.rs](https://docs.rs/pixelcoords) |
+| **[pixelactions](https://github.com/nolindnaidoo/pixelactions)** | Consume human-verified coordinates, perform the interaction, confirm it landed | [site](https://pixelactions.dev) · [crates.io](https://crates.io/crates/pixelactions) · [docs.rs](https://docs.rs/pixelactions) |
+
 ## Licence
 
-MIT © [nolindnaidoo](https://github.com/nolindnaidoo)
+MIT © [Nolin Naidoo](https://nolindnaidoo.com)

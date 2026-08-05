@@ -5,6 +5,29 @@ All notable changes to Regex-LE will be documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.3] - 2026-08-05
+
+### Changed
+
+- Documentation and packaging metadata only — no behaviour change.
+
+  The MCP server's source now explains its decisions rather than restating its
+  code: why MCP's stdio transport is line-delimited and what happens to a client
+  if you copy LSP's framing, why a tool failure is a result carrying `isError`
+  rather than a JSON-RPC error and what each does to a model's next move, why
+  the result cap is measured in context windows rather than milliseconds, and
+  why `truncated` matters more than the cap itself.
+
+- The npm package declares `publishConfig.provenance`, so a release published
+  from CI carries a Sigstore attestation binding the tarball to the commit and
+  workflow that built it. A consumer can verify it with `npm audit signatures`.
+
+- The registry entry names its registry (`registryBaseUrl`) and how to run the
+  package (`runtimeHint`), rather than leaving a client to infer both.
+
+- Package metadata points at the author's site, and the npm page links the rest
+  of the family, the Rust tools and their crates.
+
 ## [2.2.2] - 2026-08-05
 
 ### Changed

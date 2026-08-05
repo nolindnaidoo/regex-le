@@ -17,12 +17,14 @@
 		"url": "https://github.com/nolindnaidoo/regex-le",
 		"source": "github"
 	},
-	"version": "2.2.2",
+	"version": "2.2.3",
 	"packages": [
 		{
 			"registryType": "npm",
+			"registryBaseUrl": "https://registry.npmjs.org",
 			"identifier": "regex-le-mcp",
-			"version": "2.2.2",
+			"version": "2.2.3",
+			"runtimeHint": "npx",
 			"transport": {
 				"type": "stdio"
 			}

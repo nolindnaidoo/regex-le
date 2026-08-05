@@ -12,7 +12,15 @@
  * one-file change rather than a rewrite.
  */
 
-/** Newline-delimited JSON-RPC 2.0 over stdio, which is what MCP stdio is. */
+/**
+ * Newline-delimited JSON-RPC 2.0 over stdio, which is what MCP stdio is.
+ *
+ * Note what is absent: no Content-Length framing. MCP's stdio transport is
+ * line-delimited, unlike LSP's, and a server that copies LSP's framing will
+ * hang a client forever without ever erroring — the client waits for a header
+ * that never comes. This is the single most common way a hand-rolled MCP
+ * server fails, and it fails silently.
+ */
 interface JsonRpcRequest {
 	readonly jsonrpc: '2.0';
 	readonly id?: number | string | null;
@@ -119,6 +127,9 @@ export function createResponder(
 		}
 	}
 
+	// One request in, at most one response out. Kept free of I/O so the whole
+	// protocol surface is testable without spawning a process — `serve` owns
+	// the stream and this owns the semantics.
 	return async function respond(
 		request: JsonRpcRequest,
 	): Promise<JsonRpcResponse | null> {
