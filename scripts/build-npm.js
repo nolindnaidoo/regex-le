@@ -62,6 +62,17 @@ if (npmPackage?.identifier !== manifest.name) {
 	process.exit(1);
 }
 
+// The registry rejects a description over 100 characters, and it does so at
+// publish time — after npm has already taken the version, which can never be
+// reused. Failing here costs nothing.
+const REGISTRY_DESCRIPTION_LIMIT = 100;
+if (registry.description.length > REGISTRY_DESCRIPTION_LIMIT) {
+	console.error(
+		`FAIL: server.json description is ${registry.description.length} characters, over the ${REGISTRY_DESCRIPTION_LIMIT} the MCP registry allows`,
+	);
+	process.exit(1);
+}
+
 if (registry.version !== root.version || npmPackage.version !== root.version) {
 	registry.version = root.version;
 	npmPackage.version = root.version;
