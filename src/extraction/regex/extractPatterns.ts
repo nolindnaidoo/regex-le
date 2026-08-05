@@ -83,8 +83,8 @@ export function extractRegexPatterns(
 	CONSTRUCTOR.lastIndex = 0;
 	while ((m = CONSTRUCTOR.exec(text)) !== null) {
 		const groups = m.groups ?? {};
-		const body = groups['sq'] ?? groups['dq'] ?? '';
-		const flags = groups['sqf'] ?? groups['dqf'] ?? '';
+		const body = groups.sq ?? groups.dq ?? '';
+		const flags = groups.sqf ?? groups.dqf ?? '';
 		if (body.length === 0) {
 			continue;
 		}

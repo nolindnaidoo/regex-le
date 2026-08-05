@@ -106,7 +106,8 @@ export function registerExtractCommand(
 							} catch {
 								// Ignore clipboard errors
 							}
-						} else {
+						}
+						if (!config.copyToClipboardEnabled) {
 							deps.statusBar.updateText(
 								`Extracted ${patterns.length} patterns`,
 							);

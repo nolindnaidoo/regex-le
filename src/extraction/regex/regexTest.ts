@@ -187,6 +187,41 @@ function enrich(
 	);
 }
 
+/** Turn a match outcome into the frozen result the callers return. */
+function buildTestResult(
+	outcome: Awaited<ReturnType<typeof execWithTimeout>>,
+	pattern: string,
+	flags: string,
+	text: string,
+): RegexTestResult {
+	if (outcome.kind === 'ok') {
+		return Object.freeze({
+			success: true,
+			pattern,
+			flags,
+			matches: enrich(pattern, text, outcome.matches),
+			errors: Object.freeze([]),
+		});
+	}
+
+	const message =
+		outcome.kind === 'timeout'
+			? `Matching exceeded ${outcome.ms}ms and was stopped. The pattern is likely catastrophically backtracking on this input.`
+			: outcome.message;
+	return Object.freeze({
+		success: false,
+		pattern,
+		flags,
+		matches: Object.freeze([]),
+		errors: Object.freeze([
+			Object.freeze({
+				type: 'parse-error' as const,
+				message,
+			}),
+		]),
+	});
+}
+
 /**
  * Test regex with performance tracking.
  *
@@ -211,33 +246,12 @@ export async function testRegexWithPerformance(
 		timeoutMs,
 	);
 
-	let testResult: RegexTestResult;
-	if (outcome.kind === 'ok') {
-		testResult = Object.freeze({
-			success: true,
-			pattern,
-			flags,
-			matches: enrich(pattern, text, outcome.matches),
-			errors: Object.freeze([]),
-		});
-	} else {
-		const message =
-			outcome.kind === 'timeout'
-				? `Matching exceeded ${outcome.ms}ms and was stopped. The pattern is likely catastrophically backtracking on this input.`
-				: outcome.message;
-		testResult = Object.freeze({
-			success: false,
-			pattern,
-			flags,
-			matches: Object.freeze([]),
-			errors: Object.freeze([
-				Object.freeze({
-					type: 'parse-error' as const,
-					message,
-				}),
-			]),
-		});
-	}
+	const testResult: RegexTestResult = buildTestResult(
+		outcome,
+		pattern,
+		flags,
+		text,
+	);
 
 	const endTime = performance.now();
 	const duration = endTime - startTime;

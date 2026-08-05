@@ -189,7 +189,9 @@ function calculateNestedDepth(pattern: string): number {
 		if (char === '(') {
 			currentDepth++;
 			maxDepth = Math.max(maxDepth, currentDepth);
-		} else if (char === ')') {
+			continue;
+		}
+		if (char === ')') {
 			currentDepth = Math.max(0, currentDepth - 1);
 		}
 	}

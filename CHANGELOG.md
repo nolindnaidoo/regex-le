@@ -47,6 +47,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Every `else` block is gone (15 real ones; a sixteenth was the string
+  `'else'` in a keyword set). The four-arm recommendation chain in Validate,
+  which repeated `isValid` in every condition, is now ordered guards in one
+  function.
+- The ReDoS "scan did not run" result was built inline in three `else` blocks.
+  It is one frozen constant in `analysis/noFinding.ts`.
+- Test and Validate each held registration, prompting, the run and the report
+  in one file (397 and 369 lines). The runs and their reports moved to
+  `commands/testRunner.ts` and `commands/validateRunner.ts`, leaving the
+  command files at 151 and 97.
+
 - Test coverage raised from 71.39% to 75.30% of branches (87.95% to 90.02% of
   statements, 92.22% to 98.88% of functions). Four files sat below one of the
   repo's own floors; none do now. The validate and test commands are driven by

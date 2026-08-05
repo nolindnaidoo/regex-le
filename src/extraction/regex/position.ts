@@ -33,9 +33,9 @@ export function createPositionIndex(text: string): PositionIndex {
 				const mid = Math.ceil((low + high) / 2);
 				if ((lineStarts[mid] ?? 0) <= clamped) {
 					low = mid;
-				} else {
-					high = mid - 1;
+					continue;
 				}
+				high = mid - 1;
 			}
 			return Object.freeze({
 				line: low + 1,
