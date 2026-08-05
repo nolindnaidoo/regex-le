@@ -1,0 +1,148 @@
+# Keep the Zed listing in step with what Zed actually runs.
+#
+# The Zed extension installs `regex-le-mcp` at its latest published version, so
+# an npm release reaches Zed users on their next launch with no PR at all. What
+# does NOT move on its own is the version Zed's extension list displays — it
+# comes from `extensions.toml` in zed-industries/extensions, which only changes
+# when someone opens a pull request.
+#
+# Left alone that drifts: the listing says 2.2.1 while every user is running
+# 2.3.0. This opens the bump PR automatically after a release, so the drift
+# lasts hours rather than forever.
+#
+# It never publishes anything and never touches this repo. The worst case is an
+# unmerged pull request on a fork.
+name: Zed sync
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Version to sync (defaults to package.json)
+        type: string
+        required: false
+  # Fires after a successful Release run, so the npm package the Zed extension
+  # resolves is guaranteed to exist before the listing claims that version.
+  workflow_run:
+    workflows: [Release]
+    types: [completed]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: zed-sync-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      # A PAT rather than GITHUB_TOKEN: this pushes to a different repository
+      # (the fork of zed-industries/extensions), which the job's own token
+      # cannot reach by design.
+      - name: Check credentials before doing anything
+        env:
+          ZED_TOKEN: ${{ secrets.ZED_EXTENSIONS_TOKEN }}
+        run: |
+          if [ -z "$ZED_TOKEN" ]; then
+            echo "::error::ZED_EXTENSIONS_TOKEN is not set. See .github/workflows/zed-sync.yml for what it needs."
+            exit 1
+          fi
+
+      - name: Resolve the version and its commit
+        id: target
+        env:
+          REQUESTED: ${{ inputs.version }}
+        run: |
+          version="${REQUESTED:-$(node -p "require('./package.json').version")}"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+          echo "Syncing regex-le $version at $(git rev-parse --short HEAD)"
+
+      # The listing may only claim a version that a user can actually install.
+      - name: Refuse to claim a version npm does not have
+        env:
+          VERSION: ${{ steps.target.outputs.version }}
+        run: |
+          if ! npm view "regex-le-mcp@$VERSION" version >/dev/null 2>&1; then
+            echo "::error::regex-le-mcp@$VERSION is not on npm — publish it before syncing the Zed listing."
+            exit 1
+          fi
+
+      - name: Open or update the bump PR
+        env:
+          GH_TOKEN: ${{ secrets.ZED_EXTENSIONS_TOKEN }}
+          VERSION: ${{ steps.target.outputs.version }}
+          SHA: ${{ steps.target.outputs.sha }}
+          EXTENSION: regex-le
+        run: |
+          set -euo pipefail
+          branch="sync-$EXTENSION-v$VERSION"
+
+          git config --global user.name "nolindnaidoo"
+          git config --global user.email "nolindnaidoo@users.noreply.github.com"
+
+          # No --recurse-submodules: this repo has thousands and we need one.
+          git clone --quiet "https://x-access-token:${GH_TOKEN}@github.com/nolindnaidoo/extensions.git" work
+          cd work
+          git remote add upstream https://github.com/zed-industries/extensions.git
+          git fetch --quiet upstream main
+
+          # Branch from upstream, never from the fork's main, so a stale fork
+          # cannot smuggle unrelated commits into the pull request.
+          git checkout --quiet -B "$branch" upstream/main
+          git submodule update --quiet --init "extensions/$EXTENSION"
+
+          git -C "extensions/$EXTENSION" fetch --quiet origin "$SHA"
+          git -C "extensions/$EXTENSION" checkout --quiet "$SHA"
+
+          node -e "
+            const fs = require('fs');
+            const path = 'extensions.toml';
+            const source = fs.readFileSync(path, 'utf8');
+            const pattern = new RegExp('(\\\\[' + process.env.EXTENSION + '\\\\][^\\\\[]*?version = \")[^\"]+(\")');
+            if (!pattern.test(source)) {
+              console.error('::error::no [' + process.env.EXTENSION + '] entry in extensions.toml — is the extension published yet?');
+              process.exit(1);
+            }
+            fs.writeFileSync(path, source.replace(pattern, '\$1' + process.env.VERSION + '\$2'));
+          "
+
+          if git diff --quiet; then
+            echo "Listing already at $VERSION — nothing to do."
+            exit 0
+          fi
+
+          git add "extensions/$EXTENSION" extensions.toml
+          git commit --quiet -m "Update $EXTENSION to v$VERSION"
+          git push --quiet --force-with-lease -u origin "$branch"
+
+          existing=$(gh pr list --repo zed-industries/extensions \
+            --head "$branch" --state open --json number --jq '.[0].number // empty')
+          if [ -n "$existing" ]; then
+            echo "Updated existing PR #$existing"
+            exit 0
+          fi
+
+          gh pr create --repo zed-industries/extensions \
+            --base main --head "nolindnaidoo:$branch" \
+            --title "Update $EXTENSION to v$VERSION" \
+            --body-file - <<BODY
+          Bumps \`$EXTENSION\` to v$VERSION.
+
+          The extension installs \`$EXTENSION-mcp\` at its latest published
+          version, so Zed users are already running this —
+          [\`$EXTENSION-mcp@$VERSION\`](https://www.npmjs.com/package/$EXTENSION-mcp/v/$VERSION)
+          is on npm. This only brings the version shown in the extension list
+          into line with what is actually running.
+
+          Opened automatically after the release. The diff is the submodule
+          pointer and one version string.
+          BODY
