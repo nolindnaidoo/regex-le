@@ -1,17 +1,28 @@
 {
 	"$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
 	"name": "io.github.nolindnaidoo/regex-le",
+	"title": "Regex-LE",
 	"description": "Extract regular expressions from code, each with a ReDoS safety verdict.",
+	"websiteUrl": "https://letools.dev",
+	"icons": [
+		{
+			"src": "https://raw.githubusercontent.com/nolindnaidoo/regex-le/main/src/assets/images/icon.png",
+			"mimeType": "image/png",
+			"sizes": [
+				"128x128"
+			]
+		}
+	],
 	"repository": {
 		"url": "https://github.com/nolindnaidoo/regex-le",
 		"source": "github"
 	},
-	"version": "2.2.1",
+	"version": "2.2.2",
 	"packages": [
 		{
 			"registryType": "npm",
 			"identifier": "regex-le-mcp",
-			"version": "2.2.1",
+			"version": "2.2.2",
 			"transport": {
 				"type": "stdio"
 			}

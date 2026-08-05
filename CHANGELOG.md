@@ -5,6 +5,26 @@ All notable changes to Regex-LE will be documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.2] - 2026-08-05
+
+### Changed
+
+- Documentation only — no behaviour change.
+
+  The README described a keyboard shortcut and little else. 2.2.1 added an MCP
+  server that VS Code registers with agent mode, published it to npm and to the
+  official MCP registry, and submitted a Zed extension — and a reader could
+  discover none of it from this page. There is now a section for calling the
+  tool from an agent, including the JSON config for hosts that use one and a
+  one-line check that the server answers before you wire it into anything.
+
+  The privacy section previously spoke only for the extension. It covers the
+  server too, which is the part an agent actually runs.
+
+  The registry listing gains a display name, an icon and a link to letools.dev;
+  the npm page gains the badges and links it was missing. Every surface now
+  points at the others.
+
 ## [2.2.1] - 2026-08-05
 
 ### Changed
