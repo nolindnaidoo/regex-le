@@ -83,15 +83,14 @@ export async function testSinglePattern(
 			const maxMatchesToShow = Math.min(testResult.matches.length, 100);
 			for (let i = 0; i < maxMatchesToShow; i++) {
 				const match = testResult.matches[i];
-				if (match) {
+				if (!match) continue;
+				reportLines.push(
+					`${i + 1}. \`${match.match}\` at position ${match.index}`,
+				);
+				if (match.line !== undefined) {
 					reportLines.push(
-						`${i + 1}. \`${match.match}\` at position ${match.index}`,
+						`   Line ${match.line}, Column ${match.column || 0}`,
 					);
-					if (match.line !== undefined) {
-						reportLines.push(
-							`   Line ${match.line}, Column ${match.column || 0}`,
-						);
-					}
 				}
 			}
 

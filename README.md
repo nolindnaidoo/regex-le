@@ -138,7 +138,7 @@ a build only tells you how busy the runner was.
 <!-- coverage:start -->
 | Metric | Coverage |
 | --- | --- |
-| Statements | 91.30% |
+| Statements | 91.18% |
 | Branches | 75.84% |
 | Functions | 98.91% |
 | Lines | 91.62% |
