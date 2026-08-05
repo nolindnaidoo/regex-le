@@ -4,6 +4,10 @@
 architecture, invariants, toolchain, security automation, release. README.md
 is user-facing and partly generated.
 
+**[../AGENTS.md](../AGENTS.md) is the fleet-wide engineering standard** —
+code style, error handling, structure. It governs every change here; this
+repo's AGENTS.md covers only what is specific to it.
+
 ## Gates
 
 ```bash

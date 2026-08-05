@@ -30,6 +30,37 @@ types.ts                 shared types only — no logic
 
 Conventions: factory functions + `Object.freeze` (no classes), early returns, dependency bags typed inline at the consumer. Runtime strings are plain English; `package.nls.json` (mirrored in `src/i18n/`) localizes **manifest** strings only (VS Code `%key%` substitution — do not add a runtime i18n layer without wiring real bundles).
 
+## Code style
+
+The full standard, with the reasoning behind each rule, is
+[`../AGENTS.md`](../AGENTS.md). It is not optional and it applies to every
+change in this repo. In short:
+
+- **Guard clauses first, then the work.** Preconditions return immediately; the
+  happy path runs at one indent level.
+- **No `else`, no `else if`.** Two branches are an early return; many are a
+  lookup table or a `switch` that returns from every arm.
+- **Two levels of nesting, maximum.** A third means the inner block wants to be
+  its own named function.
+- **Truthy checks** (`if (!value)`) — except where `0`, `''` or `false` are
+  legitimate values, which are tested explicitly. All three have been live bugs
+  here.
+- **Immutable by default:** `readonly` fields, `ReadonlyArray`, `Object.freeze`
+  on returned objects, never mutate a parameter.
+- **Composition, never inheritance.** Factory functions returning frozen
+  objects; dependencies arrive as a typed bag so tests need no framework.
+- **Logic and presentation stay apart.** Extraction, analysis and conversion
+  return data and never touch `vscode.window.*`; `ui/` renders, `commands/`
+  orchestrates. A logic module should be testable without the `vscode` mock.
+- **Commands are thin** — read config, call logic, hand off to the UI layer,
+  handle failure.
+- **No god files** (~300 lines is the smell), and `types.ts` holds types only.
+- **Define it once.** Duplicate regexes and helpers have each shipped as a bug
+  here, because copies drift and only one copy gets fixed.
+- **Complete, descriptive error handling.** Never swallow, never report success
+  you did not achieve — check what the API returned.
+- **Comments explain why, never what.**
+
 ## Invariants (things that were once broken — keep them true)
 
 - **The bundle must be self-contained.** The VSIX ships `dist/extension.js` only; `scripts/check-bundle.js` (run in `vscode:prepublish` and CI) does a static require scan AND loads the bundle with `vscode` stubbed.
