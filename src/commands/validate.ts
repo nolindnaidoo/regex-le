@@ -206,9 +206,22 @@ async function validateSinglePattern(
 
 	const report = reportLines.join('\n');
 
-	// Copy to clipboard if enabled
+	// Copy to clipboard if enabled. The copy runs before the results document
+	// opens, so an unavailable clipboard — a remote or headless session — used
+	// to abort the whole command and cost the user the results over an optional
+	// convenience.
 	if (config.copyToClipboardEnabled) {
-		await vscode.env.clipboard.writeText(report);
+		try {
+			await vscode.env.clipboard.writeText(report);
+		} catch (error) {
+			const message = error instanceof Error ? error.message : 'Unknown error';
+			deps.notifier.showWarning(
+				vscode.l10n.t(
+					'Could not copy the validation report to the clipboard: {0}',
+					message,
+				),
+			);
+		}
 	}
 
 	// Open result document

@@ -9,6 +9,7 @@ import {
 	_respondToQuickPick,
 	_respondToWarning,
 	_setActiveEditor,
+	_setClipboardError,
 	_setConfig,
 	_shownMessages,
 } from '../__mocks__/vscode';
@@ -237,5 +238,45 @@ describe('regex-le.help', () => {
 		expect(help).toContain('**Extract**');
 		expect(help).toContain('**Validate**');
 		expect(help).not.toContain('performance monitoring');
+	});
+});
+
+describe('clipboard failure', () => {
+	// The copy runs before the report document opens, so an unavailable
+	// clipboard — a remote or headless session — used to abort the command and
+	// cost the user the report over an optional convenience.
+
+	it('test still opens its report', async () => {
+		_setConfig('regex-le.notificationsLevel', 'all');
+		_setConfig('regex-le.copyToClipboardEnabled', true);
+		registerTestCommand(makeContext(), makeDeps());
+		_setClipboardError(new Error('clipboard unavailable'));
+		_setActiveEditor(
+			_createDocument({ content: 'const digits = /\\d+/g; // 42 and 7' }),
+		);
+		_respondToQuickPick(
+			(items) =>
+				(items as Array<{ pattern: string }>).find(
+					(item) => item.pattern === '\\d+',
+				) ?? undefined,
+		);
+		await runCommand('regex-le.test');
+		expect(_openedDocuments()).toHaveLength(1);
+		expect(_shownMessages().some((m) => m.kind === 'warning')).toBe(true);
+	});
+
+	it('validate still opens its report', async () => {
+		// The clipboard copy lives in the single-pattern path, which is reached
+		// through the input-box fallback when the file has no patterns of its
+		// own; a file with patterns takes the bulk path instead.
+		_setConfig('regex-le.notificationsLevel', 'all');
+		_setConfig('regex-le.copyToClipboardEnabled', true);
+		registerValidateCommand(makeContext(), makeDeps());
+		_setClipboardError(new Error('clipboard unavailable'));
+		_setActiveEditor(_createDocument({ content: 'no patterns here' }));
+		_respondToInputBox(() => '[unclosed');
+		await runCommand('regex-le.validate');
+		expect(_openedDocuments()).toHaveLength(1);
+		expect(_shownMessages().some((m) => m.kind === 'warning')).toBe(true);
 	});
 });

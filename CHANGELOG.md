@@ -26,6 +26,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- A clipboard that could not be written cost the user the report. The copy
+  runs before the results document opens, so an unavailable clipboard — a
+  remote or headless session — aborted the command over an optional
+  convenience and nothing was shown. Test and Validate now warn and still open
+  the report.
 - The validation report claimed "This pattern is safe to use and performs
   well" and "No vulnerabilities found" when nothing was detected. The ReDoS
   detector is a structural scanner that recognises known catastrophic shapes
