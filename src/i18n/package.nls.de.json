@@ -19,5 +19,6 @@
 	"manifest.settings.telemetry.desc": "Lokale Telemetrieprotokolle im Ausgabefenster aktivieren",
 	"manifest.settings.regex.redos-detection.desc": "Erkennung von ReDoS-Sicherheitslücken (Regular Expression Denial of Service) aktivieren",
 	"manifest.settings.regex.max-match-limit.desc": "Maximale Anzahl der zurückzugebenden Treffer (verhindert übermäßigen Speicherverbrauch)",
-	"manifest.capability.untrusted-workspaces.desc": "Eingeschränkte Funktionalität in nicht vertrauenswürdigen Arbeitsbereichen"
+	"manifest.capability.untrusted-workspaces.desc": "Eingeschränkte Funktionalität in nicht vertrauenswürdigen Arbeitsbereichen",
+	"manifest.mcp.label": "Regex-LE-Tools zur Mustererkennung für den Agent-Modus"
 }

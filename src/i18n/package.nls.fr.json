@@ -19,5 +19,6 @@
 	"manifest.settings.telemetry.desc": "Activer les journaux de télémétrie en mode local uniquement dans le panneau « Sortie »",
 	"manifest.settings.regex.redos-detection.desc": "Activer la détection des vulnérabilités ReDoS (déni de service par expressions régulières)",
 	"manifest.settings.regex.max-match-limit.desc": "Nombre maximal de résultats à renvoyer (pour éviter une utilisation excessive de la mémoire)",
-	"manifest.capability.untrusted-workspaces.desc": "Fonctionnalités limitées dans les espaces de travail non fiables"
+	"manifest.capability.untrusted-workspaces.desc": "Fonctionnalités limitées dans les espaces de travail non fiables",
+	"manifest.mcp.label": "Outils d'extraction de motifs Regex-LE pour le mode agent"
 }

@@ -19,5 +19,6 @@
 	"manifest.settings.telemetry.desc": "Bật tính năng ghi nhật ký đo lường chỉ tại địa phương vào bảng Đầu ra",
 	"manifest.settings.regex.redos-detection.desc": "Kích hoạt tính năng phát hiện lỗ hổng ReDoS (Tấn công từ chối dịch vụ bằng biểu thức chính quy)",
 	"manifest.settings.regex.max-match-limit.desc": "Số lượng kết quả tối đa được trả về (để tránh sử dụng quá nhiều bộ nhớ)",
-	"manifest.capability.untrusted-workspaces.desc": "Chức năng bị hạn chế trong các không gian làm việc không đáng tin cậy"
+	"manifest.capability.untrusted-workspaces.desc": "Chức năng bị hạn chế trong các không gian làm việc không đáng tin cậy",
+	"manifest.mcp.label": "Các công cụ trích xuất mẫu Regex-LE cho chế độ tác nhân"
 }

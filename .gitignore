@@ -81,3 +81,8 @@ package.nls.zh-cn.json
 !src/i18n/*.*
 
 benchmark-results.json
+
+# Zed extension build output (Cargo.lock IS committed — it pins the wasm build)
+zed/target/
+mcp/server.js
+mcp/LICENSE

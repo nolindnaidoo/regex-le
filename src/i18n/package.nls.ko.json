@@ -19,5 +19,6 @@
 	"manifest.settings.telemetry.desc": "출력 패널에 로컬 전용 텔레메트리 로그 기록 기능을 활성화합니다.",
 	"manifest.settings.regex.redos-detection.desc": "ReDoS(정규식 서비스 거부) 취약점 탐지 활성화",
 	"manifest.settings.regex.max-match-limit.desc": "반환할 최대 일치 항목 수 (과도한 메모리 사용 방지)",
-	"manifest.capability.untrusted-workspaces.desc": "신뢰할 수 없는 작업 공간에서의 제한된 기능"
+	"manifest.capability.untrusted-workspaces.desc": "신뢰할 수 없는 작업 공간에서의 제한된 기능",
+	"manifest.mcp.label": "에이전트 모드용 Regex-LE 패턴 추출 도구"
 }

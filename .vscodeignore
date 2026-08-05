@@ -4,6 +4,9 @@
 **
 
 !dist/extension.js
+# The MCP server, launched over stdio by the provider registered in
+# activate(). Not the .map — that is for local debugging only.
+!dist/mcp-server.js
 !package.nls.json
 !package.nls.*.json
 # Runtime strings for vscode.l10n.t(), loaded via the "l10n" field in

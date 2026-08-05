@@ -85,6 +85,83 @@ exports.run = async function run() {
 	assert.ok(result, 'no results document produced');
 	assert.deepStrictEqual(result.getText().split('\\n'), ['/\\\\d+/g', '/[a-z]+/i']);
 	console.log('VSIX E2E OK:', JSON.stringify(result.getText().split('\\n')));
+	// --- the MCP server, as it ships ------------------------------------
+	// check:mcp-bundle proves dist/mcp-server.js works before packaging. This
+	// proves the packaged VSIX still carries it and that it starts the exact
+	// way provider.ts starts it — the two things .vscodeignore and
+	// ELECTRON_RUN_AS_NODE can each break with no visible error.
+	const fs = require('fs');
+	const path = require('path');
+	const cp = require('child_process');
+
+	const serverPath = path.join(ext.extensionPath, 'dist', 'mcp-server.js');
+	assert.ok(
+		fs.existsSync(serverPath),
+		'dist/mcp-server.js is missing from the installed VSIX — check .vscodeignore',
+	);
+
+	const declared = (
+		ext.packageJSON.contributes.mcpServerDefinitionProviders || []
+	).map((p) => p.id);
+	assert.deepStrictEqual(
+		declared,
+		['regex-le'],
+		'the manifest must declare the provider id the extension registers',
+	);
+
+	// process.execPath here is the editor binary, exactly as it is in the
+	// extension host. Launching without ELECTRON_RUN_AS_NODE starts a second
+	// editor window instead of a server, and the failure is silent.
+	const server = cp.spawn(process.execPath, [serverPath], {
+		env: Object.assign({}, process.env, { ELECTRON_RUN_AS_NODE: '1' }),
+		stdio: 'pipe',
+	});
+
+	const tools = await new Promise((resolve, reject) => {
+		let buffer = '';
+		const timer = setTimeout(
+			() => reject(new Error('the MCP server did not answer within 10s')),
+			10000,
+		);
+		server.on('error', reject);
+		server.stdout.on('data', (chunk) => {
+			buffer += chunk;
+			for (const line of buffer.split('\\n')) {
+				if (!line.trim()) continue;
+				let message;
+				try {
+					message = JSON.parse(line);
+				} catch {
+					continue; // a partial line; wait for the rest
+				}
+				if (message.id !== 2) continue;
+				clearTimeout(timer);
+				resolve((message.result.tools || []).map((t) => t.name));
+			}
+		});
+		const send = (m) => server.stdin.write(JSON.stringify(m) + '\\n');
+		send({
+			jsonrpc: '2.0',
+			id: 1,
+			method: 'initialize',
+			params: { protocolVersion: '2025-06-18', capabilities: {}, clientInfo: { name: 'vsix-e2e', version: '1.0.0' } },
+		});
+		send({ jsonrpc: '2.0', method: 'notifications/initialized' });
+		send({ jsonrpc: '2.0', id: 2, method: 'tools/list' });
+	}).finally(() => server.kill());
+
+	assert.deepStrictEqual(
+		tools,
+		['extract_patterns'],
+		'the installed MCP server did not advertise its tools',
+	);
+	console.log('VSIX MCP OK:', JSON.stringify(tools));
+
+	assert.strictEqual(
+		typeof vscode.lm.registerMcpServerDefinitionProvider,
+		'function',
+		'this VS Code build predates the MCP provider API — engines.vscode floor is wrong',
+	);
 };
 `,
 );

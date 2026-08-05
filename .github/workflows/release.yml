@@ -1,12 +1,17 @@
-# Manual release. Each registry is a separate opt-in, because the two cannot
-# be retried together: once a version is published it cannot be republished,
-# so a run that publishes one registry and fails on the other is only
-# recoverable by re-running with the failed target selected alone.
+# Manual release to three independent registries. Each is a separate opt-in,
+# because none of them can be retried together: once a version is published it
+# cannot be republished, so a run that publishes one and fails on another is
+# only recoverable by re-running with the failed target selected alone.
 #
 # Open VSX defaults to OFF. `ovsx publish` takes no namespace argument — it
 # derives the namespace from `publisher` in the VSIX — so enabling it publishes
 # to whatever `package.json` currently names, with no confirmation prompt.
 # Turn it on deliberately, once that namespace is the intended one.
+#
+# npm defaults to OFF for the same reason, and is usually the *first* target of
+# a release rather than an afterthought: Zed's extension resolves the package
+# at runtime, so a Zed release pointing at an unpublished version is broken for
+# everyone who installs it.
 name: Release
 
 on:
@@ -18,6 +23,10 @@ on:
         default: true
       openvsx:
         description: Publish to Open VSX (check the target namespace first)
+        type: boolean
+        default: false
+      npm:
+        description: Publish the MCP server to npm (regex-le-mcp)
         type: boolean
         default: false
 
@@ -32,7 +41,29 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  # Every publish job is opt-in, so selecting none would otherwise run nothing
+  # and report the workflow as successful — a green run that published nothing.
+  preflight:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Require at least one publish target
+        env:
+          MARKETPLACE: ${{ inputs.marketplace }}
+          OPENVSX: ${{ inputs.openvsx }}
+          NPM: ${{ inputs.npm }}
+        run: |
+          if [ "$MARKETPLACE" != "true" ] && [ "$OPENVSX" != "true" ] && [ "$NPM" != "true" ]; then
+            echo "::error::No publish target selected."
+            exit 1
+          fi
+
   release:
+    # The VSIX registries only. npm is a separate job because it authenticates
+    # with an OIDC identity token rather than a secret, and that permission
+    # should not be held by a job handling registry PATs.
+    if: inputs.marketplace || inputs.openvsx
+    needs: preflight
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -56,10 +87,6 @@ jobs:
           OPENVSX: ${{ inputs.openvsx }}
         run: |
           fail=0
-          if [ "$MARKETPLACE" != "true" ] && [ "$OPENVSX" != "true" ]; then
-            echo "::error::No publish target selected."
-            fail=1
-          fi
           if [ "$MARKETPLACE" = "true" ] && [ -z "$VSCE_PAT" ]; then
             echo "::error::Marketplace publishing requested but VSCE_PAT is not set."
             fail=1
@@ -103,3 +130,81 @@ jobs:
         env:
           OVSX_PAT: ${{ secrets.OVSX_PAT }}
         run: bunx ovsx publish "${{ steps.vsix.outputs.path }}"
+
+  # The MCP server on npm, the delivery channel for Zed and every non-VS-Code
+  # host. Published by trusted publishing: GitHub mints a short-lived identity
+  # token, npm verifies the claim against the publisher configured on the
+  # package, and no npm credential exists in this repo or in Doppler. That is
+  # also why `id-token: write` is scoped here instead of workflow-wide.
+  npm:
+    if: inputs.npm
+    needs: preflight
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      # Trusted publishing needs npm >= 11.5.1 on Node >= 22.14.0. Node 22
+      # ships npm 10, so the CLI is upgraded explicitly rather than assumed.
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 22.14.0
+          registry-url: https://registry.npmjs.org
+
+      - name: Install an npm that speaks OIDC
+        run: npm install -g npm@^11.5.1
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: 1.3.13
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      # Before anything irreversible: a published version can never be reused,
+      # and the unpublish window is 72 hours.
+      - name: Refuse to republish an existing version
+        run: |
+          version=$(node -p "require('./package.json').version")
+          name=$(node -p "require('./mcp/package.json').name")
+          if npm view "$name@$version" version >/dev/null 2>&1; then
+            echo "::error::$name@$version is already published — bump the version first."
+            exit 1
+          fi
+          echo "Publishing $name@$version"
+
+      - name: Build and gate the package
+        run: |
+          bun run build:mcp:prod
+          bun run check:mcp-bundle
+          bun run build:npm
+          bun run check:npm-package
+
+      - name: Publish to npm
+        run: npm publish ./mcp --access public
+
+      # The registry hosts metadata pointing at the npm package, so it can only
+      # be correct once that version exists. Same OIDC identity as the publish
+      # above — no registry credential either.
+      #
+      # Pinned by version AND checksum: this is a binary fetched over the
+      # network into a job that holds an identity token, and `latest` would
+      # make that whatever was released this morning.
+      - name: Publish to the MCP registry
+        env:
+          PUBLISHER_VERSION: v1.8.0
+          PUBLISHER_SHA256: 1370446bbe74d562608e8005a6ccce02d146a661fbd78674e11cc70b9618d6cf
+        run: |
+          url="https://github.com/modelcontextprotocol/registry/releases/download/${PUBLISHER_VERSION}/mcp-publisher_linux_amd64.tar.gz"
+          curl -fsSL "$url" -o publisher.tar.gz
+          echo "${PUBLISHER_SHA256}  publisher.tar.gz" | sha256sum --check --status || {
+            echo "::error::mcp-publisher checksum mismatch — refusing to run it."
+            exit 1
+          }
+          tar xzf publisher.tar.gz mcp-publisher
+          ./mcp-publisher login github-oidc
+          ./mcp-publisher publish

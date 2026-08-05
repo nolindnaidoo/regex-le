@@ -19,5 +19,6 @@
 	"manifest.settings.telemetry.desc": "Abilita i log di telemetria solo locali nel pannello “Output”",
 	"manifest.settings.regex.redos-detection.desc": "Abilita il rilevamento della vulnerabilità ReDoS (Regular Expression Denial of Service)",
 	"manifest.settings.regex.max-match-limit.desc": "Numero massimo di risultati da restituire (per evitare un utilizzo eccessivo della memoria)",
-	"manifest.capability.untrusted-workspaces.desc": "Funzionalità limitate negli spazi di lavoro non attendibili"
+	"manifest.capability.untrusted-workspaces.desc": "Funzionalità limitate negli spazi di lavoro non attendibili",
+	"manifest.mcp.label": "Strumenti di estrazione di pattern Regex-LE per la modalità agente"
 }

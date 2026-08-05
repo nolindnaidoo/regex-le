@@ -19,5 +19,6 @@
 	"manifest.settings.telemetry.desc": "Увімкнути записи телеметрії «тільки для локального використання» на панелі «Вивід»",
 	"manifest.settings.regex.redos-detection.desc": "Увімкнути виявлення вразливості ReDoS (відмова в обслуговуванні на основі регулярних виразів)",
 	"manifest.settings.regex.max-match-limit.desc": "Максимальна кількість результатів, що відображаються (запобігає надмірному використанню пам’яті)",
-	"manifest.capability.untrusted-workspaces.desc": "Обмежена функціональність у ненадійних робочих середовищах"
+	"manifest.capability.untrusted-workspaces.desc": "Обмежена функціональність у ненадійних робочих середовищах",
+	"manifest.mcp.label": "Інструменти вилучення шаблонів Regex-LE для режиму агента"
 }

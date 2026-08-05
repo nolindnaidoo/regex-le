@@ -19,5 +19,6 @@
 	"manifest.settings.telemetry.desc": "在“输出”面板中启用仅本地遥测日志",
 	"manifest.settings.regex.redos-detection.desc": "启用 ReDoS（正则表达式拒绝服务）漏洞检测",
 	"manifest.settings.regex.max-match-limit.desc": "要返回的匹配结果最大数量（用于防止内存使用过多）",
-	"manifest.capability.untrusted-workspaces.desc": "在不受信任的工作区中功能受限"
+	"manifest.capability.untrusted-workspaces.desc": "在不受信任的工作区中功能受限",
+	"manifest.mcp.label": "适用于代理模式的 Regex-LE 模式提取工具"
 }

@@ -64,6 +64,29 @@ describe('Regex-LE integration', function () {
 		assert.deepStrictEqual(lines, ['/\\d+/g', '/[a-z]+/i']);
 	});
 
+	it('offers its MCP server to agent mode', async () => {
+		// The provider is registered against the id the manifest declares; a
+		// mismatch leaves the tools invisible with nothing logged. Assert the
+		// declaration and the API the floor was raised for, together — the
+		// registration itself is only observable in a real host, which
+		// scripts/e2e-vsix.js covers against the installed VSIX.
+		const extension = vscode.extensions.getExtension(EXTENSION_ID);
+		await extension?.activate();
+
+		assert.strictEqual(
+			typeof vscode.lm.registerMcpServerDefinitionProvider,
+			'function',
+			'this VS Code build predates the MCP provider API',
+		);
+
+		const providers = extension?.packageJSON.contributes
+			.mcpServerDefinitionProviders as { id: string; label: string }[];
+		assert.deepStrictEqual(
+			providers.map((p) => p.id),
+			['regex-le'],
+		);
+	});
+
 	it('validate produces a markdown report for the patterns in the file', async () => {
 		await openEditor('const evil = /(a+)+b/;', 'javascript');
 

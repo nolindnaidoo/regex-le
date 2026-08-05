@@ -1,0 +1,38 @@
+{
+	"name": "regex-le-mcp",
+	"version": "2.2.1",
+	"mcpName": "io.github.nolindnaidoo/regex-le",
+	"description": "Extract regular expressions from code, each with a ReDoS safety verdict.",
+	"keywords": [
+		"mcp",
+		"modelcontextprotocol",
+		"model-context-protocol",
+		"regex-le"
+	],
+	"license": "MIT",
+	"author": {
+		"name": "nolindnaidoo",
+		"url": "https://github.com/nolindnaidoo"
+	},
+	"homepage": "https://letools.dev",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/nolindnaidoo/regex-le.git",
+		"directory": "mcp"
+	},
+	"bugs": {
+		"url": "https://github.com/nolindnaidoo/regex-le/issues"
+	},
+	"type": "commonjs",
+	"bin": {
+		"regex-le-mcp": "server.js"
+	},
+	"files": [
+		"server.js",
+		"README.md",
+		"LICENSE"
+	],
+	"engines": {
+		"node": ">=20"
+	}
+}

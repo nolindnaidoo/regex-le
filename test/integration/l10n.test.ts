@@ -42,17 +42,35 @@ describe('Regex-LE localization', function () {
 
 	it('substitutes manifest placeholders', () => {
 		assert.ok(extension, 'extension not found');
-		const commands = extension.packageJSON.contributes.commands as {
-			title: string;
-			category?: string;
-		}[];
-		for (const command of commands) {
-			assert.ok(
-				!command.title.startsWith('%'),
-				`manifest placeholder ${command.title} was never substituted — ` +
-					'package.nls.json missing from the VSIX, or the key does not exist',
-			);
-		}
+
+		// Walk every contribution point, not just command titles. This checked
+		// only `contributes.commands` and so missed the label on
+		// `mcpServerDefinitionProviders` entirely — a placeholder that reaches a
+		// user reads as literal `%manifest.mcp.label%` in the UI.
+		const unsubstituted: string[] = [];
+		const walk = (value: unknown): void => {
+			if (typeof value === 'string') {
+				if (value.startsWith('%') && value.endsWith('%')) {
+					unsubstituted.push(value);
+				}
+				return;
+			}
+			if (Array.isArray(value)) {
+				for (const entry of value) walk(entry);
+				return;
+			}
+			if (value && typeof value === 'object') {
+				for (const entry of Object.values(value)) walk(entry);
+			}
+		};
+		walk(extension.packageJSON.contributes);
+
+		assert.deepStrictEqual(
+			unsubstituted,
+			[],
+			`manifest placeholders were never substituted: ${unsubstituted.join(', ')} — ` +
+				'package.nls.json missing from the VSIX, or the key does not exist',
+		);
 	});
 
 	// Translated manifest catalogues live in src/i18n/ and are copied to the

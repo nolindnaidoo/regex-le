@@ -19,5 +19,6 @@
 	"manifest.settings.telemetry.desc": "「出力」パネルへのローカルのみテレメトリログの記録を有効にする",
 	"manifest.settings.regex.redos-detection.desc": "ReDoS（正規表現によるサービス拒否）の脆弱性検出を有効にする",
 	"manifest.settings.regex.max-match-limit.desc": "返すマッチの最大数（メモリの過剰な使用を防ぐため）",
-	"manifest.capability.untrusted-workspaces.desc": "信頼できないワークスペースでの機能制限"
+	"manifest.capability.untrusted-workspaces.desc": "信頼できないワークスペースでの機能制限",
+	"manifest.mcp.label": "エージェントモード用のRegex-LEパターン抽出ツール"
 }

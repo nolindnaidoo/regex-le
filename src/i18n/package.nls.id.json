@@ -19,5 +19,6 @@
 	"manifest.settings.telemetry.desc": "Aktifkan log telemetri khusus lokal ke panel Output",
 	"manifest.settings.regex.redos-detection.desc": "Aktifkan deteksi kerentanan ReDoS (Regular Expression Denial of Service)",
 	"manifest.settings.regex.max-match-limit.desc": "Jumlah hasil pencocokan maksimum yang akan ditampilkan (untuk mencegah penggunaan memori yang berlebihan)",
-	"manifest.capability.untrusted-workspaces.desc": "Fungsionalitas terbatas di ruang kerja yang tidak tepercaya"
+	"manifest.capability.untrusted-workspaces.desc": "Fungsionalitas terbatas di ruang kerja yang tidak tepercaya",
+	"manifest.mcp.label": "Alat ekstraksi pola Regex-LE untuk mode agen"
 }
