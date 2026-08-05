@@ -228,9 +228,24 @@ The pre-2.0 README carried hand-written test counts and throughput figures that 
 ## Commits
 
 Subjects use a conventional prefix — `feat:`, `fix:`, `docs:`, `test:`, `ci:`,
-`build:`, `chore:`, `refactor:` — followed by an imperative summary. The body
+`build:`, `chore:`, `refactor:`, `perf:`, `revert:` — an optional `(scope)`,
+and an imperative summary under 72 characters with no trailing period. The body
 says why the change was needed and what it prevents; a subject alone is rarely
 enough to reconstruct a decision six months later.
+
+This is enforced, not just documented:
+
+- **`commit-msg` hook** — `bun run hooks:install` points `core.hooksPath` at
+  `.githooks/`, and `prepare` runs it on install, so a fresh clone is wired
+  after `bun install`. It rejects the message before the commit exists.
+- **CI** — the `Commit messages` job runs the same validator over the pushed
+  range. The hook is skippable with `--no-verify`; this is not, so skipping it
+  delays the failure rather than avoiding it.
+
+Both call one implementation, `scripts/commit-lint.js`, so the rules cannot
+drift apart. Check a branch yourself with `bun run lint:commits`. Merge commits
+are exempt — git writes those subjects, not a person. Only the commits in a
+push are checked, so history predating the gate is left alone.
 
 ## Release
 

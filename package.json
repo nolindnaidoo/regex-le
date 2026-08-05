@@ -169,7 +169,7 @@
 				},
 				"regex-le.safety.fileSizeWarnBytes": {
 					"type": "number",
-					"default": 1e6,
+					"default": 1000000.0,
 					"minimum": 1000,
 					"description": "%manifest.settings.safety.warn.file-size.desc%"
 				},
@@ -198,7 +198,7 @@
 					"type": "number",
 					"default": 1000,
 					"minimum": 10,
-					"maximum": 1e4,
+					"maximum": 10000.0,
 					"description": "%manifest.settings.regex.max-match-limit.desc%"
 				}
 			}
@@ -226,7 +226,10 @@
 		"lint:fix": "biome check --write .",
 		"vscode:prepublish": "npm run typecheck && npm run build:prod && npm run check:bundle && npm run copy:i18n",
 		"package": "node -e \"require('fs').mkdirSync('release',{recursive:true})\" && vsce package --no-dependencies --out release/ && npm run clean:i18n",
-		"publish": "vsce publish"
+		"publish": "vsce publish",
+		"hooks:install": "git rev-parse --git-dir >/dev/null 2>&1 && git config core.hooksPath .githooks || true",
+		"lint:commits": "node scripts/commit-lint.js --range origin/main..HEAD",
+		"prepare": "bun run hooks:install"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^2.5.7",

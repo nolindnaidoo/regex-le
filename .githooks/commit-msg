@@ -1,0 +1,5 @@
+#!/bin/sh
+# Conventional-commit gate. Enabled by `bun run hooks:install`, which points
+# core.hooksPath at this directory. CI runs the same check on the pushed range,
+# so `--no-verify` delays the failure rather than avoiding it.
+exec node "$(dirname "$0")/../scripts/commit-lint.js" --file "$1"
