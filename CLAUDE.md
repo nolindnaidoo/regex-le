@@ -5,8 +5,19 @@ architecture, invariants, toolchain, security automation, release. README.md
 is user-facing and partly generated.
 
 **[../AGENTS.md](../AGENTS.md) is the fleet-wide engineering standard** —
-code style, error handling, structure. It governs every change here; this
-repo's AGENTS.md covers only what is specific to it.
+control flow, error handling, immutability, structure. It governs every change
+here; this repo's AGENTS.md covers only what is specific to it. Read it before
+writing code.
+
+## Where to look
+
+| Question | File |
+|---|---|
+| How should this code be written? | [../AGENTS.md](../AGENTS.md) — the fleet standard, applies to every change here |
+| How does this extension work? | [AGENTS.md](AGENTS.md) — architecture, invariants, known limits |
+| What does the user see? | [README.md](README.md) — Testing and Performance are generated |
+| What changed? | [CHANGELOG.md](CHANGELOG.md) |
+| How do the other nine do it? | [../CLAUDE.md](../CLAUDE.md) — fleet map |
 
 ## Gates
 
@@ -32,4 +43,10 @@ artifact users actually install.
 - **This repo is one of ten identical ones.** Config files and workflows are
   byte-identical across the family; a change here needs copying to the other
   nine. See `../CLAUDE.md`.
+- **Localization is two mechanisms, and they fail separately.** `src/i18n/package.nls.*.json`
+  covers the manifest; `l10n/bundle.l10n.*.json` covers runtime strings through
+  `vscode.l10n.t()`. Twelve locales each, held in exact key parity by the
+  integration test. Never call `l10n.t()` at module scope, never compare a
+  translated label against an English literal, and use positional `{0}`
+  placeholders rather than template literals.
 - **Coverage thresholds are a floor**, never lowered to make CI pass.
