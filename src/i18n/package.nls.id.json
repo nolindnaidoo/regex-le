@@ -1,0 +1,23 @@
+{
+	"manifest.command.category": "Regex-LE",
+	"manifest.command.test.title": "Uji Regex",
+	"manifest.command.extract.title": "Pola Ekstraksi",
+	"manifest.command.validate.title": "Memverifikasi Ekspresi Reguler",
+	"manifest.command.settings.title": "Buka Pengaturan",
+	"manifest.command.help.title": "Bantuan & Pemecahan Masalah",
+	"manifest.settings.title": "Pengaturan Regex-LE",
+	"manifest.settings.copy.clipboard.desc": "Menyalin hasil ekstraksi secara otomatis ke papan klip",
+	"manifest.settings.notifications.level.desc": "Mengatur tingkat detail pemberitahuan",
+	"manifest.settings.notifications.level.option.all": "Tampilkan semua pemberitahuan",
+	"manifest.settings.notifications.level.option.important": "Tampilkan hanya pemberitahuan yang penting",
+	"manifest.settings.notifications.level.option.silent": "Nonaktifkan semua notifikasi",
+	"manifest.settings.open.side-by-side.desc": "Ekstraksi terbuka akan menampilkan editor baru di samping",
+	"manifest.settings.safety.enabled.desc": "Aktifkan pemeriksaan keamanan untuk berkas berukuran besar dan operasi",
+	"manifest.settings.safety.warn.file-size.desc": "Berikan peringatan jika ukuran berkas masukan melebihi ambang batas ini dalam byte",
+	"manifest.settings.safety.warn.large-output.desc": "Tampilkan peringatan sebelum membuka/menyalin jika jumlah baris hasil melebihi batas ini",
+	"manifest.settings.statusbar.enabled.desc": "Tampilkan entri bilah status Regex-LE untuk akses cepat",
+	"manifest.settings.telemetry.desc": "Aktifkan log telemetri khusus lokal ke panel Output",
+	"manifest.settings.regex.redos-detection.desc": "Aktifkan deteksi kerentanan ReDoS (Regular Expression Denial of Service)",
+	"manifest.settings.regex.max-match-limit.desc": "Jumlah hasil pencocokan maksimum yang akan ditampilkan (untuk mencegah penggunaan memori yang berlebihan)",
+	"manifest.capability.untrusted-workspaces.desc": "Fungsionalitas terbatas di ruang kerja yang tidak tepercaya"
+}

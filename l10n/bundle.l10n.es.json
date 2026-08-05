@@ -1,0 +1,17 @@
+{
+	"Enter regex pattern to validate": "Introduce el patrón de expresión regular para validar",
+	"e.g., /\\d+/": "e.g., /\\d+/",
+	"Validating regex patterns...": "Validación de patrones de expresiones regulares...",
+	"Enter regex pattern to test": "Introduce el patrón de expresión regular que deseas probar",
+	"Test All Patterns": "Probar todos los patrones",
+	"Select a pattern to test against the file": "Selecciona un patrón para compararlo con el archivo",
+	"Testing regex pattern...": "Probando el patrón de expresión regular...",
+	"Extracting regex patterns...": "Extrayendo patrones de expresiones regulares...",
+	"No regex patterns found in the file.": "No se han encontrado patrones de expresiones regulares en el archivo.",
+	"Pattern cannot be empty": "El patrón no puede estar vacío",
+	"Testing pattern {0}/{1}: {2}": "Patrón de prueba {0} / {1}: {2}",
+	"Validating pattern {0}/{1}": "Validación del patrón {0} / {1}",
+	"No active editor. Please open a file first.": "No hay ningún editor activo. Por favor, abre primero un archivo.",
+	"No regex patterns found in the file. Provide a pattern to validate.": "No se han encontrado patrones de expresiones regulares en el archivo. Introduce un patrón para validarlo.",
+	"No regex patterns found in the file. Select text or provide a pattern to test.": "No se han encontrado patrones de expresiones regulares en el archivo. Selecciona un texto o introduce un patrón para realizar la búsqueda."
+}

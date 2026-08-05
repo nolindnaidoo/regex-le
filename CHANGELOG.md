@@ -5,14 +5,51 @@ All notable changes to Regex-LE will be documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [2.0.2] - 2026-08-04
+## [2.1.0] - 2026-08-04
 
 ### Added
+
+- Runtime strings are localized, and this time they render. All 9 of them —
+  notifications, status bar, quick-picks and prompts — go through
+  `vscode.l10n` and ship as twelve translated bundles in `l10n/`. The v1.x
+  line carried manifest catalogues that worked and runtime catalogues that
+  never reached the screen: `vscode-nls` was configured without
+  `__filename`, so every runtime string fell back to English while the VSIX
+  looked correct.
+- An integration test covering both localization mechanisms — manifest
+  substitution, key parity across all thirteen catalogues, and placeholder
+  integrity in every translation. A translation that silently drops `{0}`
+  now fails the build instead of shipping a message with the value missing.
 
 - Dependency review on pull requests, failing on a high-severity addition
   before Dependabot's auto-merge can act.
 
+### Fixed
+
+- The validation report claimed "This pattern is safe to use and performs
+  well" and "No vulnerabilities found" when nothing was detected. The ReDoS
+  detector is a structural scanner that recognises known catastrophic shapes
+  and explicitly cannot prove a pattern safe — as the README already said, and
+  as its own module documentation says. A user could have shipped a
+  catastrophically-backtracking pattern this heuristic does not recognise
+  having been told it was safe. Both lines now state what was actually
+  checked.
+- Progress messages ("Validating pattern 3/12", "Testing pattern 3/12"), the
+  input-box validation message ("Pattern cannot be empty") and three
+  "no patterns found" notifications were never localized. Progress text is passed to `progress.report()` and validation text
+  is returned from a callback, so neither was reached by the property-based
+  localization pass.
+
 ### Changed
+
+- Test coverage raised from 71.39% to 75.30% of branches (87.95% to 90.02% of
+  statements, 92.22% to 98.88% of functions). Four files sat below one of the
+  repo's own floors; none do now. The validate and test commands are driven by
+  a pattern input box and a picker, and everything past those — the ReDoS
+  screen, the complexity score, the report, the /pattern/flags parsing — is
+  reachable only by answering them. The status bar's show, hide and dispose
+  had never been called: it is created during activation and then left alone.
+
 
 - CI gains fleet-wide checks that no single repo can perform: shared config is
   compared across all ten extensions, and every README link is verified —

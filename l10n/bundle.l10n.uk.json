@@ -1,0 +1,17 @@
+{
+	"Enter regex pattern to validate": "Введіть шаблон регулярного виразу для перевірки",
+	"e.g., /\\d+/": "e.g., /\\d+/",
+	"Validating regex patterns...": "Перевірка шаблонів регулярних виразів...",
+	"Enter regex pattern to test": "Введіть шаблон регулярного виразу для перевірки",
+	"Test All Patterns": "Перевірити всі шаблони",
+	"Select a pattern to test against the file": "Виберіть шаблон для порівняння з файлом",
+	"Testing regex pattern...": "Перевірка шаблону регулярного виразу...",
+	"Extracting regex patterns...": "Витягування шаблонів регулярних виразів...",
+	"No regex patterns found in the file.": "У файлі не знайдено жодних шаблонів регулярних виразів.",
+	"Pattern cannot be empty": "Шаблон не може бути порожнім",
+	"Testing pattern {0}/{1}: {2}": "Приклад тестування {0} / {1}: {2}",
+	"Validating pattern {0}/{1}": "Шаблон перевірки: {0} / {1}",
+	"No active editor. Please open a file first.": "Редактор неактивний. Будь ласка, спочатку відкрийте файл.",
+	"No regex patterns found in the file. Provide a pattern to validate.": "У файлі не знайдено жодних шаблонів регулярних виразів. Вкажіть шаблон для перевірки.",
+	"No regex patterns found in the file. Select text or provide a pattern to test.": "У файлі не знайдено шаблонів регулярних виразів. Виділіть текст або вкажіть шаблон для перевірки."
+}

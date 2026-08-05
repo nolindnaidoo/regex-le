@@ -27,7 +27,7 @@ export function registerExtractCommand(
 			const editor = vscode.window.activeTextEditor;
 			if (!editor) {
 				deps.notifier.showWarning(
-					'No active editor. Please open a file first.',
+					vscode.l10n.t('No active editor. Please open a file first.'),
 				);
 				return;
 			}
@@ -46,7 +46,7 @@ export function registerExtractCommand(
 				await vscode.window.withProgress(
 					{
 						location: vscode.ProgressLocation.Notification,
-						title: 'Extracting regex patterns...',
+						title: vscode.l10n.t('Extracting regex patterns...'),
 						cancellable: false,
 					},
 					async (_progress, token): Promise<void> => {
@@ -60,7 +60,11 @@ export function registerExtractCommand(
 						if (token.isCancellationRequested) return;
 
 						if (patterns.length === 0) {
-							deps.notifier.showInfo('No regex patterns found in the file.');
+							deps.notifier.showInfo(
+								vscode.l10n.t(
+									vscode.l10n.t('No regex patterns found in the file.'),
+								),
+							);
 							return;
 						}
 

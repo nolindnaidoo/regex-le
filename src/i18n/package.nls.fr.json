@@ -1,0 +1,23 @@
+{
+	"manifest.command.category": "Regex-LE",
+	"manifest.command.test.title": "Test d'expression régulière",
+	"manifest.command.extract.title": "Modèles d'extraction",
+	"manifest.command.validate.title": "Valider l'expression régulière",
+	"manifest.command.settings.title": "Ouvrir les paramètres",
+	"manifest.command.help.title": "Aide et dépannage",
+	"manifest.settings.title": "Paramètres de Regex-LE",
+	"manifest.settings.copy.clipboard.desc": "Copier automatiquement les résultats de l'extraction dans le presse-papiers",
+	"manifest.settings.notifications.level.desc": "Permet de régler le niveau de détail des notifications",
+	"manifest.settings.notifications.level.option.all": "Afficher toutes les notifications",
+	"manifest.settings.notifications.level.option.important": "Afficher uniquement les notifications importantes",
+	"manifest.settings.notifications.level.option.silent": "Désactiver toutes les notifications",
+	"manifest.settings.open.side-by-side.desc": "L'ouverture de l'extraction ouvre un nouvel éditeur à côté",
+	"manifest.settings.safety.enabled.desc": "Activer les contrôles de sécurité pour les fichiers volumineux et les opérations importantes",
+	"manifest.settings.safety.warn.file-size.desc": "Afficher un avertissement lorsque la taille du fichier d'entrée dépasse ce seuil en octets",
+	"manifest.settings.safety.warn.large-output.desc": "Afficher un avertissement avant l'ouverture ou la copie lorsque le nombre de lignes de résultats dépasse ce seuil",
+	"manifest.settings.statusbar.enabled.desc": "Afficher l'entrée « Regex-LE » dans la barre d'état pour un accès rapide",
+	"manifest.settings.telemetry.desc": "Activer les journaux de télémétrie en mode local uniquement dans le panneau « Sortie »",
+	"manifest.settings.regex.redos-detection.desc": "Activer la détection des vulnérabilités ReDoS (déni de service par expressions régulières)",
+	"manifest.settings.regex.max-match-limit.desc": "Nombre maximal de résultats à renvoyer (pour éviter une utilisation excessive de la mémoire)",
+	"manifest.capability.untrusted-workspaces.desc": "Fonctionnalités limitées dans les espaces de travail non fiables"
+}

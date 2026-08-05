@@ -1,0 +1,17 @@
+{
+	"Enter regex pattern to validate": "Nhập mẫu biểu thức chính quy để xác thực",
+	"e.g., /\\d+/": "e.g., /\\d+/",
+	"Validating regex patterns...": "Đang xác thực các mẫu biểu thức chính quy...",
+	"Enter regex pattern to test": "Nhập mẫu biểu thức chính quy để kiểm tra",
+	"Test All Patterns": "Kiểm tra tất cả các mẫu",
+	"Select a pattern to test against the file": "Chọn một mẫu để so sánh với tệp",
+	"Testing regex pattern...": "Kiểm tra mẫu biểu thức chính quy...",
+	"Extracting regex patterns...": "Đang trích xuất các mẫu biểu thức chính quy...",
+	"No regex patterns found in the file.": "Không tìm thấy mẫu biểu thức chính quy nào trong tệp.",
+	"Pattern cannot be empty": "Mẫu không được để trống",
+	"Testing pattern {0}/{1}: {2}": "Mẫu kiểm thử {0} / {1}: {2}",
+	"Validating pattern {0}/{1}": "Mẫu xác thực {0} / {1}",
+	"No active editor. Please open a file first.": "Hiện không có trình soạn thảo nào đang hoạt động. Vui lòng mở một tệp trước.",
+	"No regex patterns found in the file. Provide a pattern to validate.": "Không tìm thấy mẫu biểu thức chính quy nào trong tệp. Vui lòng cung cấp mẫu để kiểm tra tính hợp lệ.",
+	"No regex patterns found in the file. Select text or provide a pattern to test.": "Không tìm thấy mẫu biểu thức chính quy nào trong tệp. Vui lòng chọn một đoạn văn bản hoặc nhập mẫu để kiểm tra."
+}

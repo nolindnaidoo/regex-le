@@ -28,7 +28,7 @@ export function registerValidateCommand(
 			const editor = vscode.window.activeTextEditor;
 			if (!editor) {
 				deps.notifier.showWarning(
-					'No active editor. Please open a file first.',
+					vscode.l10n.t('No active editor. Please open a file first.'),
 				);
 				return;
 			}
@@ -41,16 +41,18 @@ export function registerValidateCommand(
 
 			if (extractedPatterns.length === 0) {
 				deps.notifier.showInfo(
-					'No regex patterns found in the file. Provide a pattern to validate.',
+					vscode.l10n.t(
+						'No regex patterns found in the file. Provide a pattern to validate.',
+					),
 				);
 
 				// Fallback: prompt for pattern if none found
 				const patternInput = await vscode.window.showInputBox({
-					prompt: 'Enter regex pattern to validate',
-					placeHolder: 'e.g., /\\d+/',
+					prompt: vscode.l10n.t('Enter regex pattern to validate'),
+					placeHolder: vscode.l10n.t('e.g., /\\d+/'),
 					validateInput: (value) => {
 						if (!value || value.trim().length === 0) {
-							return 'Pattern cannot be empty';
+							return vscode.l10n.t('Pattern cannot be empty');
 						}
 						return null;
 					},
@@ -75,7 +77,7 @@ export function registerValidateCommand(
 				await vscode.window.withProgress(
 					{
 						location: vscode.ProgressLocation.Notification,
-						title: 'Validating regex patterns...',
+						title: vscode.l10n.t('Validating regex patterns...'),
 						cancellable: false,
 					},
 					async (progress) => {
@@ -161,7 +163,10 @@ async function validateSinglePattern(
 		reportLines.push('');
 	} else {
 		reportLines.push('## ✅ ReDoS Detection');
-		reportLines.push('**Detected:** No vulnerabilities found');
+		// The detector is a structural scanner, not an automaton analysis — it
+		// recognises known catastrophic shapes and cannot prove their absence.
+		// Reporting "no vulnerabilities found" claimed more than it can support.
+		reportLines.push('**Detected:** No known vulnerable shapes');
 		reportLines.push('');
 	}
 
@@ -179,7 +184,11 @@ async function validateSinglePattern(
 
 	if (isValid && !redosResult.detected && performanceScore >= 70) {
 		reportLines.push('## ✅ Recommendation');
-		reportLines.push('This pattern is safe to use and performs well.');
+		reportLines.push(
+			'No known vulnerable shapes were detected and the pattern scores well ' +
+				'on complexity. This scanner recognises common catastrophic-backtracking ' +
+				'shapes; it cannot prove a pattern safe against adversarial input.',
+		);
 	} else if (isValid && redosResult.detected) {
 		reportLines.push('## ⚠️ Recommendation');
 		reportLines.push(
@@ -246,7 +255,11 @@ async function validateAllPatterns(
 		if (!p) continue;
 
 		progress.report({
-			message: `Validating pattern ${i + 1}/${patterns.length}`,
+			message: vscode.l10n.t(
+				'Validating pattern {0}/{1}',
+				i + 1,
+				patterns.length,
+			),
 			increment: (100 / patterns.length) * i,
 		});
 

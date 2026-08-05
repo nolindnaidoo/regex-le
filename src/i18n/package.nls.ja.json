@@ -1,0 +1,23 @@
+{
+	"manifest.command.category": "Regex-LE",
+	"manifest.command.test.title": "正規表現のテスト",
+	"manifest.command.extract.title": "パターンの抽出",
+	"manifest.command.validate.title": "正規表現の検証",
+	"manifest.command.settings.title": "「設定」を開く",
+	"manifest.command.help.title": "ヘルプとトラブルシューティング",
+	"manifest.settings.title": "Regex-LE の設定",
+	"manifest.settings.copy.clipboard.desc": "抽出結果を自動的にクリップボードにコピーする",
+	"manifest.settings.notifications.level.desc": "通知の詳細度を制御します",
+	"manifest.settings.notifications.level.option.all": "すべての通知を表示する",
+	"manifest.settings.notifications.level.option.important": "重要な通知のみを表示する",
+	"manifest.settings.notifications.level.option.silent": "すべての通知を非表示にする",
+	"manifest.settings.open.side-by-side.desc": "抽出を行うと、横に新しいエディタが表示されます",
+	"manifest.settings.safety.enabled.desc": "大容量ファイルおよび操作に対する安全チェックを有効にする",
+	"manifest.settings.safety.warn.file-size.desc": "入力ファイルのサイズがこのしきい値（バイト単位）を超えた場合に警告を表示する",
+	"manifest.settings.safety.warn.large-output.desc": "結果行数がこの閾値を超えた場合、ファイルを開く／コピーする前に警告を表示する",
+	"manifest.settings.statusbar.enabled.desc": "Regex-LEのステータスバー項目を表示して、すばやくアクセスできるようにする",
+	"manifest.settings.telemetry.desc": "「出力」パネルへのローカルのみテレメトリログの記録を有効にする",
+	"manifest.settings.regex.redos-detection.desc": "ReDoS（正規表現によるサービス拒否）の脆弱性検出を有効にする",
+	"manifest.settings.regex.max-match-limit.desc": "返すマッチの最大数（メモリの過剰な使用を防ぐため）",
+	"manifest.capability.untrusted-workspaces.desc": "信頼できないワークスペースでの機能制限"
+}

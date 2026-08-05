@@ -6,6 +6,11 @@
 !dist/extension.js
 !package.nls.json
 !package.nls.*.json
+# Runtime strings for vscode.l10n.t(), loaded via the "l10n" field in
+# package.json. Only the translated bundles ship — the English source bundle
+# (l10n/bundle.l10n.json) is the translation input, and at runtime l10n.t()
+# already falls back to the literal in the code, so shipping it is dead weight.
+!l10n/bundle.l10n.*.json
 !src/assets/images/icon.png
 !README.md
 !CHANGELOG.md

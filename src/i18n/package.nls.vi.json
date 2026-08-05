@@ -1,0 +1,23 @@
+{
+	"manifest.command.category": "Regex-LE",
+	"manifest.command.test.title": "Kiểm tra biểu thức chính quy",
+	"manifest.command.extract.title": "Các mẫu trích xuất",
+	"manifest.command.validate.title": "Xác thực biểu thức chính quy",
+	"manifest.command.settings.title": "Mở Cài đặt",
+	"manifest.command.help.title": "Trợ giúp & Khắc phục sự cố",
+	"manifest.settings.title": "Cài đặt Regex-LE",
+	"manifest.settings.copy.clipboard.desc": "Tự động sao chép kết quả trích xuất vào khay nhớ tạm",
+	"manifest.settings.notifications.level.desc": "Điều chỉnh mức độ chi tiết của các thông báo",
+	"manifest.settings.notifications.level.option.all": "Hiển thị tất cả thông báo",
+	"manifest.settings.notifications.level.option.important": "Chỉ hiển thị các thông báo quan trọng",
+	"manifest.settings.notifications.level.option.silent": "Ẩn tất cả các thông báo",
+	"manifest.settings.open.side-by-side.desc": "Khi mở kết quả trích xuất, một trình soạn thảo mới sẽ xuất hiện ở bên cạnh",
+	"manifest.settings.safety.enabled.desc": "Bật tính năng kiểm tra an toàn cho các tệp và thao tác có dung lượng lớn",
+	"manifest.settings.safety.warn.file-size.desc": "Cảnh báo khi kích thước tệp đầu vào vượt quá ngưỡng này tính bằng byte",
+	"manifest.settings.safety.warn.large-output.desc": "Cảnh báo trước khi mở/sao chép khi số dòng kết quả vượt quá ngưỡng này",
+	"manifest.settings.statusbar.enabled.desc": "Hiển thị mục trên thanh trạng thái Regex-LE để truy cập nhanh",
+	"manifest.settings.telemetry.desc": "Bật tính năng ghi nhật ký đo lường chỉ tại địa phương vào bảng Đầu ra",
+	"manifest.settings.regex.redos-detection.desc": "Kích hoạt tính năng phát hiện lỗ hổng ReDoS (Tấn công từ chối dịch vụ bằng biểu thức chính quy)",
+	"manifest.settings.regex.max-match-limit.desc": "Số lượng kết quả tối đa được trả về (để tránh sử dụng quá nhiều bộ nhớ)",
+	"manifest.capability.untrusted-workspaces.desc": "Chức năng bị hạn chế trong các không gian làm việc không đáng tin cậy"
+}

@@ -83,6 +83,19 @@ This is a structural scanner, not an automaton analysis: it cannot prove a patte
 | `regex-le.regex.redosDetectionEnabled` | `true` | ReDoS screening in Test/Validate |
 | `regex-le.regex.maxMatchLimit` | `1000` | Cap on matches collected per test (10–10000) |
 
+## Languages
+
+Twelve languages besides English:
+
+German · Spanish · French · Indonesian · Italian · Japanese · Korean ·
+Portuguese (Brazil) · Russian · Ukrainian · Vietnamese · Chinese (Simplified)
+
+Both halves are covered — the manifest (command titles, setting names and
+descriptions) and everything shown while the extension runs (notifications,
+the status bar, quick-picks and prompts). The extension follows VS Code's
+display language, so it matches whatever the editor is already set to; no
+setting of its own.
+
 ## Privacy & security
 
 - **No network access.** The extension never sends data anywhere. The `telemetryEnabled` setting only writes events to a local Output Channel you can inspect (`Regex-LE Telemetry`).
@@ -125,12 +138,12 @@ a build only tells you how busy the runner was.
 <!-- coverage:start -->
 | Metric | Coverage |
 | --- | --- |
-| Statements | 87.95% |
-| Branches | 71.39% |
-| Functions | 92.22% |
-| Lines | 88.19% |
+| Statements | 90.02% |
+| Branches | 75.30% |
+| Functions | 98.88% |
+| Lines | 90.31% |
 
-83 test cases across 10 files, plus an integration suite that runs
+103 test cases across 11 files, plus an integration suite that runs
 in a real VS Code extension host and an end-to-end test that installs the
 built `.vsix` into a clean profile.
 

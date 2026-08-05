@@ -1,0 +1,17 @@
+{
+	"Enter regex pattern to validate": "유효성 검사를 위한 정규식 패턴을 입력하세요",
+	"e.g., /\\d+/": "e.g., /\\d+/",
+	"Validating regex patterns...": "정규식 패턴 유효성 검사 중...",
+	"Enter regex pattern to test": "테스트할 정규식 패턴을 입력하세요",
+	"Test All Patterns": "모든 패턴 테스트하기",
+	"Select a pattern to test against the file": "파일을 테스트할 패턴을 선택하세요",
+	"Testing regex pattern...": "정규 표현식 패턴 테스트 중...",
+	"Extracting regex patterns...": "정규식 패턴 추출 중...",
+	"No regex patterns found in the file.": "파일에서 정규식 패턴이 발견되지 않았습니다.",
+	"Pattern cannot be empty": "패턴은 비어 있을 수 없습니다.",
+	"Testing pattern {0}/{1}: {2}": "{0} / {1} 테스트 패턴: {2}",
+	"Validating pattern {0}/{1}": "패턴 검증 {0} / {1}",
+	"No active editor. Please open a file first.": "현재 편집 중인 파일이 없습니다. 먼저 파일을 열어 주세요.",
+	"No regex patterns found in the file. Provide a pattern to validate.": "파일에서 정규식 패턴이 발견되지 않았습니다. 유효성을 검사할 패턴을 입력해 주세요.",
+	"No regex patterns found in the file. Select text or provide a pattern to test.": "파일에서 정규식 패턴이 발견되지 않았습니다. 테스트할 텍스트를 선택하거나 패턴을 입력해 주세요."
+}

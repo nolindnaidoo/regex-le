@@ -1,0 +1,23 @@
+{
+	"manifest.command.category": "Regex-LE",
+	"manifest.command.test.title": "Teste de expressão regular",
+	"manifest.command.extract.title": "Padrões de extração",
+	"manifest.command.validate.title": "Validar expressão regular",
+	"manifest.command.settings.title": "Abrir Configurações",
+	"manifest.command.help.title": "Ajuda e Solução de Problemas",
+	"manifest.settings.title": "Configurações do Regex-LE",
+	"manifest.settings.copy.clipboard.desc": "Copiar automaticamente os resultados da extração para a área de transferência",
+	"manifest.settings.notifications.level.desc": "Controla o nível de detalhamento das notificações",
+	"manifest.settings.notifications.level.option.all": "Mostrar todas as notificações",
+	"manifest.settings.notifications.level.option.important": "Mostrar apenas notificações importantes",
+	"manifest.settings.notifications.level.option.silent": "Suprimir todas as notificações",
+	"manifest.settings.open.side-by-side.desc": "A extração abre um novo editor ao lado",
+	"manifest.settings.safety.enabled.desc": "Ativar verificações de segurança para arquivos grandes e operações",
+	"manifest.settings.safety.warn.file-size.desc": "Avisar quando o tamanho do arquivo de entrada exceder esse limite em bytes",
+	"manifest.settings.safety.warn.large-output.desc": "Avisar antes de abrir/copiar quando as linhas de resultado excederem esse limite",
+	"manifest.settings.statusbar.enabled.desc": "Mostrar a entrada da barra de status do Regex-LE para acesso rápido",
+	"manifest.settings.telemetry.desc": "Ativar registros de telemetria apenas locais no painel “Saída”",
+	"manifest.settings.regex.redos-detection.desc": "Ativar a detecção de vulnerabilidades ReDoS (Negação de Serviço por Expressões Regulares)",
+	"manifest.settings.regex.max-match-limit.desc": "Número máximo de resultados a serem exibidos (evita o uso excessivo de memória)",
+	"manifest.capability.untrusted-workspaces.desc": "Funcionalidade limitada em espaços de trabalho não confiáveis"
+}

@@ -30,7 +30,7 @@ export function registerTestCommand(
 			const editor = vscode.window.activeTextEditor;
 			if (!editor) {
 				deps.notifier.showWarning(
-					'No active editor. Please open a file first.',
+					vscode.l10n.t('No active editor. Please open a file first.'),
 				);
 				return;
 			}
@@ -52,16 +52,18 @@ export function registerTestCommand(
 
 			if (extractedPatterns.length === 0) {
 				deps.notifier.showInfo(
-					'No regex patterns found in the file. Select text or provide a pattern to test.',
+					vscode.l10n.t(
+						'No regex patterns found in the file. Select text or provide a pattern to test.',
+					),
 				);
 
 				// Fallback: prompt for pattern if none found
 				const patternInput = await vscode.window.showInputBox({
-					prompt: 'Enter regex pattern to test',
-					placeHolder: 'e.g., /\\d+/',
+					prompt: vscode.l10n.t('Enter regex pattern to test'),
+					placeHolder: vscode.l10n.t('e.g., /\\d+/'),
 					validateInput: (value) => {
 						if (!value || value.trim().length === 0) {
-							return 'Pattern cannot be empty';
+							return vscode.l10n.t('Pattern cannot be empty');
 						}
 						return null;
 					},
@@ -90,14 +92,14 @@ export function registerTestCommand(
 			}));
 
 			patternChoices.push({
-				label: 'Test All Patterns',
+				label: vscode.l10n.t('Test All Patterns'),
 				description: `Test all ${extractedPatterns.length} patterns`,
 				pattern: '',
 				flags: '',
 			});
 
 			const selected = await vscode.window.showQuickPick(patternChoices, {
-				placeHolder: 'Select a pattern to test against the file',
+				placeHolder: vscode.l10n.t('Select a pattern to test against the file'),
 			});
 
 			if (!selected) {
@@ -108,7 +110,7 @@ export function registerTestCommand(
 				await vscode.window.withProgress(
 					{
 						location: vscode.ProgressLocation.Notification,
-						title: 'Testing regex pattern...',
+						title: vscode.l10n.t('Testing regex pattern...'),
 						cancellable: false,
 					},
 					async (progress) => {
@@ -331,7 +333,12 @@ async function testAllPatterns(
 		if (!p) continue;
 
 		progress.report({
-			message: `Testing pattern ${i + 1}/${patterns.length}: /${p.pattern}/${p.flags}`,
+			message: vscode.l10n.t(
+				'Testing pattern {0}/{1}: {2}',
+				i + 1,
+				patterns.length,
+				`/${p.pattern}/${p.flags}`,
+			),
 			increment: (100 / patterns.length) * i,
 		});
 

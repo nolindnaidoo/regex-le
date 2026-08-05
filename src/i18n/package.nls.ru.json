@@ -1,0 +1,23 @@
+{
+	"manifest.command.category": "Regex-LE",
+	"manifest.command.test.title": "Проверка регулярного выражения",
+	"manifest.command.extract.title": "Шаблоны извлечения",
+	"manifest.command.validate.title": "Проверить выражение регулярного выражения",
+	"manifest.command.settings.title": "Открыть настройки",
+	"manifest.command.help.title": "Справка и устранение неполадок",
+	"manifest.settings.title": "Настройки Regex-LE",
+	"manifest.settings.copy.clipboard.desc": "Автоматически копировать результаты извлечения в буфер обмена",
+	"manifest.settings.notifications.level.desc": "Управляет уровнем подробности уведомлений",
+	"manifest.settings.notifications.level.option.all": "Показать все уведомления",
+	"manifest.settings.notifications.level.option.important": "Показывать только важные уведомления",
+	"manifest.settings.notifications.level.option.silent": "Отключить все уведомления",
+	"manifest.settings.open.side-by-side.desc": "При открытии результатов извлечения в новом редакторе, расположенном сбоку",
+	"manifest.settings.safety.enabled.desc": "Включить проверки безопасности для больших файлов и операций",
+	"manifest.settings.safety.warn.file-size.desc": "Выдавать предупреждение, если размер входного файла превышает указанный порог в байтах",
+	"manifest.settings.safety.warn.large-output.desc": "Выводить предупреждение перед открытием/копированием, если количество строк результатов превышает этот порог",
+	"manifest.settings.statusbar.enabled.desc": "Отобразить элемент панели состояния Regex-LE для быстрого доступа",
+	"manifest.settings.telemetry.desc": "Включить запись журналов телеметрии только для локальной сети на панели «Вывод»",
+	"manifest.settings.regex.redos-detection.desc": "Включить обнаружение уязвимости ReDoS (отказ в обслуживании с использованием регулярных выражений)",
+	"manifest.settings.regex.max-match-limit.desc": "Максимальное количество результатов, которые будут возвращены (предотвращает чрезмерное использование памяти)",
+	"manifest.capability.untrusted-workspaces.desc": "Ограниченная функциональность в ненадежных рабочих средах"
+}

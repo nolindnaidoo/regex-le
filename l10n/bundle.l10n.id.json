@@ -1,0 +1,17 @@
+{
+	"Enter regex pattern to validate": "Masukkan pola regex untuk validasi",
+	"e.g., /\\d+/": "e.g., /\\d+/",
+	"Validating regex patterns...": "Memverifikasi pola regex...",
+	"Enter regex pattern to test": "Masukkan pola regex yang akan diuji",
+	"Test All Patterns": "Uji Semua Pola",
+	"Select a pattern to test against the file": "Pilih pola untuk diuji terhadap berkas tersebut",
+	"Testing regex pattern...": "Menguji pola regex...",
+	"Extracting regex patterns...": "Mengekstrak pola regex...",
+	"No regex patterns found in the file.": "Tidak ditemukan pola regex apa pun dalam berkas tersebut.",
+	"Pattern cannot be empty": "Pola tidak boleh kosong",
+	"Testing pattern {0}/{1}: {2}": "Pola pengujian {0} / {1}: {2}",
+	"Validating pattern {0}/{1}": "Pola validasi {0} / {1}",
+	"No active editor. Please open a file first.": "Tidak ada editor yang aktif. Silakan buka file terlebih dahulu.",
+	"No regex patterns found in the file. Provide a pattern to validate.": "Tidak ditemukan pola regex dalam berkas tersebut. Silakan masukkan pola yang akan diverifikasi.",
+	"No regex patterns found in the file. Select text or provide a pattern to test.": "Tidak ditemukan pola regex dalam berkas tersebut. Pilih teks atau masukkan pola yang akan diuji."
+}

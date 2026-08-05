@@ -1,0 +1,23 @@
+{
+	"manifest.command.category": "Regex-LE",
+	"manifest.command.test.title": "正则表达式测试",
+	"manifest.command.extract.title": "提取模式",
+	"manifest.command.validate.title": "验证正则表达式",
+	"manifest.command.settings.title": "打开“设置”",
+	"manifest.command.help.title": "帮助与故障排除",
+	"manifest.settings.title": "Regex-LE 设置",
+	"manifest.settings.copy.clipboard.desc": "自动将提取结果复制到剪贴板",
+	"manifest.settings.notifications.level.desc": "控制通知的详细程度",
+	"manifest.settings.notifications.level.option.all": "显示所有通知",
+	"manifest.settings.notifications.level.option.important": "仅显示重要通知",
+	"manifest.settings.notifications.level.option.silent": "屏蔽所有通知",
+	"manifest.settings.open.side-by-side.desc": "打开提取结果后，旁边会显示一个新的编辑器",
+	"manifest.settings.safety.enabled.desc": "启用对大文件和操作的安全检查",
+	"manifest.settings.safety.warn.file-size.desc": "当输入文件大小超过此阈值（以字节为单位）时发出警告",
+	"manifest.settings.safety.warn.large-output.desc": "当结果行数超过此阈值时，在打开/复制前发出警告",
+	"manifest.settings.statusbar.enabled.desc": "显示 Regex-LE 状态栏条目以便快速访问",
+	"manifest.settings.telemetry.desc": "在“输出”面板中启用仅本地遥测日志",
+	"manifest.settings.regex.redos-detection.desc": "启用 ReDoS（正则表达式拒绝服务）漏洞检测",
+	"manifest.settings.regex.max-match-limit.desc": "要返回的匹配结果最大数量（用于防止内存使用过多）",
+	"manifest.capability.untrusted-workspaces.desc": "在不受信任的工作区中功能受限"
+}

@@ -1,0 +1,23 @@
+{
+	"manifest.command.category": "Regex-LE",
+	"manifest.command.test.title": "정규식 테스트",
+	"manifest.command.extract.title": "패턴 추출",
+	"manifest.command.validate.title": "정규식 유효성 검사",
+	"manifest.command.settings.title": "설정 열기",
+	"manifest.command.help.title": "도움말 및 문제 해결",
+	"manifest.settings.title": "Regex-LE 설정",
+	"manifest.settings.copy.clipboard.desc": "추출 결과를 클립보드에 자동으로 복사합니다.",
+	"manifest.settings.notifications.level.desc": "알림의 상세 수준을 제어합니다",
+	"manifest.settings.notifications.level.option.all": "모든 알림 보기",
+	"manifest.settings.notifications.level.option.important": "중요한 알림만 표시하기",
+	"manifest.settings.notifications.level.option.silent": "모든 알림 차단",
+	"manifest.settings.open.side-by-side.desc": "열기 시 추출 결과가 옆에 있는 새 편집기에 표시됩니다",
+	"manifest.settings.safety.enabled.desc": "대용량 파일 및 작업에 대한 안전 점검 활성화",
+	"manifest.settings.safety.warn.file-size.desc": "입력 파일 크기가 이 임계값(바이트 단위)을 초과할 때 경고 메시지를 표시합니다.",
+	"manifest.settings.safety.warn.large-output.desc": "결과 행 수가 이 임계값을 초과할 경우, 열거나 복사하기 전에 경고 메시지를 표시합니다.",
+	"manifest.settings.statusbar.enabled.desc": "빠른 접근을 위해 Regex-LE 상태 표시줄 항목을 표시",
+	"manifest.settings.telemetry.desc": "출력 패널에 로컬 전용 텔레메트리 로그 기록 기능을 활성화합니다.",
+	"manifest.settings.regex.redos-detection.desc": "ReDoS(정규식 서비스 거부) 취약점 탐지 활성화",
+	"manifest.settings.regex.max-match-limit.desc": "반환할 최대 일치 항목 수 (과도한 메모리 사용 방지)",
+	"manifest.capability.untrusted-workspaces.desc": "신뢰할 수 없는 작업 공간에서의 제한된 기능"
+}

@@ -1,0 +1,17 @@
+{
+	"Enter regex pattern to validate": "输入正则表达式模式以进行验证",
+	"e.g., /\\d+/": "e.g., /\\d+/",
+	"Validating regex patterns...": "正在验证正则表达式模式……",
+	"Enter regex pattern to test": "输入要测试的正则表达式模式",
+	"Test All Patterns": "测试所有模式",
+	"Select a pattern to test against the file": "选择一个模式，用于对该文件进行测试",
+	"Testing regex pattern...": "测试正则表达式模式...",
+	"Extracting regex patterns...": "正在提取正则表达式模式……",
+	"No regex patterns found in the file.": "未在文件中找到任何正则表达式模式。",
+	"Pattern cannot be empty": "模式不能为空",
+	"Testing pattern {0}/{1}: {2}": "测试案例 {0} / {1}：{2}",
+	"Validating pattern {0}/{1}": "验证模式 {0} / {1}",
+	"No active editor. Please open a file first.": "当前没有正在使用的编辑器。请先打开一个文件。",
+	"No regex patterns found in the file. Provide a pattern to validate.": "未在文件中找到正则表达式模式。请提供要验证的模式。",
+	"No regex patterns found in the file. Select text or provide a pattern to test.": "文件中未找到正则表达式模式。请选择文本或提供要测试的模式。"
+}

@@ -1,0 +1,23 @@
+{
+	"manifest.command.category": "Regex-LE",
+	"manifest.command.test.title": "Test dell'espressione regolare",
+	"manifest.command.extract.title": "Modelli di estrazione",
+	"manifest.command.validate.title": "Verifica l'espressione regolare",
+	"manifest.command.settings.title": "Apri Impostazioni",
+	"manifest.command.help.title": "Aiuto e risoluzione dei problemi",
+	"manifest.settings.title": "Impostazioni Regex-LE",
+	"manifest.settings.copy.clipboard.desc": "Copia automaticamente i risultati dell'estrazione negli appunti",
+	"manifest.settings.notifications.level.desc": "Regola il livello di dettaglio delle notifiche",
+	"manifest.settings.notifications.level.option.all": "Mostra tutte le notifiche",
+	"manifest.settings.notifications.level.option.important": "Mostra solo le notifiche importanti",
+	"manifest.settings.notifications.level.option.silent": "Disattiva tutte le notifiche",
+	"manifest.settings.open.side-by-side.desc": "L'estrazione in modalità aperta apre un nuovo editor a lato",
+	"manifest.settings.safety.enabled.desc": "Abilita i controlli di sicurezza per file di grandi dimensioni e operazioni complesse",
+	"manifest.settings.safety.warn.file-size.desc": "Avvisa quando la dimensione del file di input supera questa soglia in byte",
+	"manifest.settings.safety.warn.large-output.desc": "Avvisa prima dell'apertura/copia quando le righe dei risultati superano questa soglia",
+	"manifest.settings.statusbar.enabled.desc": "Mostra la voce \"Regex-LE\" nella barra di stato per un accesso rapido",
+	"manifest.settings.telemetry.desc": "Abilita i log di telemetria solo locali nel pannello “Output”",
+	"manifest.settings.regex.redos-detection.desc": "Abilita il rilevamento della vulnerabilità ReDoS (Regular Expression Denial of Service)",
+	"manifest.settings.regex.max-match-limit.desc": "Numero massimo di risultati da restituire (per evitare un utilizzo eccessivo della memoria)",
+	"manifest.capability.untrusted-workspaces.desc": "Funzionalità limitate negli spazi di lavoro non attendibili"
+}

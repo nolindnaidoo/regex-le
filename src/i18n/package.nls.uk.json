@@ -1,0 +1,23 @@
+{
+	"manifest.command.category": "Regex-LE",
+	"manifest.command.test.title": "Перевірка регулярного виразу",
+	"manifest.command.extract.title": "Шаблони вилучення",
+	"manifest.command.validate.title": "Перевірити регулярний вираз",
+	"manifest.command.settings.title": "Відкрити налаштування",
+	"manifest.command.help.title": "Довідка та усунення несправностей",
+	"manifest.settings.title": "Налаштування Regex-LE",
+	"manifest.settings.copy.clipboard.desc": "Автоматично копіювати результати вилучення в буфер обміну",
+	"manifest.settings.notifications.level.desc": "Регулює рівень деталізації сповіщень",
+	"manifest.settings.notifications.level.option.all": "Показати всі сповіщення",
+	"manifest.settings.notifications.level.option.important": "Показувати лише важливі сповіщення",
+	"manifest.settings.notifications.level.option.silent": "Приховати всі сповіщення",
+	"manifest.settings.open.side-by-side.desc": "При відкритті результатів вилучення з’являється новий редактор збоку",
+	"manifest.settings.safety.enabled.desc": "Увімкнути перевірки безпеки для великих файлів та операцій",
+	"manifest.settings.safety.warn.file-size.desc": "Подавати попередження, коли розмір вхідного файлу перевищує цей поріг у байтах",
+	"manifest.settings.safety.warn.large-output.desc": "Попереджати перед відкриттям/копіюванням, якщо кількість рядків результатів перевищує цей поріг",
+	"manifest.settings.statusbar.enabled.desc": "Відобразити елемент панелі стану Regex-LE для швидкого доступу",
+	"manifest.settings.telemetry.desc": "Увімкнути записи телеметрії «тільки для локального використання» на панелі «Вивід»",
+	"manifest.settings.regex.redos-detection.desc": "Увімкнути виявлення вразливості ReDoS (відмова в обслуговуванні на основі регулярних виразів)",
+	"manifest.settings.regex.max-match-limit.desc": "Максимальна кількість результатів, що відображаються (запобігає надмірному використанню пам’яті)",
+	"manifest.capability.untrusted-workspaces.desc": "Обмежена функціональність у ненадійних робочих середовищах"
+}

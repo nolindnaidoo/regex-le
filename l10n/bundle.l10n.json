@@ -1,0 +1,17 @@
+{
+  "No active editor. Please open a file first.": "No active editor. Please open a file first.",
+  "No regex patterns found in the file. Provide a pattern to validate.": "No regex patterns found in the file. Provide a pattern to validate.",
+  "Enter regex pattern to validate": "Enter regex pattern to validate",
+  "e.g., /\\d+/": "e.g., /\\d+/",
+  "Pattern cannot be empty": "Pattern cannot be empty",
+  "Validating regex patterns...": "Validating regex patterns...",
+  "Validating pattern {0}/{1}": "Validating pattern {0}/{1}",
+  "No regex patterns found in the file. Select text or provide a pattern to test.": "No regex patterns found in the file. Select text or provide a pattern to test.",
+  "Enter regex pattern to test": "Enter regex pattern to test",
+  "Test All Patterns": "Test All Patterns",
+  "Select a pattern to test against the file": "Select a pattern to test against the file",
+  "Testing regex pattern...": "Testing regex pattern...",
+  "Testing pattern {0}/{1}: {2}": "Testing pattern {0}/{1}: {2}",
+  "Extracting regex patterns...": "Extracting regex patterns...",
+  "No regex patterns found in the file.": "No regex patterns found in the file."
+}

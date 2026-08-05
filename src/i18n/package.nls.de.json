@@ -1,0 +1,23 @@
+{
+	"manifest.command.category": "Regex-LE",
+	"manifest.command.test.title": "Regex-Test",
+	"manifest.command.extract.title": "Muster extrahieren",
+	"manifest.command.validate.title": "Regex überprüfen",
+	"manifest.command.settings.title": "Einstellungen öffnen",
+	"manifest.command.help.title": "Hilfe & Fehlerbehebung",
+	"manifest.settings.title": "Regex-LE-Einstellungen",
+	"manifest.settings.copy.clipboard.desc": "Extraktionsergebnisse automatisch in die Zwischenablage kopieren",
+	"manifest.settings.notifications.level.desc": "Steuert den Ausführlichkeitsgrad der Benachrichtigungen",
+	"manifest.settings.notifications.level.option.all": "Alle Benachrichtigungen anzeigen",
+	"manifest.settings.notifications.level.option.important": "Nur wichtige Benachrichtigungen anzeigen",
+	"manifest.settings.notifications.level.option.silent": "Alle Benachrichtigungen unterdrücken",
+	"manifest.settings.open.side-by-side.desc": "Beim Öffnen der Extraktion wird ein neuer Editor neben dem aktuellen Fenster angezeigt",
+	"manifest.settings.safety.enabled.desc": "Sicherheitsprüfungen für große Dateien und Vorgänge aktivieren",
+	"manifest.settings.safety.warn.file-size.desc": "Eine Warnung ausgeben, wenn die Größe der Eingabedatei diesen Schwellenwert in Byte überschreitet",
+	"manifest.settings.safety.warn.large-output.desc": "Warnung vor dem Öffnen/Kopieren anzeigen, wenn die Anzahl der Ergebniszeilen diesen Schwellenwert überschreitet",
+	"manifest.settings.statusbar.enabled.desc": "Eintrag in der Regex-LE-Statusleiste für den Schnellzugriff anzeigen",
+	"manifest.settings.telemetry.desc": "Lokale Telemetrieprotokolle im Ausgabefenster aktivieren",
+	"manifest.settings.regex.redos-detection.desc": "Erkennung von ReDoS-Sicherheitslücken (Regular Expression Denial of Service) aktivieren",
+	"manifest.settings.regex.max-match-limit.desc": "Maximale Anzahl der zurückzugebenden Treffer (verhindert übermäßigen Speicherverbrauch)",
+	"manifest.capability.untrusted-workspaces.desc": "Eingeschränkte Funktionalität in nicht vertrauenswürdigen Arbeitsbereichen"
+}

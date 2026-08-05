@@ -1,0 +1,17 @@
+{
+	"Enter regex pattern to validate": "検証用の正規表現パターンを入力してください",
+	"e.g., /\\d+/": "e.g., /\\d+/",
+	"Validating regex patterns...": "正規表現パターンの検証中...",
+	"Enter regex pattern to test": "テストする正規表現を入力してください",
+	"Test All Patterns": "すべてのパターンをテストする",
+	"Select a pattern to test against the file": "ファイルに対してテストを行うパターンを選択してください",
+	"Testing regex pattern...": "正規表現パターンのテスト中...",
+	"Extracting regex patterns...": "正規表現パターンの抽出中...",
+	"No regex patterns found in the file.": "ファイル内に正規表現のパターンが見つかりませんでした。",
+	"Pattern cannot be empty": "パターンは空にしてはなりません",
+	"Testing pattern {0}/{1}: {2}": "テストパターン {0} / {1}: {2}",
+	"Validating pattern {0}/{1}": "パターンの検証 {0} / {1}",
+	"No active editor. Please open a file first.": "アクティブなエディタがありません。まずファイルを開いてください。",
+	"No regex patterns found in the file. Provide a pattern to validate.": "ファイル内に正規表現のパターンが見つかりませんでした。検証するパターンを指定してください。",
+	"No regex patterns found in the file. Select text or provide a pattern to test.": "ファイル内に正規表現のパターンが見つかりませんでした。テキストを選択するか、テストするパターンを指定してください。"
+}
