@@ -140,14 +140,16 @@ Architecture. [nolindnaidoo.com](https://nolindnaidoo.com) ·
 
 ### Also from the same workshop
 
-Two Rust desktop tools that make up one loop — pixelcoords answers *where*,
-pixelactions *acts* there. Both are MCP-adjacent in spirit: small, single-purpose,
-and built so a machine can drive them.
+Three Rust tools built the same way: small, single-purpose, and driven by a
+machine rather than a person. pixelcoords and pixelactions make up one loop —
+pixelcoords answers *where*, pixelactions *acts* there — and scrape-le answers
+whether a page can be scraped at all, over a CLI or its own MCP server.
 
 | | | |
 |---|---|---|
 | **[pixelcoords](https://github.com/nolindnaidoo/pixelcoords)** | Freeze your screen, mark regions, get pixel-exact coordinates and crops | [site](https://pixelcoords.dev) · [crates.io](https://crates.io/crates/pixelcoords) · [docs.rs](https://docs.rs/pixelcoords) |
 | **[pixelactions](https://github.com/nolindnaidoo/pixelactions)** | Consume human-verified coordinates, perform the interaction, confirm it landed | [site](https://pixelactions.dev) · [crates.io](https://crates.io/crates/pixelactions) · [docs.rs](https://docs.rs/pixelactions) |
+| **[scrape-le](https://github.com/nolindnaidoo/scrape-le/tree/main/crate)** | Check whether a page is scrapeable before the scraper is written | [crates.io](https://crates.io/crates/scrape-le) |
 
 ## Licence
 
