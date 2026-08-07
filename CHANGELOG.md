@@ -5,6 +5,22 @@ All notable changes to Regex-LE will be documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.4] - 2026-08-07
+
+### Changed
+
+- Documentation only — no behaviour change.
+
+  The cross-references now point at each tool's own page on letools.dev rather
+  than its VS Code Marketplace listing. The Marketplace listing shows one of
+  the four channels a tool ships through; the detail page shows all of them,
+  which is what a reader following a link from another tool is looking for.
+  Install instructions are untouched, and the rating links now lead with Open
+  VSX — where the audience these READMEs reach actually installs from.
+
+- `homepage` in the extension and MCP manifests, and `websiteUrl` in the
+  registry entry, resolve to the same detail page.
+
 ## [2.2.3] - 2026-08-05
 
 ### Changed

@@ -3,7 +3,7 @@
 	"publisher": "nolindnaidoo",
 	"displayName": "Regex-LE",
 	"description": "Zero-Hassle Regex Extraction & Validation - Find, test, and validate the regular expressions in any file, with match reports and built-in ReDoS screening.",
-	"version": "2.2.3",
+	"version": "2.2.4",
 	"license": "MIT",
 	"author": {
 		"name": "nolindnaidoo",
@@ -16,7 +16,7 @@
 	"bugs": {
 		"url": "https://github.com/nolindnaidoo/regex-le/issues"
 	},
-	"homepage": "https://letools.dev",
+	"homepage": "https://letools.dev/tools/regex-le",
 	"engines": {
 		"vscode": "^1.101.0",
 		"node": ">=20.0.0"

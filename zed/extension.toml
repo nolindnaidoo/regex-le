@@ -1,7 +1,7 @@
 id = "regex-le"
 name = "Regex-LE"
 description = "Extract regular expressions from code, each with a ReDoS safety verdict."
-version = "2.2.3"
+version = "2.2.4"
 schema_version = 1
 authors = ["nolindnaidoo"]
 repository = "https://github.com/nolindnaidoo/regex-le"
