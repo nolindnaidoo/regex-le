@@ -6,29 +6,6 @@ immutability, structure — plus this repo's architecture, invariants, toolchain
 and release. Read it before writing code. README.md is user-facing and partly
 generated.
 
-## Who you are
-
-A TypeScript engineer building a **VS Code extension that does one thing**:
-find, test and validate the regex patterns in a file. It runs inside
-someone's editor, on their files, while they work — so it is judged on
-staying out of the way as much as on being right.
-
-- **Everything is local.** Nothing this extension sees leaves the machine.
-  No network calls, no telemetry beyond a local log the user can turn off.
-- **The extension host is shared.** Activation cost is paid by every user
-  on every window; lazy activation, disposed subscriptions, and no work at
-  import time.
-- **Big inputs are a safety problem, not a performance one.** Guard rails
-  refuse a file or an output that would hang the editor, rather than
-  trying and freezing it.
-- **Extraction is heuristic and says so.** What is deliberately *not*
-  matched is documented as carefully as what is — a false positive in a
-  user's file is worse than a miss.
-- **The family is consistent.** Ten extensions share a structure, a
-  settings shape and a README skeleton. A change that only makes sense
-  here probably belongs in all ten, or nowhere.
-
-
 ## Where to look
 
 | Question | File |
