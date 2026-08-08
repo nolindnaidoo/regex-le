@@ -1,0 +1,99 @@
+[package]
+name = "regex-le"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.88"
+license = "MIT"
+readme = "README.md"
+description = "Find every regex in a codebase and report which can be driven into catastrophic backtracking"
+authors = ["Nolin D Naidoo"]
+homepage = "https://letools.dev/tools/regex-le"
+repository = "https://github.com/nolindnaidoo/regex-le"
+keywords = ["regex", "redos", "security", "lint", "cli"]
+categories = ["command-line-utilities", "development-tools"]
+# What a consumer gets, and why.
+#
+# Ships: src/, Cargo.toml, Cargo.lock, LICENSE, README.md — needed to
+# build the binary. SPEC.md and CHANGELOG.md — the behavioural contract
+# someone scripting against the exit codes needs. tests/ and fixtures/ —
+# not needed to *build* (verified: the crate compiles without them), but
+# needed to *verify*: `cargo test` on the unpacked tarball runs the full
+# corpus, so the parity claims in the README are checkable by whoever
+# installed it rather than taken on trust.
+#
+# Excluded: AGENTS.md and CLAUDE.md are how this repo is worked on, not
+# how the tool is used. rust-toolchain.toml is a convenience for
+# contributors to *this* checkout; shipped, it would pin the toolchain
+# of anyone who unpacks or vendors the crate, which is not this crate's
+# business.
+exclude = ["AGENTS.md", "CLAUDE.md", "rust-toolchain.toml"]
+
+[[bin]]
+name = "regex-le"
+path = "src/main.rs"
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+# Two regex engines, on purpose, and the split is the point.
+#
+# `regex` is linear-time and its matching cannot fail, so every pattern
+# that does not need backtracking uses it and needs no error path.
+#
+# `fancy-regex` exists for one reason: the constructor pattern uses a
+# lookbehind — `(?<![.\w$])RegExp` — which `regex` does not support. Rewriting them as alternations would change the patterns,
+# their group numbering, and their behaviour on strings containing the
+# other quote character. Porting them verbatim is parity; rewriting them
+# is parity drift waiting to happen, so the dependency is cheaper than
+# the rewrite. It is pure Rust and already carries `regex` beneath it, so
+# naming `regex` directly costs nothing further.
+regex = "1"
+fancy-regex = "0.19"
+# The format parsers, each chosen to match what the extension uses:
+# jsonc-parser for jsonc-parser (comments, trailing commas, real
+# offsets), toml for @iarna/toml, csv for csv-parse. dotenv, HTML, CSS
+# and JavaScript are regex in the extension and regex here.
+# The one place this crate needs a JavaScript-compatible engine.
+#
+# The extension reports an invalid pattern as a *syntax error* rather
+# than as a vulnerability, and deciding that needs a parser that agrees
+# with `new RegExp` about what is valid. `regress` is that parser — it is
+# what Boa uses — and it is used here to **parse and nothing else**. It
+# never matches anything.
+#
+# That is the line between the half of this extension that is ported and
+# the half that is not: matching with JavaScript semantics is the tester,
+# and the tester is not here. See SPEC.md.
+regress = "0.11"
+# The walker. `ignore` is ripgrep's, so "what this tool walks" and "what
+# ripgrep walks" are the same answer — which is the answer a person
+# auditing a repository already has in their head.
+ignore = "0.4"
+
+[profile.release]
+strip = true
+lto = "thin"
+codegen-units = 1
+# Every output of this tool is a claim someone scripts against — a line
+# number, a column, a count. A wrapped number is silently wrong data in a
+# report whose whole value is honesty, which is worse than a crash — so
+# overflow keeps panicking in release, as it does in debug. (Same rule as
+# pixelcoords, pixelactions and scrape-le.)
+overflow-checks = true
+
+[lints.rust]
+unsafe_code = "forbid"
+
+[lints.clippy]
+all = { level = "warn", priority = -1 }
+pedantic = { level = "warn", priority = -1 }
+# Deliberate relaxations, same policy as the other crates: no inline
+# #[allow] anywhere (CI enforces); anything relaxed must be listed here,
+# visibly.
+cast_possible_truncation = "allow"
+cast_possible_wrap = "allow"
+cast_sign_loss = "allow"
+cast_precision_loss = "allow"
+must_use_candidate = "allow"
+missing_errors_doc = "allow"
+missing_panics_doc = "allow"
