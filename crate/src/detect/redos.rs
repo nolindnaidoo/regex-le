@@ -1,4 +1,4 @@
-//! ReDoS detection: structural, heuristic, and honest about it.
+//! `ReDoS` detection: structural, heuristic, and honest about it.
 //!
 //! Two shapes are flagged:
 //!

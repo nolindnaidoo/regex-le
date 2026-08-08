@@ -97,3 +97,8 @@ cast_precision_loss = "allow"
 must_use_candidate = "allow"
 missing_errors_doc = "allow"
 missing_panics_doc = "allow"
+# `Pattern.pattern` is the pattern text, and the struct is a Pattern with
+# its flags, position and verdict. Renaming the field to satisfy the lint
+# would make the JSON key differ from the extension's, which the corpus
+# pins — the shared shape wins over the naming convention.
+struct_field_names = "allow"
