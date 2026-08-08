@@ -1,0 +1,363 @@
+[
+	{
+		"name": "a javascript document",
+		"file": "patterns.js",
+		"arguments": {},
+		"expected": {
+			"ok": true,
+			"data": {
+				"patterns": [
+					{
+						"pattern": "\\d+",
+						"flags": "g",
+						"match": "/\\d+/g",
+						"line": 2,
+						"column": 16,
+						"redos": {
+							"detected": false,
+							"severity": "low",
+							"reason": "No obvious ReDoS vulnerabilities detected"
+						}
+					},
+					{
+						"pattern": "\\w+",
+						"flags": "i",
+						"match": "/\\w+/i",
+						"line": 3,
+						"column": 14,
+						"redos": {
+							"detected": false,
+							"severity": "low",
+							"reason": "No obvious ReDoS vulnerabilities detected"
+						}
+					},
+					{
+						"pattern": "^[a-z]+$",
+						"flags": "",
+						"match": "/^[a-z]+$/",
+						"line": 4,
+						"column": 18,
+						"redos": {
+							"detected": false,
+							"severity": "low",
+							"reason": "No obvious ReDoS vulnerabilities detected"
+						}
+					},
+					{
+						"pattern": "foo\\/bar",
+						"flags": "g",
+						"match": "/foo\\/bar/g",
+						"line": 5,
+						"column": 22,
+						"redos": {
+							"detected": false,
+							"severity": "low",
+							"reason": "No obvious ReDoS vulnerabilities detected"
+						}
+					},
+					{
+						"pattern": "[abc]",
+						"flags": "gim",
+						"match": "/[abc]/gim",
+						"line": 6,
+						"column": 19,
+						"redos": {
+							"detected": false,
+							"severity": "low",
+							"reason": "No obvious ReDoS vulnerabilities detected"
+						}
+					},
+					{
+						"pattern": "\\d{3}-\\d{4}",
+						"flags": "g",
+						"match": "new RegExp('\\\\d{3}-\\\\d{4}', 'g')",
+						"line": 9,
+						"column": 14,
+						"redos": {
+							"detected": false,
+							"severity": "low",
+							"reason": "No obvious ReDoS vulnerabilities detected"
+						}
+					},
+					{
+						"pattern": "hello",
+						"flags": "",
+						"match": "new RegExp('hello')",
+						"line": 10,
+						"column": 21,
+						"redos": {
+							"detected": false,
+							"severity": "low",
+							"reason": "No obvious ReDoS vulnerabilities detected"
+						}
+					},
+					{
+						"pattern": "world",
+						"flags": "i",
+						"match": "RegExp('world', 'i')",
+						"line": 11,
+						"column": 14,
+						"redos": {
+							"detected": false,
+							"severity": "low",
+							"reason": "No obvious ReDoS vulnerabilities detected"
+						}
+					}
+				]
+			},
+			"diagnostics": [],
+			"meta": {
+				"tool": "extract_patterns",
+				"count": 8,
+				"truncated": false
+			}
+		}
+	},
+	{
+		"name": "a typescript document",
+		"file": "patterns.ts",
+		"arguments": {},
+		"expected": {
+			"ok": true,
+			"data": {
+				"patterns": [
+					{
+						"pattern": "(?<year>\\d{4})-(?<month>\\d{2})",
+						"flags": "u",
+						"match": "/(?<year>\\d{4})-(?<month>\\d{2})/u",
+						"line": 2,
+						"column": 15,
+						"redos": {
+							"detected": false,
+							"severity": "low",
+							"reason": "No obvious ReDoS vulnerabilities detected"
+						}
+					},
+					{
+						"pattern": "abc",
+						"flags": "y",
+						"match": "/abc/y",
+						"line": 3,
+						"column": 16,
+						"redos": {
+							"detected": false,
+							"severity": "low",
+							"reason": "No obvious ReDoS vulnerabilities detected"
+						}
+					},
+					{
+						"pattern": "a.b",
+						"flags": "s",
+						"match": "/a.b/s",
+						"line": 4,
+						"column": 16,
+						"redos": {
+							"detected": false,
+							"severity": "low",
+							"reason": "No obvious ReDoS vulnerabilities detected"
+						}
+					},
+					{
+						"pattern": "foo(?=bar)",
+						"flags": "",
+						"match": "/foo(?=bar)/",
+						"line": 7,
+						"column": 19,
+						"redos": {
+							"detected": false,
+							"severity": "low",
+							"reason": "No obvious ReDoS vulnerabilities detected"
+						}
+					},
+					{
+						"pattern": "(?<=\\$)\\d+",
+						"flags": "",
+						"match": "/(?<=\\$)\\d+/",
+						"line": 8,
+						"column": 20,
+						"redos": {
+							"detected": false,
+							"severity": "low",
+							"reason": "No obvious ReDoS vulnerabilities detected"
+						}
+					},
+					{
+						"pattern": "^[A-Z][a-z]+$",
+						"flags": "",
+						"match": "new RegExp('^[A-Z][a-z]+$')",
+						"line": 11,
+						"column": 14,
+						"redos": {
+							"detected": false,
+							"severity": "low",
+							"reason": "No obvious ReDoS vulnerabilities detected"
+						}
+					},
+					{
+						"pattern": "a|b|c",
+						"flags": "gi",
+						"match": "new RegExp('a|b|c', 'gi')",
+						"line": 12,
+						"column": 19,
+						"redos": {
+							"detected": false,
+							"severity": "low",
+							"reason": "No obvious ReDoS vulnerabilities detected"
+						}
+					},
+					{
+						"pattern": "it's",
+						"flags": "g",
+						"match": "new RegExp('it\\'s', 'g')",
+						"line": 15,
+						"column": 16,
+						"redos": {
+							"detected": false,
+							"severity": "low",
+							"reason": "No obvious ReDoS vulnerabilities detected"
+						}
+					}
+				]
+			},
+			"diagnostics": [],
+			"meta": {
+				"tool": "extract_patterns",
+				"count": 8,
+				"truncated": false
+			}
+		}
+	},
+	{
+		"name": "constructors across lines",
+		"file": "multiline.js",
+		"arguments": {},
+		"expected": {
+			"ok": true,
+			"data": {
+				"patterns": [
+					{
+						"pattern": "\\d{4}-\\d{2}-\\d{2}",
+						"flags": "g",
+						"match": "new RegExp(\n\t'\\\\d{4}-\\\\d{2}-\\\\d{2}',\n\t'g',\n)",
+						"line": 2,
+						"column": 18,
+						"redos": {
+							"detected": false,
+							"severity": "low",
+							"reason": "No obvious ReDoS vulnerabilities detected"
+						}
+					},
+					{
+						"pattern": "\\d{2}:\\d{2}",
+						"flags": "g",
+						"match": "new RegExp('\\\\d{2}:\\\\d{2}', 'g')",
+						"line": 8,
+						"column": 17,
+						"redos": {
+							"detected": false,
+							"severity": "low",
+							"reason": "No obvious ReDoS vulnerabilities detected"
+						}
+					}
+				]
+			},
+			"diagnostics": [],
+			"meta": {
+				"tool": "extract_patterns",
+				"count": 2,
+				"truncated": false
+			}
+		}
+	},
+	{
+		"name": "a plain log file",
+		"file": "log.txt",
+		"arguments": {},
+		"expected": {
+			"ok": true,
+			"data": {
+				"patterns": []
+			},
+			"diagnostics": [],
+			"meta": {
+				"tool": "extract_patterns",
+				"count": 0,
+				"truncated": false
+			}
+		}
+	},
+	{
+		"name": "capped and flagged",
+		"file": "patterns.js",
+		"arguments": {
+			"maxResults": 2
+		},
+		"expected": {
+			"ok": true,
+			"data": {
+				"patterns": [
+					{
+						"pattern": "\\d+",
+						"flags": "g",
+						"match": "/\\d+/g",
+						"line": 2,
+						"column": 16,
+						"redos": {
+							"detected": false,
+							"severity": "low",
+							"reason": "No obvious ReDoS vulnerabilities detected"
+						}
+					},
+					{
+						"pattern": "\\w+",
+						"flags": "i",
+						"match": "/\\w+/i",
+						"line": 3,
+						"column": 14,
+						"redos": {
+							"detected": false,
+							"severity": "low",
+							"reason": "No obvious ReDoS vulnerabilities detected"
+						}
+					}
+				]
+			},
+			"diagnostics": [],
+			"meta": {
+				"tool": "extract_patterns",
+				"count": 2,
+				"truncated": true
+			}
+		}
+	},
+	{
+		"name": "nothing to find",
+		"content": "const x = 1;\n",
+		"arguments": {},
+		"expected": {
+			"ok": true,
+			"data": {
+				"patterns": []
+			},
+			"diagnostics": [],
+			"meta": {
+				"tool": "extract_patterns",
+				"count": 0,
+				"truncated": false
+			}
+		}
+	},
+	{
+		"name": "content must be a string",
+		"arguments": {},
+		"expectedError": "content is required and must be a string"
+	},
+	{
+		"name": "a nonsensical cap is rejected",
+		"content": "x",
+		"arguments": {
+			"maxResults": 0
+		},
+		"expectedError": "maxResults must be a positive integer"
+	}
+]
