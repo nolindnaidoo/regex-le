@@ -35,7 +35,7 @@ pub(crate) struct ReDoSResult {
     pub(crate) detected: bool,
     pub(crate) severity: Severity,
     pub(crate) reason: String,
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "vulnerableGroups", skip_serializing_if = "Option::is_none")]
     pub(crate) vulnerable_groups: Option<Vec<String>>,
 }
 

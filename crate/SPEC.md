@@ -49,7 +49,9 @@ problem's.
 ## Shape
 
 **One crate.** Self-contained: no published `-core`, no shared crate with
-the family. Code two crates need is copied with a drift check.
+the family, and nothing holding this code equal to the similar files
+in the sibling repos. Where they agree it is because the same answer was
+right twice; where they diverge that is the point.
 
 ```
 crate/
@@ -122,6 +124,22 @@ dependency, and it is the line between the lint half and the tester half.
 classes, so `[(]+` is a class and not a group, and `\(a+\)+` is escaped
 literal parentheses. Nested groups are each reported with their full
 body. It is a string scan with a stack — no engine involved.
+
+### What is walked
+
+Every text file, with no format filter — a regex literal is a regex
+literal wherever it appears, and the extension's engine takes raw text
+rather than a language id.
+
+A directory is walked the way ripgrep walks one: `.gitignore` honoured,
+hidden files skipped, `--no-ignore` and `--hidden` to reach the rest. A
+file named explicitly is always read.
+
+**What the ignore rules kept out is not counted.** On a checkout with
+dependencies installed that number is around thirty thousand and all of
+it is `node_modules`; reporting it reads as a shortfall when the walk did
+exactly what it was asked, and a dangerous regex inside a dependency is
+not a line you can go and fix.
 
 ## Output contract
 

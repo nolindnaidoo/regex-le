@@ -125,6 +125,46 @@ Duplicate pattern+flags pairs are listed once. This is lexing by heuristic, not 
 
 This is a structural scanner, not an automaton analysis: it cannot prove a pattern safe, only flag the dangerous shapes it recognizes. The reports also include a rough performance score based on execution time relative to input size — treat it as a hint, not a benchmark (memory is not measured).
 
+## The CLI
+
+The same lint runs from a terminal or a shell pipeline: a Rust CLI in
+[`crate/`](crate/README.md), sharing one corpus with the extension —
+[`crate/fixtures/`](crate/fixtures/) — so the two can never read a
+document differently.
+
+```bash
+regex-le .                      # every vulnerable pattern in the tree
+regex-le --severity high src/   # only the exponential shapes
+regex-le --all src/             # every pattern, vulnerable or not
+regex-le mcp                    # the same lint over MCP on stdio
+```
+
+**Exit codes**: 0 nothing vulnerable, 1 at least one finding, 2 the
+question was malformed — so `regex-le . || exit 1` is a CI gate.
+
+**It ports the lint half, not the tester.** Running a pattern against
+your text with JavaScript semantics needs a JavaScript engine, and
+getting it nearly right would mean the two frontends reporting different
+matches for the same pattern. Testing is an editor activity; keep it
+here. The lint needs no engine at all — the ReDoS verdict reads the
+pattern text — which is what makes it a cheap deterministic CI step.
+
+It flags shapes and **cannot prove a pattern safe**, exactly as the
+screening in this extension cannot.
+
+Install it with `cargo install regex-le`
+([crates.io](https://crates.io/crates/regex-le)). The spec
+([`crate/SPEC.md`](crate/SPEC.md)) and the engineering standard
+([`crate/AGENTS.md`](crate/AGENTS.md)) live alongside it, and it keeps
+its own [CHANGELOG](crate/CHANGELOG.md).
+
+**Two MCP servers, one tool.** `regex-le mcp` offers `extract_patterns`
+exactly as [`regex-le-mcp`](https://www.npmjs.com/package/regex-le-mcp)
+does — [`crate/fixtures/mcp-extract-patterns.json`](crate/fixtures/mcp-extract-patterns.json)
+runs against both and CI fails if they diverge. Take the npm one if Node
+is already there; take the binary if you want no runtime, or if you want
+`regex_le_lint` too.
+
 ## Commands
 
 | Command | Description |

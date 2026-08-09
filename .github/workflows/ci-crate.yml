@@ -1,0 +1,196 @@
+# The Rust CLI's CI. Lives beside ci.yml rather than inside it because
+# ci.yml is byte-identical across the ten *-le repos (letools-site's
+# fleet check); this file is invisible to that check.
+#
+# Paths include the extension's extraction sources on purpose: parity
+# must fail when EITHER side drifts from the shared corpus, and an edit
+# to src/extraction/regex/heuristics.ts would otherwise land green.
+name: CI (crate)
+
+on:
+  # Manually runnable as well as push-triggered. Push events are not
+  # guaranteed: during a GitHub Actions incident they are throttled and
+  # silently dropped, and a dropped event never replays — leaving a
+  # commit with no way to be verified. Dispatch is the escape hatch.
+  # ci.yml cannot have this: it is byte-identical across the ten *-le
+  # repos and the fleet check enforces that.
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'crate/**'
+      - 'src/extraction/**'
+      - 'src/mcp/**'
+      - 'scripts/check-extraction-parity.ts'
+      - '.github/workflows/ci-crate.yml'
+  pull_request:
+    paths:
+      - 'crate/**'
+      - 'src/extraction/**'
+      - 'src/mcp/**'
+      - 'scripts/check-extraction-parity.ts'
+      - '.github/workflows/ci-crate.yml'
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+
+defaults:
+  run:
+    working-directory: crate
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-15, windows-2025, ubuntu-24.04]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: dtolnay/rust-toolchain@2c7215f132e9ebf062739d9130488b56d53c060c # master
+        with:
+          toolchain: stable
+          components: rustfmt, clippy
+      - run: cargo fmt --all --check
+      - run: cargo clippy --all-targets -- -D warnings
+      - run: cargo test --locked
+      - run: cargo build --locked
+
+  msrv:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: dtolnay/rust-toolchain@2c7215f132e9ebf062739d9130488b56d53c060c # master
+        with:
+          toolchain: "1.88"
+      - name: Verify the declared rust-version actually builds
+        run: cargo check --locked
+
+  policy:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Forbid inline lint suppressions
+        working-directory: .
+        run: |
+          if grep -rn '#\[allow(' crate/src --include='*.rs'; then
+            echo 'Inline #[allow] found — fix the lint or relax it in [lints.clippy] in crate/Cargo.toml.'
+            exit 1
+          fi
+      # detect/ is the layer the corpus pins and the layer that must
+      # stay pure. A filesystem call in it means the "testable from a
+      # fixture file, no flake" claim in AGENTS.md has quietly stopped
+      # being true.
+      - name: Forbid filesystem access in the pure detection layer
+        working-directory: .
+        run: |
+          # Comment lines are filtered out: the module doc in
+          # detect/mod.rs names `std::fs` to say it must not appear.
+          if grep -rn 'std::fs\|File::open' crate/src/detect --include='*.rs' \
+             | grep -v ':[0-9]*: *//'; then
+            echo 'detect/ must not touch the filesystem — that belongs in walk.rs and scan.rs.'
+            exit 1
+          fi
+
+  # AGENTS.md sets a 90% line coverage floor per module for detect/.
+  # Enforced per module, not on the total: a total hides one module
+  # sliding while the others carry it. Scoped to detect/ because
+  # everything else is I/O verified by the contract and scenario jobs.
+  coverage:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: dtolnay/rust-toolchain@2c7215f132e9ebf062739d9130488b56d53c060c # master
+        with:
+          toolchain: stable
+          components: llvm-tools-preview
+      - uses: taiki-e/install-action@1beb33eee6d086258184383af9a538940be190ed # v2.85.6
+        with:
+          tool: cargo-llvm-cov
+      - name: Measure coverage
+        run: |
+          cargo llvm-cov --no-report
+          cargo llvm-cov report --json --output-path coverage.json
+          cargo llvm-cov report --html
+      - name: Publish the browsable report
+        # Uploaded even when the floor check fails — a failing run is
+        # exactly when someone wants to see which lines are uncovered.
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: coverage-report
+          path: crate/target/llvm-cov/html/
+          if-no-files-found: error
+      - name: Enforce the per-module floor on detect/
+        run: |
+          python3 - <<'PY'
+          import json, sys
+          FLOOR = 90.0
+          files = json.load(open("coverage.json"))["data"][0]["files"]
+          under = []
+          for f in files:
+              if "/detect/" not in f["filename"]:
+                  continue
+              name = f["filename"].split("/")[-1]
+              if name == "corpus.rs":
+                  continue  # the corpus runner is test-only scaffolding
+              pct = f["summary"]["lines"]["percent"]
+              print(f"{name:16} {pct:6.2f}%")
+              if pct < FLOOR:
+                  under.append((name, pct))
+          if under:
+              print(f"\nAGENTS.md sets a {FLOOR}% line coverage floor per module in detect/:")
+              for name, pct in under:
+                  print(f"  {name}: {pct:.2f}%")
+              sys.exit(1)
+          PY
+
+  # What only a document too big for the fast path can prove: the
+  # 50,000-URL cap, and that the scanner stays linear while reaching it.
+  scenarios:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-15, windows-2025, ubuntu-24.04]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: dtolnay/rust-toolchain@2c7215f132e9ebf062739d9130488b56d53c060c # master
+        with:
+          toolchain: stable
+      - name: Scenarios against an oversized document
+        env:
+          REGEX_LE_SCENARIOS: "1"
+        run: cargo test --test scenarios -- --test-threads=1
+
+  audit:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: dtolnay/rust-toolchain@2c7215f132e9ebf062739d9130488b56d53c060c # master
+        with:
+          toolchain: stable
+      - uses: taiki-e/install-action@1beb33eee6d086258184383af9a538940be190ed # v2.85.6
+        with:
+          tool: cargo-audit
+      - run: cargo audit
+
+  # Fails when the extension's extraction behaviour and the shared
+  # corpus (crate/fixtures/) disagree — the reason both frontends live
+  # in one repo at all.
+  parity:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: 1.3.13
+      - name: Install dependencies
+        working-directory: .
+        run: bun install --frozen-lockfile
+      - name: Extraction and MCP parity
+        working-directory: .
+        run: bun scripts/check-extraction-parity.ts

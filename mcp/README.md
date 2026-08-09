@@ -52,6 +52,14 @@ carries this server and registers it for you:
 · [Open VSX](https://open-vsx.org/extension/OffensiveEdge/regex-le)
 · [Zed](https://github.com/zed-industries/extensions/pull/7083) *(pending review)*
 
+**No Node?** The same `extract_patterns` tool ships in a static Rust
+binary: `cargo install regex-le`, then `regex-le mcp`
+([crates.io](https://crates.io/crates/regex-le)). The two servers answer
+identically — one fixture corpus runs against both and CI fails if they
+diverge. The binary additionally offers `regex_le_lint`, which walks a
+tree; **this server reads no files**, which is what lets an agent call it
+anywhere.
+
 Prefer a global install to `npx` on every launch:
 
 ```bash

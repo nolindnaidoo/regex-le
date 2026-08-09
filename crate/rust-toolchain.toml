@@ -1,0 +1,6 @@
+# Contributors get the same toolchain CI uses, without being told to
+# install anything. Scoped to crate/ because the rest of this repository
+# is TypeScript and has no business acquiring a Rust toolchain.
+[toolchain]
+channel = "stable"
+components = ["rustfmt", "clippy"]

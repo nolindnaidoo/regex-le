@@ -1,0 +1,148 @@
+# Publishes the Rust CLI to crates.io. Separate from release.yml, which
+# publishes the extension and the npm MCP server — the two products in
+# this repo release on their own cadence and their own tags.
+#
+# Dispatch-only, like release.yml: a tag push must not be able to spend
+# a version by itself, because a crates.io version can never be reused.
+name: Release (crate)
+
+on:
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: Publish to crates.io (off runs the full dry run only)
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-crate
+  cancel-in-progress: false
+
+env:
+  CARGO_TERM_COLOR: always
+
+defaults:
+  run:
+    working-directory: crate
+
+jobs:
+  # Everything that must be true before a version is spent. Runs
+  # whether or not `publish` is set, so the dry run is a first-class
+  # way to check a release without risking one.
+  preflight:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: dtolnay/rust-toolchain@2c7215f132e9ebf062739d9130488b56d53c060c # master
+        with:
+          toolchain: stable
+          components: rustfmt, clippy
+      - run: cargo fmt --all --check
+      - run: cargo clippy --all-targets -- -D warnings
+      - run: cargo test --locked
+
+      # Two assertions about the tarball, in both directions.
+      #
+      # The corpus must be present: it is not needed to build the binary,
+      # but `cargo test` on the unpacked crate runs it, which is what
+      # lets a consumer check the parity claims rather than trust them.
+      #
+      # The contributor-only files must be absent: shipping
+      # rust-toolchain.toml would pin the toolchain of anyone who
+      # unpacks or vendors the crate, and AGENTS.md/CLAUDE.md describe
+      # how this repo is worked on, not how the tool is used.
+      - name: The packaged crate carries its corpus and nothing private
+        run: |
+          set -euo pipefail
+          list=$(cargo package --list --allow-dirty)
+          for forbidden in AGENTS.md CLAUDE.md rust-toolchain.toml; do
+            if printf '%s\n' "$list" | grep -qx "$forbidden"; then
+              echo "::error::$forbidden is in the package — it is for contributors to this checkout, not consumers"
+              exit 1
+            fi
+          done
+          required=$(printf '%s\n' \
+            fixtures/extraction.json \
+            fixtures/heuristics.json \
+            fixtures/mcp-extract-paths.json)
+          # Every document the corpus names must ship too — the list is
+          # read from the corpus rather than repeated here, so adding a
+          # case cannot leave its document behind.
+          documents=$(python3 -c "
+          import json
+          cases = json.load(open('fixtures/extraction.json'))['documents']
+          for name in sorted({case['file'] for case in cases}):
+              print('fixtures/documents/' + name)
+          ")
+          for path in $required $documents; do
+            if ! printf '%s\n' "$list" | grep -qx "$path"; then
+              echo "::error::$path is missing from the package — the crate would not build for a consumer"
+              exit 1
+            fi
+          done
+          echo "corpus present in the tarball"
+
+      # A crates.io version can never be reused, so spending one by
+      # accident is unrecoverable. Checked before the dry run rather
+      # than discovered by a failed upload.
+      - name: The version is not already on crates.io
+        run: |
+          set -euo pipefail
+          version=$(cargo metadata --no-deps --format-version 1 | python3 -c 'import json,sys; print(json.load(sys.stdin)["packages"][0]["version"])')
+          echo "local: $version"
+          body=$(curl -sS "https://crates.io/api/v1/crates/regex-le/versions" || echo '{}')
+          if printf '%s' "$body" | python3 -c 'import json,sys; d=json.load(sys.stdin); print("\n".join(v["num"] for v in d.get("versions", [])))' 2>/dev/null | grep -qx "$version"; then
+            echo "::error::$version is already on crates.io; a published version can never be reused"
+            exit 1
+          fi
+          echo "$version is unpublished — safe to release"
+
+      - name: The changelog documents this version
+        working-directory: .
+        run: |
+          set -euo pipefail
+          version=$(grep -m1 '^version' crate/Cargo.toml | sed 's/.*"\(.*\)".*/\1/')
+          if ! grep -q "^## \[$version\]" crate/CHANGELOG.md; then
+            echo "::error::crate/CHANGELOG.md has no entry for $version"
+            exit 1
+          fi
+
+      # The corpus is a contract with the extension, not just with this
+      # crate. Publishing a version whose corpus the extension no longer
+      # reproduces would ship a documented lie.
+      - name: Extraction parity holds
+        working-directory: .
+        run: |
+          set -euo pipefail
+          curl -fsSL https://bun.sh/install | bash -s "bun-v1.3.13"
+          export PATH="$HOME/.bun/bin:$PATH"
+          bun install --frozen-lockfile
+          bun scripts/check-extraction-parity.ts
+
+      - run: cargo publish --dry-run
+
+  publish:
+    needs: preflight
+    if: inputs.publish
+    runs-on: ubuntu-24.04
+    environment: crates-io
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: dtolnay/rust-toolchain@2c7215f132e9ebf062739d9130488b56d53c060c # master
+        with:
+          toolchain: stable
+      - name: Verify the token before doing anything irreversible
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+        run: |
+          if [ -z "${CARGO_REGISTRY_TOKEN:-}" ]; then
+            echo "::error::CARGO_REGISTRY_TOKEN is not set"
+            exit 1
+          fi
+      - name: Publish
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+        run: cargo publish

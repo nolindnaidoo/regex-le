@@ -2,10 +2,6 @@
 //! subtly wrong: which flags are legal, whether a pattern compiles at
 //! all, and whether a slash is a regex or a division sign.
 
-use std::sync::LazyLock;
-
-use regex::Regex;
-
 pub(crate) const VALID_FLAGS: &str = "dgimsuvy";
 
 /// Keywords a regex literal may directly follow.
@@ -57,8 +53,13 @@ pub(crate) fn compiles(pattern: &str, flags: &str) -> bool {
     regress::Regex::with_flags(pattern, flags).is_ok()
 }
 
-static WORD_CHARACTER: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"[\w$]").expect("a constant pattern compiles"));
+/// JavaScript's `[\w$]`, which is **ASCII**: `\w` there is
+/// `[A-Za-z0-9_]` and nothing more. Rust's `regex` crate spells `\w`
+/// Unicode-aware, so borrowing it would make `café /x/` division here
+/// and a regex in the extension.
+fn is_word_character(character: char) -> bool {
+    character.is_ascii_alphanumeric() || character == '_' || character == '$'
+}
 
 /// Whether a slash at `offset` opens a regex rather than dividing.
 ///
@@ -66,40 +67,28 @@ static WORD_CHARACTER: LazyLock<Regex> =
 /// division — unless the identifier is a keyword that may be followed by
 /// a regex. Directly after another slash it is a comment or a division
 /// chain, which is what keeps `https://…` out of the results.
+///
+/// It walks backwards over the text before `offset` without copying it.
+/// Collecting the document into a `Vec<char>` on each call reads more
+/// plainly and is quadratic: one call per candidate slash, and a
+/// minified bundle has thousands.
 pub(crate) fn is_regex_context(text: &str, offset: usize) -> bool {
-    let characters: Vec<char> = text.chars().collect();
-    // The extension indexes UTF-16 code units; offsets here come from
-    // byte-indexed matches, so the scan walks back over characters from
-    // the character index the byte offset lands on.
-    let offset = text[..offset.min(text.len())].chars().count();
-
-    let mut index = offset as isize - 1;
-    while index >= 0 {
-        match characters.get(index as usize) {
-            Some(' ' | '\t') => index -= 1,
-            _ => break,
-        }
+    let mut end = offset.min(text.len());
+    while end > 0 && !text.is_char_boundary(end) {
+        end -= 1;
     }
-    if index < 0 {
+    let before = text[..end].trim_end_matches([' ', '\t']);
+
+    let Some(previous) = before.chars().next_back() else {
         return true; // start of text
-    }
-
-    let previous = characters[index as usize];
+    };
     if previous == '\n' || previous == '\r' {
         return true; // start of line
     }
 
-    if WORD_CHARACTER.is_match(&previous.to_string()) {
-        let mut start = index;
-        while start > 0
-            && characters
-                .get((start - 1) as usize)
-                .is_some_and(|c| WORD_CHARACTER.is_match(&c.to_string()))
-        {
-            start -= 1;
-        }
-        let word: String = characters[start as usize..=index as usize].iter().collect();
-        return REGEX_ALLOWING_KEYWORDS.contains(&word.as_str());
+    if is_word_character(previous) {
+        let word = before.trim_end_matches(is_word_character);
+        return REGEX_ALLOWING_KEYWORDS.contains(&&before[word.len()..]);
     }
 
     !matches!(previous, ')' | ']' | '.' | '/')
@@ -161,6 +150,22 @@ mod tests {
         assert!(is_regex_context("return /a/", 7));
         assert!(is_regex_context("case /a/", 5));
         assert!(!is_regex_context("count /a/", 6), "not a keyword");
+    }
+
+    /// JavaScript's `\w` is ASCII, so a non-ASCII letter is not part
+    /// of an identifier and the slash after it opens a regex. Rust's
+    /// `\w` would answer the other way.
+    #[test]
+    fn a_non_ascii_letter_does_not_make_an_identifier() {
+        assert!(is_regex_context("café /a/", 5));
+    }
+
+    /// The keyword scan stops at the identifier, not at the start of
+    /// the line.
+    #[test]
+    fn a_keyword_is_read_off_the_end_of_the_identifier() {
+        assert!(is_regex_context("x = return /a/", 11));
+        assert!(!is_regex_context("x = noreturn /a/", 13));
     }
 
     #[test]

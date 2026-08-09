@@ -51,18 +51,6 @@ impl TempTree {
         std::fs::write(&target, contents).expect("a file");
         target
     }
-
-    /// `link` points at `target`, with `target` written verbatim so a
-    /// relative link stays relative — which is what makes the reported
-    /// link target readable.
-    #[cfg(unix)]
-    pub(crate) fn symlink(&self, target: &str, link: &str) {
-        let link_path = self.root.join(link);
-        if let Some(parent) = link_path.parent() {
-            std::fs::create_dir_all(parent).expect("a parent directory");
-        }
-        std::os::unix::fs::symlink(target, link_path).expect("a symlink");
-    }
 }
 
 impl Drop for TempTree {

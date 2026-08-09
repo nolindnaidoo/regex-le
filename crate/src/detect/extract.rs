@@ -7,7 +7,7 @@
 
 use std::sync::LazyLock;
 
-use fancy_regex::Regex;
+use fancy_regex::{Regex, RegexBuilder};
 use serde::Serialize;
 
 use super::heuristics::{self, VALID_FLAGS};
@@ -39,10 +39,23 @@ static LITERAL: LazyLock<Regex> = LazyLock::new(|| {
 /// The lookbehind is why this module uses `fancy-regex`: `(?<![.\w$])`
 /// keeps `foo.RegExp` and `myRegExp` from matching, and `regex` cannot
 /// express it.
+/// fancy-regex's default backtracking budget is spent by a long enough
+/// document rather than by a pathological pattern: the lookbehind sits
+/// at the start, so there is no literal prefix to scan for and every
+/// byte is a candidate start. A minified bundle on one line exhausts it
+/// and the whole file comes back as a refusal.
+///
+/// Measured on 800 KB of one line, which needed roughly 20× the default.
+/// The ceiling stays — a scan that cannot finish still says so rather
+/// than reporting a clean file.
+const BACKTRACK_LIMIT: usize = 100_000_000;
+
 static CONSTRUCTOR: LazyLock<Regex> = LazyLock::new(|| {
-    Regex::new(&format!(
+    RegexBuilder::new(&format!(
         r#"(?<![.\w$])(?:new\s+)?RegExp\s*\(\s*(?:'(?<sq>(?:[^'\\\r\n]|\\.)*)'|"(?<dq>(?:[^"\\\r\n]|\\.)*)")\s*(?:,\s*(?:'(?<sqf>[{VALID_FLAGS}]*)'|"(?<dqf>[{VALID_FLAGS}]*)")\s*)?,?\s*\)"#
     ))
+    .backtrack_limit(BACKTRACK_LIMIT)
+    .build()
     .expect("a constant pattern compiles")
 });
 
@@ -232,5 +245,16 @@ mod tests {
         let found = extract_patterns("const re = /(a+)+/;").expect("the patterns hold");
         assert!(found[0].redos.detected);
         assert_eq!(found[0].redos.severity, super::redos::Severity::High);
+    }
+
+    /// The regression the corpus could not have caught: a document long
+    /// enough to spend the backtracking budget came back as a refusal,
+    /// so a minified bundle reported nothing rather than its patterns.
+    #[test]
+    fn a_long_single_line_document_is_scanned_rather_than_refused() {
+        let content = "const a = /x/g; const b = total / count; ".repeat(20_000);
+        let patterns = extract_patterns(&content).expect("a scan, not a refusal");
+        assert_eq!(patterns.len(), 1, "collapsed to its first occurrence");
+        assert_eq!(patterns[0].pattern, "x");
     }
 }

@@ -2,6 +2,8 @@
 
 Technical source of truth for this repo. README.md is the user-facing doc; this file is for anyone (human or agent) changing the code.
 
+This repo hosts **two products**: the extension at the root (this document's scope) and the Rust CLI in `crate/` (its own `AGENTS.md` + `SPEC.md`). The crate ports the **lint half only** — pattern detection and the ReDoS screen, never the tester. The shared corpus lives at `crate/fixtures/`; `scripts/check-extraction-parity.ts` fails CI when this extension drifts from it.
+
 ## What this is
 
 A VS Code extension that finds regex patterns in the active document (literals, `new RegExp(...)`, `RegExp(...)`), tests them against the file content, and screens them for ReDoS-prone shapes. No network access, no filesystem writes.

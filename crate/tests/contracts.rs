@@ -1,0 +1,304 @@
+//! The exit codes and the stdout contract, driven against the built
+//! binary.
+//!
+//! These are the API: a shell branches on the exit code and parses
+//! stdout, so both are pinned here rather than inferred from unit tests
+//! of the functions behind them. Nothing here needs a network or a
+//! privileged filesystem operation, so it runs everywhere on every push.
+//!
+//! A new refusal adds its case here.
+
+use std::io::Write;
+use std::path::{Path, PathBuf};
+use std::process::{Command, Stdio};
+use std::sync::atomic::{AtomicUsize, Ordering};
+
+const BINARY: &str = env!("CARGO_BIN_EXE_regex-le");
+static COUNTER: AtomicUsize = AtomicUsize::new(0);
+
+struct Tree {
+    root: PathBuf,
+}
+
+impl Tree {
+    fn new(name: &str) -> Self {
+        let unique = COUNTER.fetch_add(1, Ordering::Relaxed);
+        let root = std::env::temp_dir().join(format!(
+            "regex-le-contract-{name}-{}-{unique}",
+            std::process::id()
+        ));
+        let _ = std::fs::remove_dir_all(&root);
+        std::fs::create_dir_all(&root).expect("a temporary directory");
+        Self {
+            root: std::fs::canonicalize(&root).expect("a canonical directory"),
+        }
+    }
+
+    fn path(&self) -> &Path {
+        &self.root
+    }
+
+    fn write(&self, relative: &str, contents: &str) -> PathBuf {
+        let target = self.root.join(relative);
+        if let Some(parent) = target.parent() {
+            std::fs::create_dir_all(parent).expect("a parent directory");
+        }
+        std::fs::write(&target, contents).expect("a file");
+        target
+    }
+}
+
+impl Drop for Tree {
+    fn drop(&mut self) {
+        let _ = std::fs::remove_dir_all(&self.root);
+    }
+}
+
+struct Run {
+    code: i32,
+    stdout: String,
+    stderr: String,
+}
+
+fn run(args: &[&str]) -> Run {
+    let output = Command::new(BINARY)
+        .args(args)
+        .output()
+        .expect("the binary runs");
+    Run {
+        code: output.status.code().expect("an exit code"),
+        stdout: String::from_utf8_lossy(&output.stdout).into_owned(),
+        stderr: String::from_utf8_lossy(&output.stderr).into_owned(),
+    }
+}
+
+/// Every line of stdout, parsed. Doubles as the assertion that stdout
+/// is JSON Lines and nothing else — a stray human message there would
+/// fail to parse.
+fn reports(run: &Run) -> Vec<serde_json::Value> {
+    run.stdout
+        .lines()
+        .filter(|line| !line.trim().is_empty())
+        .map(|line| serde_json::from_str(line).expect("stdout carries only JSON"))
+        .collect()
+}
+
+fn findings(run: &Run) -> u64 {
+    reports(run)
+        .iter()
+        .filter_map(|report| report["summary"]["findings"].as_u64())
+        .sum()
+}
+
+/// One exponential shape, one overlapping alternation, one pattern that
+/// is fine, and one slash that is a division.
+fn source_tree(name: &str) -> Tree {
+    let tree = Tree::new(name);
+    tree.write(
+        "src/validate.js",
+        "const email = /(\\w+)+@/g;\nconst ratio = total / count;\n",
+    );
+    tree.write(
+        "src/parse.ts",
+        "const alt = /(a|a)*/;\nconst ok = /[a-z]+/;\n",
+    );
+    tree.write("README.md", "See https://example.com/docs for more.\n");
+    tree
+}
+
+#[test]
+fn a_vulnerable_pattern_exits_one() {
+    let tree = source_tree("findings");
+    let run = run(&[&tree.path().to_string_lossy()]);
+    assert_eq!(run.code, 1, "{}", run.stderr);
+    assert_eq!(
+        findings(&run),
+        2,
+        "the division and the URL are not patterns"
+    );
+}
+
+#[test]
+fn a_clean_tree_exits_zero() {
+    let tree = Tree::new("clean");
+    tree.write("src/a.js", "const ok = /[a-z]+/;\n");
+    let run = run(&[&tree.path().to_string_lossy()]);
+    assert_eq!(run.code, 0, "{}", run.stderr);
+    assert!(run.stderr.contains("0 findings"), "{}", run.stderr);
+}
+
+#[test]
+fn an_unreadable_input_exits_two() {
+    assert_eq!(run(&["/no/such/place-xyz"]).code, 2);
+}
+
+#[test]
+fn an_unknown_flag_exits_two_and_names_itself() {
+    let tree = source_tree("badflag");
+    let run = run(&["--sever", &tree.path().to_string_lossy()]);
+    assert_eq!(run.code, 2);
+    assert!(run.stderr.contains("--sever"), "{}", run.stderr);
+    assert!(run.stdout.is_empty(), "a refusal writes no report");
+}
+
+/// The threshold narrows what counts as a finding, and the exit code
+/// follows it — that is the whole point of having one.
+#[test]
+fn the_threshold_changes_the_exit_code() {
+    let tree = Tree::new("threshold");
+    tree.write("src/a.js", "const alt = /(a|a)*/;\n");
+    let path = tree.path().to_string_lossy().to_string();
+    assert_eq!(run(&[&path]).code, 1, "medium is the default");
+    assert_eq!(run(&["--severity", "high", &path]).code, 0);
+}
+
+/// Reporting more patterns does not find more of them.
+#[test]
+fn all_widens_the_report_but_not_the_verdict() {
+    let tree = Tree::new("all");
+    tree.write("src/a.js", "const a = /[a-z]+/;\nconst b = /(a+)+/;\n");
+    let path = tree.path().to_string_lossy().to_string();
+
+    let lint = run(&[&path]);
+    assert_eq!(
+        reports(&lint)[0]["patterns"]
+            .as_array()
+            .expect("a list")
+            .len(),
+        1
+    );
+
+    let everything = run(&["--all", &path]);
+    assert_eq!(
+        reports(&everything)[0]["patterns"]
+            .as_array()
+            .expect("a list")
+            .len(),
+        2
+    );
+    assert_eq!(findings(&everything), findings(&lint));
+    assert_eq!(everything.code, lint.code);
+}
+
+/// `low` is refused rather than silently accepted, and the refusal says
+/// why instead of pretending the word is unknown.
+#[test]
+fn a_low_threshold_is_refused_with_its_reason() {
+    let tree = source_tree("low");
+    let run = run(&["--severity", "low", &tree.path().to_string_lossy()]);
+    assert_eq!(run.code, 2);
+    assert!(run.stderr.contains("--all"), "{}", run.stderr);
+}
+
+/// The tester half is not here. If any of these is ever accepted, the
+/// line this crate was drawn along has moved.
+#[test]
+fn no_flag_offers_to_run_a_pattern() {
+    let tree = source_tree("notester");
+    for attempt in ["--test", "--match", "--input", "--timeout", "--fix"] {
+        assert_eq!(
+            run(&[attempt, &tree.path().to_string_lossy()]).code,
+            2,
+            "{attempt} was accepted"
+        );
+    }
+}
+
+#[test]
+fn version_and_help_exit_clear() {
+    let version = run(&["--version"]);
+    assert_eq!(version.code, 0);
+    assert!(version.stdout.contains("regex-le"));
+    let help = run(&["--help"]);
+    assert_eq!(help.code, 0);
+    assert!(help.stdout.contains("usage: regex-le"));
+    assert!(
+        help.stdout.contains("cannot prove"),
+        "the scope of the answer is stated"
+    );
+}
+
+#[test]
+fn stdout_carries_only_reports_and_stderr_only_the_summary() {
+    let tree = source_tree("streams");
+    let run = run(&[&tree.path().to_string_lossy()]);
+    assert!(!reports(&run).is_empty());
+    assert!(!run.stderr.contains('{'), "{}", run.stderr);
+    assert!(run.stderr.contains("findings in"), "{}", run.stderr);
+}
+
+#[test]
+fn a_document_on_stdin_is_scanned() {
+    let mut child = Command::new(BINARY)
+        .args(["--stdin"])
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .expect("the binary runs");
+    child
+        .stdin
+        .as_mut()
+        .expect("stdin")
+        .write_all(b"const re = /(a+)+/g;\n")
+        .expect("written");
+    let output = child.wait_with_output().expect("finishes");
+    assert_eq!(output.status.code(), Some(1));
+    let report: serde_json::Value =
+        serde_json::from_slice(&output.stdout).expect("stdout carries JSON");
+    assert_eq!(report["file"], "<stdin>");
+    assert_eq!(report["patterns"][0]["pattern"], "(a+)+");
+    assert_eq!(report["patterns"][0]["redos"]["severity"], "high");
+}
+
+#[test]
+fn stdin_with_file_arguments_exits_two() {
+    let tree = source_tree("stdin-and-files");
+    assert_eq!(
+        run(&["--stdin", &tree.path().to_string_lossy()]).code,
+        2,
+        "one input or the other, not both"
+    );
+}
+
+/// **The cross-surface contract.** Both surfaces call one entry point,
+/// so they must answer identically for the same tree.
+#[test]
+fn the_cli_and_the_mcp_server_report_the_same_thing() {
+    let tree = source_tree("agreement");
+    let cli = run(&[&tree.path().to_string_lossy()]);
+    let from_cli = reports(&cli);
+
+    let request = serde_json::json!({
+        "jsonrpc": "2.0",
+        "id": 1,
+        "method": "tools/call",
+        "params": {
+            "name": "regex_le_lint",
+            "arguments": { "path": tree.path().to_string_lossy() },
+        },
+    });
+    let mut child = Command::new(BINARY)
+        .arg("mcp")
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .expect("the server starts");
+    writeln!(child.stdin.as_mut().expect("stdin"), "{request}").expect("written");
+    let output = child.wait_with_output().expect("finishes");
+    let response: serde_json::Value = serde_json::from_slice(
+        output
+            .stdout
+            .split(|byte| *byte == b'\n')
+            .next()
+            .expect("a line"),
+    )
+    .expect("the reply is JSON");
+
+    let from_mcp = response["result"]["structuredContent"]["data"]["reports"]
+        .as_array()
+        .expect("reports")
+        .clone();
+    assert_eq!(from_mcp, from_cli, "the two surfaces disagree");
+}
