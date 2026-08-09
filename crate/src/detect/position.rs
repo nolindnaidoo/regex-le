@@ -10,9 +10,11 @@
 //!
 //! Lines and columns are 1-based, matching the extension's contract.
 //!
-//! **This file is a copy of paths-le's `extract/position.rs`.** The
-//! family's crates are self-contained by decision, so code two of them
-//! need is duplicated and held equal by a drift check.
+//! Each crate in this family stands on its own: no shared crate, no
+//! published core, and nothing holding this file equal to the similar
+//! ones in the sibling repos. Where they agree it is because the same
+//! answer was right twice; where they diverge that is the point, and
+//! neither has to justify itself to the other.
 
 use serde::Serialize;
 
