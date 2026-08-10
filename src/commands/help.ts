@@ -38,7 +38,7 @@ function buildHelpContent(): string {
 	const settings =
 		'Access via Command Palette: "Regex-LE: Open Settings"\nKey settings: ReDoS detection, match limits, safety thresholds, notification level';
 	const support =
-		"- GitHub Issues: https://github.com/nolindnaidoo/regex-le/issues\n- Documentation: https://github.com/nolindnaidoo/regex-le#readme\n- LE Tools: https://letools.dev\n\nEnjoying it? A rating helps more than you'd think:\n- Rate on VS Code Marketplace: https://marketplace.visualstudio.com/items?itemName=nolindnaidoo.regex-le&ssr=false#review-details\n- Rate on Open VSX: https://open-vsx.org/extension/nolindnaidoo/regex-le/reviews\n\nBuilt by nolindnaidoo (https://github.com/nolindnaidoo) — MIT licensed.";
+		"- GitHub Issues: https://github.com/nolindnaidoo/regex-le/issues\n- Documentation: https://github.com/nolindnaidoo/regex-le#readme\n- LE Tools: https://letools.dev\n\nEnjoying it? A rating helps more than you'd think:\n- Rate on VS Code Marketplace: https://marketplace.visualstudio.com/items?itemName=nolindnaidoo.regex-le&ssr=false#review-details\n- Rate on Open VSX: https://open-vsx.org/extension/OffensiveEdge/regex-le/reviews\n\nBuilt by nolindnaidoo (https://github.com/nolindnaidoo) — MIT licensed.";
 
 	return `# ${title}
 

@@ -50,7 +50,7 @@ claude mcp add regex-le -- npx -y regex-le-mcp
 carries this server and registers it for you:
 [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=nolindnaidoo.regex-le)
 · [Open VSX](https://open-vsx.org/extension/OffensiveEdge/regex-le)
-· [Zed](https://github.com/zed-industries/extensions/pull/7083) *(pending review)*
+· [Zed](https://zed.dev/docs/ai/mcp) *(no listing yet — add it by hand)*
 
 **No Node?** The same `extract_patterns` tool ships in a static Rust
 binary: `cargo install regex-le`, then `regex-le mcp`
@@ -148,15 +148,20 @@ Architecture. [nolindnaidoo.com](https://nolindnaidoo.com) ·
 
 ### Also from the same workshop
 
-Three Rust tools built the same way: small, single-purpose, and driven by a
+Seven Rust tools built the same way: small, single-purpose, and driven by a
 machine rather than a person. pixelcoords and pixelactions make up one loop —
-pixelcoords answers *where*, pixelactions *acts* there — and scrape-le answers
-whether a page can be scraped at all, over a CLI or its own MCP server.
+pixelcoords answers *where*, pixelactions *acts* there. The five LE crates are
+the terminal half of the extensions they sit in: the same detection, held to
+the extension's own corpus, and an exit code instead of a results editor.
 
 | | | |
 |---|---|---|
 | **[pixelcoords](https://github.com/nolindnaidoo/pixelcoords)** | Freeze your screen, mark regions, get pixel-exact coordinates and crops | [site](https://pixelcoords.dev) · [crates.io](https://crates.io/crates/pixelcoords) · [docs.rs](https://docs.rs/pixelcoords) |
 | **[pixelactions](https://github.com/nolindnaidoo/pixelactions)** | Consume human-verified coordinates, perform the interaction, confirm it landed | [site](https://pixelactions.dev) · [crates.io](https://crates.io/crates/pixelactions) · [docs.rs](https://docs.rs/pixelactions) |
+| **[regex-le](https://github.com/nolindnaidoo/regex-le/tree/main/crate)** | This server's own binary: find every regex in a codebase and report which can be driven into catastrophic backtracking | [crates.io](https://crates.io/crates/regex-le) |
+| **[paths-le](https://github.com/nolindnaidoo/paths-le/tree/main/crate)** | Find every path in a codebase and report whether it still points at anything | [crates.io](https://crates.io/crates/paths-le) |
+| **[secrets-le](https://github.com/nolindnaidoo/secrets-le/tree/main/crate)** | Find hardcoded credentials, and never print one | [crates.io](https://crates.io/crates/secrets-le) |
+| **[urls-le](https://github.com/nolindnaidoo/urls-le/tree/main/crate)** | Extract every URL from a codebase, with its protocol and exact position | [crates.io](https://crates.io/crates/urls-le) |
 | **[scrape-le](https://github.com/nolindnaidoo/scrape-le/tree/main/crate)** | Check whether a page is scrapeable before the scraper is written | [crates.io](https://crates.io/crates/scrape-le) |
 
 ## Licence
