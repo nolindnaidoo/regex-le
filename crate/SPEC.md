@@ -103,7 +103,7 @@ Three outcomes, in the extension's precedence order:
 |---|---|---|
 | `high` | a quantified group whose body also contains an unbounded quantifier — `(a+)+`, `([a-z]+)*`, `(\w*)+` | exponential backtracking |
 | `medium` | a quantified group whose body is an alternation with overlapping branches — `(a\|a)*`, `(a\|ab)+` | heavy backtracking |
-| `low` | everything else, **including patterns that do not compile** | no obvious vulnerability, or a syntax error |
+| `low` | everything else | no obvious vulnerability |
 
 **This is a scanner, not an automaton analysis, and the distinction is
 in the output.** It cannot prove a pattern safe — only flag the common
@@ -112,11 +112,18 @@ badly on adversarial input. That honest scope is the extension's wording
 and it ports with the code; a tool that implied more would be worse than
 one that found less.
 
-**An invalid pattern is a syntax error, not a vulnerability.** It comes
-back `low` with the reason `Pattern is invalid`, which is why this crate
-needs a JavaScript-compatible parser at all: `regress`, used to *parse*
-and nothing else. It never matches anything. That is the whole of the
-dependency, and it is the line between the lint half and the tester half.
+**An invalid pattern is a syntax error, not a vulnerability**, and the
+two stages treat it differently. Extraction **drops** it: a `/(/ ` or a
+`new RegExp('(')` never reaches a report, matching the extension, which
+is why no report ever carries this verdict. The ReDoS check itself, asked
+directly about a pattern that does not compile, answers `low` with the
+reason `Pattern is invalid` rather than guessing at its shape.
+
+Either way something has to decide whether a pattern would compile in
+JavaScript, and that is why this crate needs a JavaScript-compatible
+parser at all: `regress`, used to *parse* and nothing else. It never
+matches anything. That is the whole of the dependency, and it is the line
+between the lint half and the tester half.
 
 ### Group scanning
 
