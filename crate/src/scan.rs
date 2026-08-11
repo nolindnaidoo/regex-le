@@ -32,7 +32,26 @@ pub(crate) struct FileReport {
 }
 
 impl FileReport {
-    pub(crate) fn is_unexamined(&self) -> bool {
+    /// Whether this file was not read at all — not text, or not
+    /// openable.
+    ///
+    /// Reported rather than swallowed, because a report that quietly
+    /// skipped a file would be claiming coverage it does not have. It
+    /// does **not** fail the run on its own: every repository has a PNG
+    /// and a zip in it, and exiting 2 on those makes the tool unusable
+    /// in CI, which is the one place it is most worth running.
+    /// `--strict` is there for a pipeline that wants zero tolerance.
+    pub(crate) fn was_skipped(&self) -> bool {
+        self.diagnostics
+            .iter()
+            .any(|diagnostic| diagnostic.code == "skipped")
+    }
+
+    /// Whether the scan of this file gave up part way. Unlike a skip
+    /// this **does** fail the run: reporting no findings when a
+    /// detector stopped early would overstate coverage, which is the
+    /// one thing an audit tool must never do.
+    pub(crate) fn is_incomplete(&self) -> bool {
         self.diagnostics
             .iter()
             .any(|diagnostic| diagnostic.severity == "error")
@@ -68,28 +87,16 @@ fn at_or_above(severity: Severity, threshold: Severity) -> bool {
     }
 }
 
-pub(crate) fn scan_file(path: &PathBuf, options: ScanOptions) -> Option<FileReport> {
+pub(crate) fn scan_file(path: &PathBuf, options: ScanOptions) -> FileReport {
     let file = path.to_string_lossy().into_owned();
     match std::fs::read(path) {
-        // A file that is not UTF-8 holds no source to read. Failing on
-        // each would make the tool unusable in a repository full of
-        // images.
-        Ok(bytes) => String::from_utf8(bytes)
-            .ok()
-            .map(|content| scan_content(&content, file, options)),
-        Err(error) => Some(FileReport {
-            file,
-            patterns: Vec::new(),
-            diagnostics: vec![Diagnostic {
-                severity: "error".to_string(),
-                code: "unreadable".to_string(),
-                message: format!("could not be read: {error}"),
-            }],
-            summary: Summary {
-                patterns: 0,
-                findings: 0,
-            },
-        }),
+        Ok(bytes) => match String::from_utf8(bytes) {
+            Ok(content) => scan_content(without_bom(&content), file, options),
+            // Named rather than dropped. A file that vanishes from the
+            // report is a file the reader believes was covered.
+            Err(_) => skipped(file, "not UTF-8 text"),
+        },
+        Err(error) => skipped(file, &error.to_string()),
     }
 }
 
@@ -133,8 +140,13 @@ pub(crate) fn scan_content(content: &str, file: String, options: ScanOptions) ->
 }
 
 /// 0 nothing vulnerable, 1 at least one finding, 2 could not answer.
-pub(crate) fn exit_code(reports: &[FileReport]) -> u8 {
-    if reports.iter().any(FileReport::is_unexamined) {
+pub(crate) fn exit_code(reports: &[FileReport], strict: bool) -> u8 {
+    // A scan that gave up part way always fails: it would otherwise
+    // report "nothing found" for a file it never finished reading.
+    if reports.iter().any(FileReport::is_incomplete) {
+        return 2;
+    }
+    if strict && reports.iter().any(FileReport::was_skipped) {
         return 2;
     }
     u8::from(reports.iter().any(|report| report.summary.findings > 0))
@@ -174,14 +186,14 @@ mod tests {
             ScanOptions::default(),
         );
         assert_eq!(report.summary.findings, 0);
-        assert_eq!(exit_code(&[report]), 0);
+        assert_eq!(exit_code(&[report], false), 0);
     }
 
     #[test]
     fn a_vulnerable_pattern_is_a_finding() {
         let report = scan_content("const re = /(a+)+/;", "a.js".into(), ScanOptions::default());
         assert_eq!(report.summary.findings, 1);
-        assert_eq!(exit_code(&[report]), 1);
+        assert_eq!(exit_code(&[report], false), 1);
     }
 
     /// By default only the patterns at or above the threshold are
@@ -224,25 +236,35 @@ mod tests {
     }
 
     #[test]
-    fn a_binary_file_is_skipped_rather_than_failed() {
+    fn a_binary_file_is_named_rather_than_dropped() {
         let tree = TempTree::new("scan-binary");
         let file = tree.path().join("logo.png");
         std::fs::write(&file, [0x89, 0x50, 0xff, 0xfe]).expect("a file");
-        assert!(scan_file(&file, ScanOptions::default()).is_none());
+        // It used to vanish from the report entirely, which reads to
+        // whoever runs this as "that file was clean".
+        let report = scan_file(&file, ScanOptions::default());
+        assert!(report.was_skipped());
+        assert_eq!(report.diagnostics[0].message, "not UTF-8 text");
+        assert_eq!(exit_code(std::slice::from_ref(&report), false), 0);
+        assert_eq!(exit_code(&[report], true), 2);
     }
 
+    /// Changed deliberately: a file that could not be read is reported
+    /// and does not fail the run, because every repository has one and
+    /// exiting 2 on it meant the tool never got run in CI at all.
     #[test]
-    fn an_unreadable_file_ends_the_run_at_two() {
+    fn an_unreadable_file_is_reported_and_does_not_end_the_run() {
         let tree = TempTree::new("scan-unreadable");
-        let report =
-            scan_file(&tree.path().join("gone.js"), ScanOptions::default()).expect("a report");
-        assert!(report.is_unexamined());
-        assert_eq!(exit_code(&[report]), 2);
+        let report = scan_file(&tree.path().join("gone.js"), ScanOptions::default());
+        assert!(report.was_skipped());
+        assert_eq!(report.diagnostics[0].severity, "warning");
+        assert_eq!(exit_code(std::slice::from_ref(&report), false), 0);
+        assert_eq!(exit_code(&[report], true), 2, "--strict is opt-in");
     }
 
     #[test]
     fn nothing_to_scan_exits_clear() {
-        assert_eq!(exit_code(&[]), 0);
+        assert_eq!(exit_code(&[], false), 0);
     }
 
     #[test]
@@ -256,5 +278,53 @@ mod tests {
         assert!(line.contains("a.js:1:12"), "{line}");
         assert!(line.contains("/(a+)+/g"), "{line}");
         assert!(line.contains("[high]"), "{line}");
+    }
+}
+
+/// The report for a file that was not read: named, warned about, and
+/// not a failure by itself.
+fn skipped(file: String, reason: &str) -> FileReport {
+    FileReport {
+        file,
+        patterns: Vec::new(),
+        diagnostics: vec![Diagnostic {
+            severity: "warning".to_string(),
+            code: "skipped".to_string(),
+            message: reason.to_string(),
+        }],
+        summary: Summary {
+            patterns: 0,
+            findings: 0,
+        },
+    }
+}
+
+/// Drop a leading byte-order mark.
+///
+/// No editor shows it and VS Code strips it before the extension ever
+/// sees a document, so without this the two frontends read the same file
+/// differently the moment anything on Windows saves it — Notepad, Excel,
+/// a PowerShell redirect. Three invisible bytes shift every column on
+/// the first line, and in a structured format they can lose the
+/// document entirely.
+pub(crate) fn without_bom(content: &str) -> &str {
+    content.strip_prefix('\u{feff}').unwrap_or(content)
+}
+
+#[cfg(test)]
+mod hazards {
+    use super::*;
+
+    /// Three invisible bytes that Notepad, Excel and a PowerShell
+    /// redirect all add, and that VS Code strips before the extension
+    /// ever sees a document — so without this the two frontends read
+    /// the same file differently.
+    #[test]
+    fn a_byte_order_mark_is_not_part_of_the_document() {
+        assert_eq!(without_bom("\u{feff}abc"), "abc");
+        assert_eq!(without_bom("abc"), "abc");
+        // Only a leading one: elsewhere it is a zero-width no-break
+        // space and belongs to the text.
+        assert_eq!(without_bom("a\u{feff}b"), "a\u{feff}b");
     }
 }

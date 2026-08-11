@@ -233,3 +233,32 @@ Options:
 - **Automaton-based analysis**, which would let it prove safety rather
   than flag shapes, and is a different tool.
 - **A baseline file** for accepting known findings.
+
+## Files that cannot be read
+
+Exit 2 means the *question* was malformed — an unknown flag, an
+unreadable format name, a path that does not exist. It does not mean one
+file in fifty thousand was a PNG.
+
+A file that is not UTF-8 text, or that cannot be opened, is:
+
+- named on stderr,
+- carried in the JSON report with a `skipped` diagnostic saying why,
+- and left out of the exit code.
+
+`--strict` turns any skipped file back into exit 2, for a pipeline that
+wants zero tolerance. What is never allowed is the third option: a file
+that silently vanishes from the report, which reads to whoever ran it as
+a file that was clean.
+
+## The byte-order mark
+
+A leading BOM is stripped before extraction. It is three invisible bytes
+that Notepad, Excel and a PowerShell redirect all add, and that VS Code
+removes before the extension sees a document — so leaving it in means
+the two frontends read the same file differently. It shifts every column
+on the first line, and in a structured format it can lose the document
+entirely.
+
+A BOM anywhere other than the start is a zero-width no-break space and
+belongs to the text.

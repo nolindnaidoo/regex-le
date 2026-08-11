@@ -28,6 +28,8 @@ Options:
   --severity <level>   fail at this verdict or worse: high or medium
                        (default medium)
   --all                report every pattern, not only the vulnerable ones
+  --strict             exit 2 if any file could not be read, rather than
+                       reporting it and carrying on
   --stdin              read one document from stdin
   --hidden             walk hidden files and directories too
   --no-ignore          walk files that .gitignore excludes
@@ -38,7 +40,14 @@ question was malformed.";
 /// Every flag the parser accepts. Held equal to the flags named in USAGE
 /// by a test, and consulted at runtime so the list is what the parser
 /// actually honours.
-const FLAGS: [&str; 5] = ["--severity", "--all", "--stdin", "--hidden", "--no-ignore"];
+const FLAGS: [&str; 6] = [
+    "--severity",
+    "--all",
+    "--stdin",
+    "--strict",
+    "--hidden",
+    "--no-ignore",
+];
 
 /// The thresholds `--severity` accepts. `low` is deliberately absent:
 /// every pattern has a verdict, so a `low` threshold fails on every file
@@ -47,6 +56,8 @@ const THRESHOLDS: [&str; 2] = ["high", "medium"];
 
 #[derive(Debug)]
 struct Options {
+    /// Fail the run if any file could not be read.
+    strict: bool,
     inputs: Vec<PathBuf>,
     stdin: bool,
     scan: ScanOptions,
@@ -88,7 +99,7 @@ fn execute(args: &[String]) -> Result<u8, String> {
         walk::collect(&options.inputs, &options.walk)?
             .files
             .iter()
-            .filter_map(|target| scan::scan_file(target, options.scan))
+            .map(|target| scan::scan_file(target, options.scan))
             .collect()
     };
 
@@ -101,7 +112,7 @@ fn execute(args: &[String]) -> Result<u8, String> {
     drop(stdout);
 
     summarise(&reports);
-    Ok(scan::exit_code(&reports))
+    Ok(scan::exit_code(&reports, options.strict))
 }
 
 fn scan_stdin(options: ScanOptions) -> Result<FileReport, String> {
@@ -116,6 +127,7 @@ fn parse(args: &[String]) -> Result<Options, String> {
     let mut options = Options {
         inputs: Vec::new(),
         stdin: false,
+        strict: false,
         scan: ScanOptions::default(),
         walk: WalkOptions::default(),
     };
@@ -132,6 +144,7 @@ fn parse(args: &[String]) -> Result<Options, String> {
         match arg.as_str() {
             "--all" => options.scan.all = true,
             "--stdin" => options.stdin = true,
+            "--strict" => options.strict = true,
             "--hidden" => options.walk.hidden = true,
             "--no-ignore" => options.walk.respect_ignore = false,
             "--severity" => {
