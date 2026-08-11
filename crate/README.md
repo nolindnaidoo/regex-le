@@ -204,6 +204,8 @@ All ten LE tools are on **[letools.dev](https://letools.dev)**.
   [crates.io](https://crates.io/crates/secrets-le)
 - **[urls-le](https://github.com/nolindnaidoo/urls-le/tree/main/crate)** — Extract every URL from a codebase, with its protocol and exact position
   [crates.io](https://crates.io/crates/urls-le)
+- **[string-le](https://github.com/nolindnaidoo/string-le/tree/main/crate)** — Get every string in a codebase out where a person can read them
+  [crates.io](https://crates.io/crates/string-le)
 - **[scrape-le](https://github.com/nolindnaidoo/scrape-le/tree/main/crate)** — Check whether a page is scrapeable before the scraper is written
   [crates.io](https://crates.io/crates/scrape-le)
 
