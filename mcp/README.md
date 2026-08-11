@@ -148,7 +148,7 @@ Architecture. [nolindnaidoo.com](https://nolindnaidoo.com) ·
 
 ### Also from the same workshop
 
-Eleven Rust tools built the same way: small, single-purpose, and driven by a
+Twelve Rust tools built the same way: small, single-purpose, and driven by a
 machine rather than a person. pixelcoords and pixelactions make up one loop —
 pixelcoords answers *where*, pixelactions *acts* there. The nine LE crates are
 the terminal half of the extensions they sit in: the same detection, held to
