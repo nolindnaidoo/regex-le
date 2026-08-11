@@ -148,10 +148,10 @@ Architecture. [nolindnaidoo.com](https://nolindnaidoo.com) ·
 
 ### Also from the same workshop
 
-Nine Rust tools built the same way: small, single-purpose, and driven by a
+Ten Rust tools built the same way: small, single-purpose, and driven by a
 machine rather than a person. pixelcoords and pixelactions make up one loop —
-pixelcoords answers *where*, pixelactions *acts* there. The seven LE crates are
-the terminal half of the extensions they sit in: the same extraction, held to
+pixelcoords answers *where*, pixelactions *acts* there. The eight LE crates are
+the terminal half of the extensions they sit in: the same detection, held to
 the extension's own corpus, and an exit code instead of a results editor.
 
 | | | |
@@ -164,6 +164,7 @@ the extension's own corpus, and an exit code instead of a results editor.
 | **[regex-le](https://github.com/nolindnaidoo/regex-le/tree/main/crate)** | Find every regex in a codebase and report which can be driven into catastrophic backtracking | [crates.io](https://crates.io/crates/regex-le) |
 | **[string-le](https://github.com/nolindnaidoo/string-le/tree/main/crate)** | Get every string in a codebase out where a person can read them | [crates.io](https://crates.io/crates/string-le) |
 | **[numbers-le](https://github.com/nolindnaidoo/numbers-le/tree/main/crate)** | Find every hardcoded number in a codebase so a person can check them | [crates.io](https://crates.io/crates/numbers-le) |
+| **[envsync-le](https://github.com/nolindnaidoo/envsync-le/tree/main/crate)** | Compare the dotenv files in a tree and say which keys are missing from which | [crates.io](https://crates.io/crates/envsync-le) |
 | **[scrape-le](https://github.com/nolindnaidoo/scrape-le/tree/main/crate)** | Check whether a page is scrapeable before the scraper is written | [crates.io](https://crates.io/crates/scrape-le) |
 
 ## Licence

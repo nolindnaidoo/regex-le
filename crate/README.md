@@ -208,6 +208,8 @@ All ten LE tools are on **[letools.dev](https://letools.dev)**.
   [crates.io](https://crates.io/crates/string-le)
 - **[numbers-le](https://github.com/nolindnaidoo/numbers-le/tree/main/crate)** — Find every hardcoded number in a codebase so a person can check them
   [crates.io](https://crates.io/crates/numbers-le)
+- **[envsync-le](https://github.com/nolindnaidoo/envsync-le/tree/main/crate)** — Compare the dotenv files in a tree and say which keys are missing from which
+  [crates.io](https://crates.io/crates/envsync-le)
 - **[scrape-le](https://github.com/nolindnaidoo/scrape-le/tree/main/crate)** — Check whether a page is scrapeable before the scraper is written
   [crates.io](https://crates.io/crates/scrape-le)
 
