@@ -30,6 +30,16 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Changed
 
+- **A binary file is skipped silently and counted, not reported.** A NUL
+  byte in the first 8 KB — ripgrep's test — means the file was never a
+  text candidate, so it gets no report line and no say in the exit code.
+  It used to arrive as `not UTF-8 text` with a `skipped` diagnostic,
+  which made `--strict` exit 2 on any repository holding a PNG and left
+  the flag unusable. The stderr summary carries the count
+  (`0 findings in 40 files, 16 binary files skipped`), and
+  `regex_le_lint` carries it as `data.binary`, so a narrower scan is
+  still visible. A file that *looked* like text and could not be read
+  keeps its named `skipped` diagnostic and keeps failing `--strict`.
 - **A document's language selects which spellings are looked for**, and
   the slash-versus-division walk runs only where a bare `/…/` is legal —
   JavaScript, TypeScript, Ruby. A Python or Go file no longer reports

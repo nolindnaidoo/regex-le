@@ -33,15 +33,16 @@ pub(crate) struct FileReport {
 }
 
 impl FileReport {
-    /// Whether this file was not read at all — not text, or not
-    /// openable.
+    /// Whether this file looked like text and still could not be read —
+    /// a permission error, or bytes that are not UTF-8.
     ///
     /// Reported rather than swallowed, because a report that quietly
     /// skipped a file would be claiming coverage it does not have. It
-    /// does **not** fail the run on its own: every repository has a PNG
-    /// and a zip in it, and exiting 2 on those makes the tool unusable
-    /// in CI, which is the one place it is most worth running.
-    /// `--strict` is there for a pipeline that wants zero tolerance.
+    /// does **not** fail the run on its own; `--strict` is there for a
+    /// pipeline that wants zero tolerance. A binary file never gets
+    /// here — `scan_file` returns nothing for one, because it was never
+    /// a text candidate and exiting 2 on every repository with an icon
+    /// in it made `--strict` unusable.
     pub(crate) fn was_skipped(&self) -> bool {
         self.diagnostics
             .iter()
@@ -88,20 +89,45 @@ fn at_or_above(severity: Severity, threshold: Severity) -> bool {
     }
 }
 
-pub(crate) fn scan_file(path: &PathBuf, options: ScanOptions) -> FileReport {
+/// How much of a file the binary test reads. Ripgrep's number: a file
+/// that has made it 8 KB without a NUL byte is text as far as any tool
+/// that greps it is concerned.
+const BINARY_SNIFF_BYTES: usize = 8192;
+
+/// Whether this is a binary file rather than a text file that failed to
+/// be read. A NUL byte near the start is how ripgrep decides, and the
+/// distinction matters: a PNG was never a text candidate, so calling it
+/// a skipped file makes `--strict` exit 2 on every repository that has
+/// an icon in it.
+fn is_binary(bytes: &[u8]) -> bool {
+    bytes.iter().take(BINARY_SNIFF_BYTES).any(|byte| *byte == 0)
+}
+
+/// Scan one file, or `None` when it is binary.
+///
+/// `None` is not silence: the caller counts it and says how many files
+/// were never text, so the reader still knows coverage was narrower than
+/// the tree. What it is not is a per-file report line, and it does not
+/// reach `--strict`.
+pub(crate) fn scan_file(path: &PathBuf, options: ScanOptions) -> Option<FileReport> {
     let file = path.to_string_lossy().into_owned();
     // The extension is handed a language id by the editor; a walk has
     // only the name on disk, and an unrecognised one is not a refusal —
     // it means every form is scanned for.
     let language = resolve_language(None, Some(&file));
-    match std::fs::read(path) {
-        Ok(bytes) => match String::from_utf8(bytes) {
-            Ok(content) => scan_content(without_bom(&content), file, language, options),
-            // Named rather than dropped. A file that vanishes from the
-            // report is a file the reader believes was covered.
-            Err(_) => skipped(file, "not UTF-8 text"),
-        },
-        Err(error) => skipped(file, &error.to_string()),
+    let bytes = match std::fs::read(path) {
+        Ok(bytes) => bytes,
+        Err(error) => return Some(skipped(file, &error.to_string())),
+    };
+    if is_binary(&bytes) {
+        return None;
+    }
+    match String::from_utf8(bytes) {
+        Ok(content) => Some(scan_content(without_bom(&content), file, language, options)),
+        // Named rather than dropped: this one *looked* like text and
+        // could not be read, and a file that vanishes from the report is
+        // a file the reader believes was covered.
+        Err(_) => Some(skipped(file, "not UTF-8 text")),
     }
 }
 
@@ -263,18 +289,38 @@ mod tests {
         assert_eq!(high.summary.findings, 0);
     }
 
+    /// Changed deliberately: a PNG was never a text candidate, so it is
+    /// not a file that failed to be read. Reporting it as one gave
+    /// `--strict` a reason to exit 2 on every repository with an icon in
+    /// it, which made the flag useless. It gets no report line; the
+    /// caller counts it and says how many.
     #[test]
-    fn a_binary_file_is_named_rather_than_dropped() {
+    fn a_binary_file_is_counted_rather_than_reported() {
         let tree = TempTree::new("scan-binary");
         let file = tree.path().join("logo.png");
-        std::fs::write(&file, [0x89, 0x50, 0xff, 0xfe]).expect("a file");
-        // It used to vanish from the report entirely, which reads to
-        // whoever runs this as "that file was clean".
-        let report = scan_file(&file, ScanOptions::default());
+        std::fs::write(&file, [0x89, 0x50, 0x4e, 0x47, 0x00, 0x1a]).expect("a file");
+        assert!(scan_file(&file, ScanOptions::default()).is_none());
+    }
+
+    /// The distinction the NUL byte draws. Both of these are bytes a
+    /// `String` cannot hold; only one of them was ever meant to be text.
+    #[test]
+    fn invalid_utf8_without_a_nul_byte_is_still_a_text_file() {
+        let tree = TempTree::new("scan-latin1");
+        let file = tree.path().join("notes.txt");
+        std::fs::write(&file, [b'c', b'a', b'f', 0xe9]).expect("a file");
+        let report = scan_file(&file, ScanOptions::default()).expect("a report");
         assert!(report.was_skipped());
         assert_eq!(report.diagnostics[0].message, "not UTF-8 text");
-        assert_eq!(exit_code(std::slice::from_ref(&report), false), 0);
-        assert_eq!(exit_code(&[report], true), 2);
+        assert_eq!(exit_code(&[report], true), 2, "--strict still sees it");
+    }
+
+    #[test]
+    fn a_nul_byte_past_the_first_pages_is_not_sniffed() {
+        let mut bytes = vec![b'a'; BINARY_SNIFF_BYTES];
+        bytes.push(0);
+        assert!(!is_binary(&bytes));
+        assert!(is_binary(&[b'a', 0]));
     }
 
     /// Changed deliberately: a file that could not be read is reported
@@ -283,7 +329,8 @@ mod tests {
     #[test]
     fn an_unreadable_file_is_reported_and_does_not_end_the_run() {
         let tree = TempTree::new("scan-unreadable");
-        let report = scan_file(&tree.path().join("gone.js"), ScanOptions::default());
+        let report =
+            scan_file(&tree.path().join("gone.js"), ScanOptions::default()).expect("a report");
         assert!(report.was_skipped());
         assert_eq!(report.diagnostics[0].severity, "warning");
         assert_eq!(exit_code(std::slice::from_ref(&report), false), 0);

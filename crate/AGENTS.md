@@ -142,10 +142,14 @@ pixelactions and scrape-le:
   severity that does not resolve, an input that does not exist: all are
   errors with actionable messages. A typo'd `--sever` that silently did
   nothing would report a clean lint that never ran the check asked for.
-- **Refuse rather than guess.** A file that cannot be read is reported
-  as unexamined and the run exits 2 — never a clean result that quietly
-  skipped it. A scan that exhausts its backtracking budget says so
-  rather than reporting no patterns.
+- **Refuse rather than guess.** A *text* file that cannot be read is
+  reported as unexamined and `--strict` exits 2 — never a clean result
+  that quietly skipped it. A scan that exhausts its backtracking budget
+  says so rather than reporting no patterns. A **binary** file is a
+  different thing: a NUL byte in the first 8 KB means it was never a
+  text candidate, so it gets no report line and no say in the exit code,
+  and is counted on stderr instead. Calling a PNG an unexamined file
+  exits 2 on every repository with an icon in it.
 - **Refusals speak the caller's vocabulary.** An MCP caller has no
   command line; no message aimed at one mentions `--severity` or any
   other flag. A test asserts no MCP output contains `--`.

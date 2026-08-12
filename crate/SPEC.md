@@ -290,16 +290,25 @@ Exit 2 means the *question* was malformed — an unknown flag, an
 unreadable format name, a path that does not exist. It does not mean one
 file in fifty thousand was a PNG.
 
-A file that is not UTF-8 text, or that cannot be opened, is:
+**A binary file is not a file that failed to be read; it was never a text
+candidate.** A NUL byte in the first 8 KB is how ripgrep decides, and it
+is how this decides. Such a file gets **no report line at all** and does
+not reach `--strict` — otherwise the flag exits 2 on every repository
+with an icon in it, which is a flag nobody can use. It is **counted** on
+stderr (`0 findings in 40 files, 16 binary files skipped`), because the
+reader still has to learn that coverage was narrower than the tree.
+
+A file that looked like text and still could not be read — a permission
+error, or bytes that are not UTF-8 with no NUL among them — is:
 
 - named on stderr,
 - carried in the JSON report with a `skipped` diagnostic saying why,
 - and left out of the exit code.
 
-`--strict` turns any skipped file back into exit 2, for a pipeline that
-wants zero tolerance. What is never allowed is the third option: a file
-that silently vanishes from the report, which reads to whoever ran it as
-a file that was clean.
+`--strict` turns any such skipped file back into exit 2, for a pipeline
+that wants zero tolerance. What is never allowed is the third option: a
+text file that silently vanishes from the report, which reads to whoever
+ran it as a file that was clean.
 
 ## The byte-order mark
 

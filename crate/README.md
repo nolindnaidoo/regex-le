@@ -149,6 +149,13 @@ A directory is walked the way ripgrep walks one: `.gitignore` honoured,
 hidden files skipped, `--no-ignore` and `--hidden` to reach the rest. A
 file named explicitly is always read.
 
+**A binary file is skipped and counted, not reported.** A NUL byte in the
+first 8 KB is ripgrep's test and it is this one's: such a file was never
+a text candidate, so it gets no report line and no say in the exit code,
+and the stderr summary says how many there were. A file that *looked*
+like text and could not be read is named, carried in the report with a
+`skipped` diagnostic, and fails `--strict`.
+
 ### Ported as-is, including the awkward parts
 
 - **A slash is only a regex when it can be one.** After an identifier, a

@@ -185,9 +185,12 @@ fn lint_tool(arguments: &Value) -> Result<Value, String> {
     let reports: Vec<Value> = walked
         .files
         .iter()
-        .map(|target| scan::scan_file(target, options))
+        .filter_map(|target| scan::scan_file(target, options))
         .map(|report| serde_json::to_value(report).expect("a report serializes"))
         .collect();
+    // A binary file gets no report, so the count is the only place a
+    // model can learn the scan covered less than the tree.
+    let binary = walked.files.len() - reports.len();
 
     let findings: u64 = reports
         .iter()
@@ -213,7 +216,7 @@ fn lint_tool(arguments: &Value) -> Result<Value, String> {
     let count = reports.len();
     Ok(envelope(
         "regex_le_lint",
-        &json!({ "reports": reports, "findings": findings }),
+        &json!({ "reports": reports, "findings": findings, "binary": binary }),
         count,
         &diagnostics,
         false,

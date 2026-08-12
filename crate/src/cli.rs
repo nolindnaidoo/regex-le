@@ -28,8 +28,10 @@ Options:
   --severity <level>   fail at this verdict or worse: high or medium
                        (default medium)
   --all                report every pattern, not only the vulnerable ones
-  --strict             exit 2 if any file could not be read, rather than
-                       reporting it and carrying on
+  --strict             exit 2 if any text file could not be read, rather
+                       than reporting it and carrying on. Binary files
+                       are counted, never reported, and never counted
+                       here
   --stdin              read one document from stdin
   --hidden             walk hidden files and directories too
   --no-ignore          walk files that .gitignore excludes
@@ -93,14 +95,17 @@ pub(crate) fn run() -> ExitCode {
 
 fn execute(args: &[String]) -> Result<u8, String> {
     let options = parse(args)?;
-    let reports = if options.stdin {
-        vec![scan_stdin(options.scan)?]
+    let (reports, binary) = if options.stdin {
+        (vec![scan_stdin(options.scan)?], 0)
     } else {
-        walk::collect(&options.inputs, &options.walk)?
+        let walked = walk::collect(&options.inputs, &options.walk)?;
+        let reports: Vec<FileReport> = walked
             .files
             .iter()
-            .map(|target| scan::scan_file(target, options.scan))
-            .collect()
+            .filter_map(|target| scan::scan_file(target, options.scan))
+            .collect();
+        let binary = walked.files.len() - reports.len();
+        (reports, binary)
     };
 
     let mut stdout = std::io::stdout().lock();
@@ -111,7 +116,7 @@ fn execute(args: &[String]) -> Result<u8, String> {
     }
     drop(stdout);
 
-    summarise(&reports);
+    summarise(&reports, binary);
     Ok(scan::exit_code(&reports, options.strict))
 }
 
@@ -192,8 +197,10 @@ fn threshold(value: &str) -> Result<Severity, String> {
     }
 }
 
-/// The human half. Every line restates something already in the JSON.
-fn summarise(reports: &[FileReport]) {
+/// The human half. Every line restates something already in the JSON —
+/// except the binary count, which has no report line by design and is
+/// the only place a reader learns the walk covered less than the tree.
+fn summarise(reports: &[FileReport], binary: usize) {
     let mut stderr = std::io::stderr().lock();
     let mut findings = 0;
 
@@ -207,9 +214,17 @@ fn summarise(reports: &[FileReport]) {
         findings += report.summary.findings;
     }
 
+    let binary_note = if binary == 0 {
+        String::new()
+    } else {
+        format!(
+            ", {} skipped",
+            plural(binary, "binary file", "binary files")
+        )
+    };
     let _ = writeln!(
         stderr,
-        "{} in {}",
+        "{} in {}{binary_note}",
         plural(findings, "finding", "findings"),
         plural(reports.len(), "file", "files")
     );

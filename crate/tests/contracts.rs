@@ -132,6 +132,43 @@ fn an_unreadable_input_exits_two() {
     assert_eq!(run(&["/no/such/place-xyz"]).code, 2);
 }
 
+/// A PNG is not a text file that failed to be read — it was never a text
+/// candidate. Reporting it as skipped made `--strict` exit 2 on every
+/// repository with an icon in it, which is a flag nobody can use.
+#[test]
+fn a_binary_file_is_counted_and_leaves_strict_alone() {
+    let tree = Tree::new("binary");
+    tree.write("src/a.js", "const ok = /[a-z]+/;\n");
+    std::fs::write(
+        tree.path().join("logo.png"),
+        [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x00],
+    )
+    .expect("a file");
+
+    let run = run(&["--strict", &tree.path().to_string_lossy()]);
+    assert_eq!(run.code, 0, "{}", run.stderr);
+    assert_eq!(reports(&run).len(), 1, "the PNG gets no report line");
+    assert!(!run.stdout.contains("logo.png"), "{}", run.stdout);
+    // Counted, not silent: the reader still learns coverage was
+    // narrower than the tree.
+    assert!(
+        run.stderr.contains("1 binary file skipped"),
+        "{}",
+        run.stderr
+    );
+}
+
+/// The distinction the NUL byte draws: this one looked like text, could
+/// not be read, and still fails `--strict`.
+#[test]
+fn a_text_file_that_cannot_be_read_still_fails_strict() {
+    let tree = Tree::new("latin1");
+    std::fs::write(tree.path().join("notes.txt"), [b'c', b'a', b'f', 0xe9]).expect("a file");
+    let run = run(&["--strict", &tree.path().to_string_lossy()]);
+    assert_eq!(run.code, 2, "{}", run.stderr);
+    assert!(run.stderr.contains("not UTF-8 text"), "{}", run.stderr);
+}
+
 #[test]
 fn an_unknown_flag_exits_two_and_names_itself() {
     let tree = source_tree("badflag");
