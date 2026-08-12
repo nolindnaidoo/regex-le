@@ -46,8 +46,12 @@ struct Group {
 
 pub(crate) fn detect_redos(pattern: &str, flags: &str) -> ReDoSResult {
     // An invalid pattern is a syntax error, not a ReDoS finding. Saying
-    // otherwise would put a security verdict on a typo.
-    if !heuristics::compiles(pattern, flags) {
+    // otherwise would put a security verdict on a typo. The judge is
+    // `is_well_formed` rather than `compiles` because this scan reads
+    // patterns from every language the extractor finds one in, and
+    // `regress` speaks only JavaScript: a Python named group would
+    // otherwise come back as a syntax error on working code.
+    if !heuristics::is_well_formed(pattern, flags) {
         return ReDoSResult {
             detected: false,
             severity: Severity::Low,

@@ -46,7 +46,7 @@ export function registerTestCommand(
 			const text = document.getText();
 
 			// Extract regex patterns from the file
-			const extractedPatterns = extractRegexPatterns(text);
+			const extractedPatterns = extractRegexPatterns(text, document.languageId);
 
 			if (extractedPatterns.length === 0) {
 				deps.notifier.showInfo(

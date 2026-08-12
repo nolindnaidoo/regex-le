@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { compiles, isRegexContext, isValidFlagString } from './heuristics';
+import {
+	compiles,
+	isRegexContext,
+	isValidFlagString,
+	isWellFormed,
+	javaScriptEquivalent,
+} from './heuristics';
 
 describe('isRegexContext', () => {
 	const cases: ReadonlyArray<[string, boolean, string]> = [
@@ -51,5 +57,57 @@ describe('compiles', () => {
 		expect(compiles('\\d+', 'g')).toBe(true);
 		expect(compiles('[unclosed', '')).toBe(false);
 		expect(compiles('a', 'uv')).toBe(false); // u+v are mutually exclusive
+	});
+});
+
+describe('isWellFormed', () => {
+	// The spellings JavaScript refuses and their own languages accept.
+	// Judging these as syntax errors put `Pattern is invalid` on working
+	// Python, Go and PHP.
+	const foreign = [
+		'(?P<year>\\d{4})',
+		'(?P<a>x)(?P=a)',
+		'(?>a+)',
+		'a++',
+		'a{2,}+',
+		'(?i)abc',
+		'(?im-sx)abc',
+		"(?'name'a)",
+		'(?#a comment)b',
+	];
+
+	for (const pattern of foreign) {
+		it(`${pattern} is another language's spelling, not a syntax error`, () => {
+			expect(compiles(pattern, '')).toBe(false);
+			expect(isWellFormed(pattern, '')).toBe(true);
+		});
+	}
+
+	// Widening the judge must not turn a typo into a pattern.
+	it('still refuses a real syntax error', () => {
+		for (const pattern of ['(', 'a{2,1}', '[z-a]', '(?P<a>x', '(?>a+']) {
+			expect(isWellFormed(pattern, '')).toBe(false);
+		}
+		expect(isWellFormed('x', 'zz')).toBe(false);
+	});
+});
+
+describe('javaScriptEquivalent', () => {
+	// The rewrite answers a question; it never reaches a report. These
+	// pin what it produces so a change to it is visible.
+	it('translates rather than repairs', () => {
+		expect(javaScriptEquivalent('(?P<y>\\d+)')).toBe('(?<y>\\d+)');
+		expect(javaScriptEquivalent('(?P<a>x)(?P=a)')).toBe('(?<a>x)\\k<a>');
+		expect(javaScriptEquivalent('(?>a+)b')).toBe('(?:a+)b');
+		expect(javaScriptEquivalent('(?i)abc')).toBe('abc');
+		expect(javaScriptEquivalent('(?s:a.b)')).toBe('(?:a.b)');
+		expect(javaScriptEquivalent('a++b*+')).toBe('a+b*');
+		expect(javaScriptEquivalent('(?#note)a')).toBe('a');
+		expect(javaScriptEquivalent("(?'n'a)")).toBe('(?<n>a)');
+	});
+
+	it('leaves alone what JavaScript already spells the same way', () => {
+		const same = '[a+]\\+(?<n>x)(?=y)(?<=z)(?!q)';
+		expect(javaScriptEquivalent(same)).toBe(same);
 	});
 });

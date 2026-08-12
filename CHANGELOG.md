@@ -13,6 +13,32 @@ separate product on its own cadence and keeps its own
 
 ### Added
 
+- **Seven more languages.** `extractRegexPatterns` now finds patterns at
+  the call sites Python, Rust, Go, Java, Ruby, PHP and C# write them at,
+  alongside the JavaScript and TypeScript literals and `RegExp`
+  constructors it read before. A `.py`, `.rs` or `.go` file holding
+  `(a+)+` came back with nothing; each is now a high-severity finding.
+- `extractRegexPatterns(text, languageId?)` takes the document's
+  language. The `Extract`, `Test` and `Validate` commands pass the
+  editor's; `extract_patterns` over MCP takes an optional `format` or
+  `filename`, and a name it does not recognise comes back as a warning
+  diagnostic rather than being silently ignored.
+- MCP `extract_patterns` now reports `redos.vulnerableGroups`, which the
+  Rust server already did.
+
+### Changed
+
+- **The language selects which spellings are looked for**, and the
+  slash-versus-division walk runs only where a bare `/…/` is legal —
+  JavaScript, TypeScript, Ruby. A Python document no longer reports
+  `#!/usr/bin/env python` as a pattern. A document whose language is
+  absent or unrecognised is scanned exactly as before, for everything.
+- **Another language's spelling is no longer a syntax error.**
+  `re.compile(r'(?P<year>\d{4})')` is ordinary Python that JavaScript
+  refuses; `detectReDoS` used to answer `Pattern is invalid` for it.
+  Validity is now judged against a JavaScript rendering of the pattern,
+  while the pattern reported and scanned stays the source as written.
+
 - A **Rust CLI and MCP server**, in [`crate/`](crate/README.md), published
   to crates.io as [`regex-le`](https://crates.io/crates/regex-le). It runs
   the same pattern detection and ReDoS screen over a whole tree, with exit

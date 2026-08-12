@@ -7,6 +7,47 @@ this repository release on their own cadence.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- **Seven more languages.** Patterns are now found at the call sites
+  Python, Rust, Go, Java, Ruby, PHP and C# write them at, alongside the
+  JavaScript and TypeScript literals and `RegExp` constructors that were
+  all this read before. A `.py`, `.rs` or `.go` file holding `(a+)+`
+  came back clean; each is now a `high` finding, and the corpus carries
+  one document per language so neither frontend can lose them again.
+- **`extract_patterns` takes an optional `format` or `filename`** on
+  both MCP servers, resolved through a shared alias table
+  (`fixtures/aliases.json`) so a name one server reads and the other
+  ignores cannot ship. Naming nothing still scans for every spelling; a
+  name neither resolves comes back as a `warning` diagnostic rather than
+  being silently ignored.
+- The extension's MCP `extract_patterns` now carries
+  `redos.vulnerableGroups`, which this server already reported. The two
+  were free to disagree because no shared case had a vulnerable pattern
+  in it; there are nine now.
+
+### Changed
+
+- **A document's language selects which spellings are looked for**, and
+  the slash-versus-division walk runs only where a bare `/…/` is legal —
+  JavaScript, TypeScript, Ruby. A Python or Go file no longer reports
+  `#!/usr/bin/env python` and `/var/log/app.log` as patterns, so the
+  pattern count on a Python-heavy tree drops sharply while the finding
+  count rises. A file whose language nothing recognises is scanned
+  exactly as before.
+- **Validity is judged in the pattern's own grammar.**
+  `re.compile(r"(?P<year>\d{4})")` is ordinary Python and a syntax error
+  to `regress`; it used to be dropped, and calling `detect_redos` on it
+  answered `Pattern is invalid`. Validity is now asked of a JavaScript
+  *rendering* of the pattern — `(?P<` → `(?<`, `(?>` → `(?:`, an inline
+  mode switch dropped, a possessive quantifier's `+` dropped — and only
+  what fails that is a syntax error. Nothing rendered reaches a report:
+  the pattern reported, and the pattern the ReDoS scan reads, is the
+  source as written. `(?P<word>\w+)+@` is reported verbatim and comes
+  back `high`.
+
 ## [0.1.0] - 2026-08-09
 
 First release. The extension's lint engine, ported and pinned against a

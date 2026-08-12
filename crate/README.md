@@ -31,9 +31,10 @@
 A regex that backtracks catastrophically is a denial of service with a
 code review that approved it. `(\w+)+@` looks like an email check and
 hangs a request thread on forty characters of input. regex-le finds
-every pattern in a tree — literals and `RegExp` constructors, not the
-division signs and URLs a grep would hand you — and tells you which ones
-have that shape.
+every pattern in a tree — JavaScript and TypeScript literals and
+`RegExp` constructors, and the call sites Python, Rust, Go, Java, Ruby,
+PHP and C# write a pattern at, not the division signs and URLs a grep
+would hand you — and tells you which ones have that shape.
 
 It never runs them. The verdict reads the pattern *text*, so scanning a
 repository is a cheap deterministic CI step with no engine, no timeout
@@ -124,8 +125,25 @@ against.
 
 ## What it reads
 
-Every text file in the tree. A regex literal is a regex literal wherever
-it appears, so there is no format filter and no language list.
+Every text file in the tree. Nothing is excluded for having the wrong
+extension: the file name only chooses which spellings to look for.
+
+| language | what it looks for |
+|---|---|
+| JavaScript, TypeScript | `/…/flags` and `new RegExp(…)` |
+| Python | `re.compile`, `re.match`, `re.search`, `re.sub`, `re.split`, `re.findall` and friends |
+| Rust | `Regex::new`, `RegexBuilder::new` |
+| Go | `regexp.MustCompile`, `regexp.Compile` |
+| Java | `Pattern.compile`, `Pattern.matches` |
+| Ruby | `/…/` and `Regexp.new` |
+| PHP | `preg_match`, `preg_replace`, `preg_split`, `preg_match_all` and friends |
+| C# | `new Regex(…)`, `Regex.Match`, `Regex.IsMatch`, `Regex.Replace` |
+| anything else | every spelling above |
+
+A name nothing recognises is not a refusal — it means all of them, which
+is what this did before it knew languages existed. Naming the language
+buys precision: a `.py` file is not scanned for bare `/…/`, so
+`#!/usr/bin/env python` stops reading as a pattern.
 
 A directory is walked the way ripgrep walks one: `.gitignore` honoured,
 hidden files skipped, `--no-ignore` and `--hidden` to reach the rest. A
@@ -139,6 +157,14 @@ file named explicitly is always read.
   `return`, `case`, `yield`, `throw` and the rest — is the extension's
   and is ported verbatim, because a second implementation guessing at it
   is how two frontends start disagreeing about what is even a pattern.
+  It is asked only where a bare `/…/` is legal.
+- **A call form reports no flags.** Every language but JavaScript sets
+  them with constants, builder methods or an inline `(?i)`, not a string
+  argument, and the verdict does not depend on flags.
+- **Another language's spelling is not a syntax error.**
+  `re.compile(r"(?P<word>\w+)+@")` is ordinary Python that a JavaScript
+  parser refuses. It is reported as written, and still comes back
+  `high`.
 - **A pattern-and-flags pair is reported once**, at its first
   occurrence. The output is a pattern list, not an occurrence list,
   which is why a file using the same validation regex ten times reports

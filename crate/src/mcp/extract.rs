@@ -12,6 +12,7 @@
 use serde_json::{Value, json};
 
 use crate::detect::extract::extract_patterns;
+use crate::detect::format::{SUPPORTED_FORMATS, resolve_language};
 
 const DEFAULT_MAX_RESULTS: usize = 500;
 const MAX_MAX_RESULTS: usize = 5000;
@@ -19,14 +20,31 @@ const MAX_MAX_RESULTS: usize = 5000;
 pub(crate) fn definition() -> Value {
     json!({
         "name": "extract_patterns",
-        "description": "Find every regular expression in a document — literals and RegExp \
-                        constructors — with 1-based line and column and a ReDoS verdict for \
-                        each. Nothing is executed: the verdict comes from the shape of the \
-                        pattern text. It flags dangerous shapes and cannot prove a pattern safe.",
+        "description": "Find every regular expression in a document — JavaScript and \
+                        TypeScript literals and RegExp constructors, and the call sites \
+                        Python, Rust, Go, Java, Ruby, PHP and C# write a pattern at — with \
+                        1-based line and column and a ReDoS verdict for each. Nothing is \
+                        executed: the verdict comes from the shape of the pattern text. It \
+                        flags dangerous shapes and cannot prove a pattern safe.",
         "inputSchema": {
             "type": "object",
             "properties": {
                 "content": { "type": "string", "description": "The document text to scan." },
+                "format": {
+                    "type": "string",
+                    "description": format!(
+                        "Language of the document, so only its own spellings are looked for: \
+                         {}. Common extensions and aliases are accepted. Optional — with no \
+                         language every spelling is looked for, which finds more and \
+                         mistakes a path for a pattern more often.",
+                        SUPPORTED_FORMATS.join(", ")
+                    ),
+                },
+                "filename": {
+                    "type": "string",
+                    "description": "Filename used to infer the language when `format` is \
+                                    absent, e.g. \"validate.py\".",
+                },
                 "maxResults": {
                     "type": "integer",
                     "minimum": 1,
@@ -50,20 +68,39 @@ pub(crate) fn run(arguments: &Value) -> Result<Value, String> {
         .and_then(Value::as_str)
         .ok_or_else(|| "content is required and must be a string".to_string())?;
     let max_results = read_max_results(arguments)?;
+    let format = arguments.get("format").and_then(Value::as_str);
+    let filename = arguments.get("filename").and_then(Value::as_str);
+    let language = resolve_language(format, filename);
 
-    let (patterns, diagnostics) = match extract_patterns(content) {
-        Ok(patterns) => (patterns, Vec::new()),
+    // Named rather than silently ignored: a caller who asked for Kotlin
+    // and got JavaScript's answers should be told which question was
+    // actually run. It is a warning, not an error — the scan happened.
+    let mut diagnostics: Vec<Value> = Vec::new();
+    if language.is_none()
+        && let Some(named) = format.or(filename)
+    {
+        diagnostics.push(json!({
+            "severity": "warning",
+            "code": "unknown-format",
+            "message": format!(
+                "no regex spellings are known for {named}, so every spelling was looked for"
+            ),
+        }));
+    }
+
+    let patterns = match extract_patterns(content, language) {
+        Ok(patterns) => patterns,
         // A refusal, not an empty document: reporting no patterns when
         // the scan gave up would have a model conclude the file is
         // clean.
-        Err(message) => (
-            Vec::new(),
-            vec![json!({
+        Err(message) => {
+            diagnostics.push(json!({
                 "severity": "error",
                 "code": "incomplete",
                 "message": message,
-            })],
-        ),
+            }));
+            Vec::new()
+        }
     };
 
     let mut values: Vec<Value> = patterns

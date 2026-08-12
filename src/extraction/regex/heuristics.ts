@@ -67,6 +67,184 @@ export function compiles(pattern: string, flags: string): boolean {
 }
 
 /**
+ * True when the pattern is a well-formed regular expression in *some*
+ * grammar this extractor reads.
+ *
+ * `compiles` answers for JavaScript, which is the right judge of a
+ * JavaScript literal and the wrong one for the rest: JavaScript is the
+ * only engine here, so `re.compile(r"(?P<year>\d+)")` — ordinary
+ * Python — would come back a syntax error and be reported as
+ * `Pattern is invalid`, a verdict on working code.
+ */
+export function isWellFormed(pattern: string, flags: string): boolean {
+	return (
+		compiles(pattern, flags) || compiles(javaScriptEquivalent(pattern), flags)
+	);
+}
+
+/** PCRE-family flag letters, as an inline mode switch spells them. */
+const INLINE_FLAGS = 'imsxuUXAJn';
+
+/**
+ * The non-JavaScript spellings this extractor reads, rendered as the
+ * JavaScript an engine can answer for.
+ *
+ * **Nothing here reaches a report.** It exists so the validity question
+ * has an answer for a pattern written in another language; the pattern
+ * text that is reported, and that the ReDoS scan reads, is always the
+ * source exactly as written. That is why dropping a possessive `+` is
+ * safe: `(a++)+` still reaches the scan as `(a++)+` and is still
+ * flagged, which is the conservative answer a tool that cannot prove a
+ * pattern safe should give.
+ */
+export function javaScriptEquivalent(pattern: string): string {
+	const characters = Array.from(pattern);
+	const out: string[] = [];
+	let inClass = false;
+	let afterQuantifier = false;
+	let i = 0;
+
+	while (i < characters.length) {
+		const ch = characters[i] ?? '';
+		if (ch === '\\') {
+			out.push(ch, characters[i + 1] ?? '');
+			afterQuantifier = false;
+			i += 2;
+			continue;
+		}
+		if (inClass) {
+			inClass = ch !== ']';
+			out.push(ch);
+			i++;
+			continue;
+		}
+		if (ch === '(') {
+			const [rendered, width] = rewriteGroupPrefix(characters, i);
+			out.push(rendered);
+			afterQuantifier = false;
+			i += width;
+			continue;
+		}
+		// A possessive quantifier is a `+` on another quantifier —
+		// `a++`, `a{2,}+` — which JavaScript spells with no `+` at all.
+		if (ch === '+' && afterQuantifier) {
+			i++;
+			continue;
+		}
+		inClass = ch === '[';
+		afterQuantifier = ch === '*' || ch === '+' || ch === '?' || ch === '}';
+		out.push(ch);
+		i++;
+	}
+	return out.join('');
+}
+
+/**
+ * Rewrite a group opener JavaScript does not spell the same way,
+ * returning the rendering and how many characters it consumed.
+ */
+function rewriteGroupPrefix(
+	characters: readonly string[],
+	index: number,
+): readonly [string, number] {
+	// A PCRE comment carries no pattern at all.
+	if (startsWith(characters, index, '(?#')) {
+		const end = find(characters, index, ')');
+		return ['', (end === -1 ? characters.length : end + 1) - index];
+	}
+	if (startsWith(characters, index, '(?P<')) {
+		return ['(?<', 4];
+	}
+	if (startsWith(characters, index, '(?P=')) {
+		const end = find(characters, index + 4, ')');
+		if (end !== -1) {
+			return [
+				`\\k<${characters.slice(index + 4, end).join('')}>`,
+				end + 1 - index,
+			];
+		}
+	}
+	if (startsWith(characters, index, "(?'")) {
+		const end = find(characters, index + 3, "'");
+		if (end !== -1) {
+			return [
+				`(?<${characters.slice(index + 3, end).join('')}>`,
+				end + 1 - index,
+			];
+		}
+	}
+	// An atomic group is a non-capturing group that refuses to give
+	// characters back. JavaScript has no such group, and the shape the
+	// ReDoS scan reads is the same either way.
+	if (startsWith(characters, index, '(?>')) {
+		return ['(?:', 3];
+	}
+	const flags = inlineFlags(characters, index);
+	if (flags === undefined) {
+		return ['(', 1];
+	}
+	return [flags[1] === ':' ? '(?:' : '', flags[0]];
+}
+
+/**
+ * `(?i)`, `(?im-sx)`, `(?s:` — a mode switch rather than a pattern. Go
+ * and Rust write one at the head of nearly every case-insensitive
+ * pattern they have.
+ */
+function inlineFlags(
+	characters: readonly string[],
+	index: number,
+): readonly [number, string] | undefined {
+	if (!startsWith(characters, index, '(?')) {
+		return undefined;
+	}
+	let at = index + 2;
+	while (
+		at < characters.length &&
+		INLINE_FLAGS.includes(characters[at] ?? '')
+	) {
+		at++;
+	}
+	if (characters[at] === '-') {
+		at++;
+		const negated = at;
+		while (
+			at < characters.length &&
+			INLINE_FLAGS.includes(characters[at] ?? '')
+		) {
+			at++;
+		}
+		if (at === negated) {
+			return undefined;
+		}
+	}
+	const terminator = characters[at];
+	if (terminator !== ')' && terminator !== ':') {
+		return undefined;
+	}
+	return [at + 1 - index, terminator];
+}
+
+function startsWith(
+	characters: readonly string[],
+	index: number,
+	prefix: string,
+): boolean {
+	return Array.from(prefix).every(
+		(expected, offset) => characters[index + offset] === expected,
+	);
+}
+
+function find(
+	characters: readonly string[],
+	from: number,
+	needle: string,
+): number {
+	const at = characters.slice(from).indexOf(needle);
+	return at === -1 ? -1 : from + at;
+}
+
+/**
  * Decide whether a `/` at `offset` can start a regex literal, based on
  * what precedes it. Mirrors how JS engines disambiguate regex from
  * division: a regex is only legal where an expression is expected.

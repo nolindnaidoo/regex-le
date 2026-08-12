@@ -26,8 +26,10 @@ import {
 	compiles,
 	isRegexContext,
 	isValidFlagString,
+	isWellFormed,
 } from '../src/extraction/regex/heuristics';
 import { detectReDoS } from '../src/extraction/regex/redos';
+import { ALIASES, resolveFormat } from '../src/mcp/fileType';
 import { TOOLS } from '../src/mcp/tools';
 
 const ROOT = join(import.meta.dir, '..');
@@ -80,8 +82,14 @@ function checkDocuments(): void {
 	}>;
 
 	for (const testCase of corpus.documents) {
-		const actual = extractRegexPatterns(readDocument(testCase.file)).map(
-			(pattern) => ({
+		// The language comes off the file name, exactly as it does for a
+		// walked file on the crate side — so a case cannot pin an answer
+		// neither frontend would produce.
+		const language = resolveFormat(undefined, testCase.file);
+		const actual = extractRegexPatterns(
+			readDocument(testCase.file),
+			language,
+		).map((pattern) => ({
 				pattern: pattern.pattern,
 				flags: pattern.flags,
 				line: pattern.line,
@@ -126,6 +134,11 @@ function checkHeuristics(): void {
 				flags: string;
 				expected: boolean;
 			}>;
+			isWellFormed: ReadonlyArray<{
+				pattern: string;
+				flags: string;
+				expected: boolean;
+			}>;
 			isRegexContext: ReadonlyArray<{
 				text: string;
 				offset: number;
@@ -147,6 +160,14 @@ function checkHeuristics(): void {
 		if (actual !== testCase.expected) {
 			fail(
 				`compiles ${JSON.stringify(testCase.pattern)} /${testCase.flags}: expected ${testCase.expected}, got ${actual}`,
+			);
+		}
+	}
+	for (const testCase of corpus.heuristics.isWellFormed) {
+		const actual = isWellFormed(testCase.pattern, testCase.flags);
+		if (actual !== testCase.expected) {
+			fail(
+				`isWellFormed ${JSON.stringify(testCase.pattern)} /${testCase.flags}: expected ${testCase.expected}, got ${actual}`,
 			);
 		}
 	}
@@ -213,9 +234,35 @@ async function checkMcpExtractPatterns(): Promise<void> {
 	}
 }
 
+/**
+ * Both MCP servers offer the same `extract_patterns`, so a language name one
+ * side reads and the other ignores makes them two different tools. The crate's
+ * `detect/format.rs` holds the other side of this comparison.
+ */
+function checkAliases(): void {
+	const shared = readCorpus('aliases.json') as Readonly<Record<string, string>>;
+	const mine = Object.fromEntries(
+		Object.entries(ALIASES).sort(([a], [b]) => (a < b ? -1 : 1)),
+	);
+	const theirs = Object.fromEntries(
+		Object.entries(shared).sort(([a], [b]) => (a < b ? -1 : 1)),
+	);
+	if (!deepEqual(mine, theirs)) {
+		fail(
+			`aliases:\n  expected: ${JSON.stringify(theirs)}\n  got:      ${JSON.stringify(mine)}`,
+		);
+	}
+	for (const [from, to] of Object.entries(ALIASES)) {
+		if (resolveFormat(to, undefined) === undefined) {
+			fail(`alias ${from} lands on ${to}, which no extractor form knows`);
+		}
+	}
+}
+
 checkDocuments();
 checkRedos();
 checkHeuristics();
+checkAliases();
 await checkMcpExtractPatterns();
 
 if (failures.length > 0) {

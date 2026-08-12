@@ -7,12 +7,13 @@
 use serde::Deserialize;
 
 use super::extract::{Pattern, extract_patterns};
+use super::format::resolve_language;
 use super::heuristics;
 use super::redos::{Severity, detect_redos};
 
 const EXTRACTION: &str = include_str!("../../fixtures/extraction.json");
 
-const DOCUMENTS: [(&str, &str); 4] = [
+const DOCUMENTS: [(&str, &str); 13] = [
     ("log.txt", include_str!("../../fixtures/documents/log.txt")),
     (
         "multiline.js",
@@ -26,6 +27,39 @@ const DOCUMENTS: [(&str, &str); 4] = [
         "patterns.ts",
         include_str!("../../fixtures/documents/patterns.ts"),
     ),
+    (
+        "patterns.py",
+        include_str!("../../fixtures/documents/patterns.py"),
+    ),
+    (
+        "patterns.rs",
+        include_str!("../../fixtures/documents/patterns.rs"),
+    ),
+    (
+        "patterns.go",
+        include_str!("../../fixtures/documents/patterns.go"),
+    ),
+    (
+        "patterns.java",
+        include_str!("../../fixtures/documents/patterns.java"),
+    ),
+    (
+        "patterns.rb",
+        include_str!("../../fixtures/documents/patterns.rb"),
+    ),
+    (
+        "patterns.php",
+        include_str!("../../fixtures/documents/patterns.php"),
+    ),
+    (
+        "patterns.cs",
+        include_str!("../../fixtures/documents/patterns.cs"),
+    ),
+    (
+        "division.py",
+        include_str!("../../fixtures/documents/division.py"),
+    ),
+    ("pcre.py", include_str!("../../fixtures/documents/pcre.py")),
 ];
 
 pub(crate) fn document(name: &str) -> &'static str {
@@ -84,6 +118,8 @@ struct Heuristics {
     #[serde(rename = "isValidFlagString")]
     is_valid_flag_string: Vec<FlagCase>,
     compiles: Vec<CompileCase>,
+    #[serde(rename = "isWellFormed")]
+    is_well_formed: Vec<CompileCase>,
     #[serde(rename = "isRegexContext")]
     is_regex_context: Vec<ContextCase>,
 }
@@ -134,7 +170,11 @@ fn every_document_case_reproduces() {
     assert!(!corpus.documents.is_empty(), "the corpus is empty");
 
     for case in corpus.documents {
-        let actual: Vec<ExpectedPattern> = extract_patterns(document(&case.file))
+        // The language comes off the file name, exactly as it does for
+        // a walked file and for the extension's parity script — so a
+        // case cannot pin an answer neither frontend would produce.
+        let language = resolve_language(None, Some(&case.file));
+        let actual: Vec<ExpectedPattern> = extract_patterns(document(&case.file), language)
             .expect("the patterns hold")
             .iter()
             .map(as_expected)
@@ -177,6 +217,15 @@ fn every_heuristics_case_reproduces() {
             heuristics::compiles(&case.pattern, &case.flags),
             case.expected,
             "compiles {:?} /{}",
+            case.pattern,
+            case.flags
+        );
+    }
+    for case in corpus.heuristics.is_well_formed {
+        assert_eq!(
+            heuristics::is_well_formed(&case.pattern, &case.flags),
+            case.expected,
+            "isWellFormed {:?} /{}",
             case.pattern,
             case.flags
         );

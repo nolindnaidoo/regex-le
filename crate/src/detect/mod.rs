@@ -8,6 +8,7 @@
 //! semantics — is deliberately absent; see SPEC.md.
 
 pub(crate) mod extract;
+pub(crate) mod format;
 pub(crate) mod heuristics;
 pub(crate) mod redos;
 

@@ -49,7 +49,7 @@ The same engine runs as an [MCP](https://modelcontextprotocol.io) server, so an 
 | **Cursor, Windsurf, anything else** | point it at `npx regex-le-mcp` |
 
 ```
-extract_patterns(content, maxResults?)
+extract_patterns(content, format?, filename?, maxResults?)
 ```
 
 Returns every pattern with its flags, 1-based position and a **ReDoS verdict**, so "are any of the regexes in this file dangerous?" is one call rather than two.
@@ -100,21 +100,31 @@ That prints the tool list and exits — if you see `extract_patterns`, the serve
 
 ## What gets extracted
 
-Extraction scans the whole document (any file type), so constructors split across lines are found too:
+Extraction scans the whole document, so constructors split across lines are found too. The document's language chooses which spellings to look for:
 
-| Form | Example |
-|---|---|
-| Literal | `/[a-z]+/gi` |
-| Constructor | `new RegExp('\\d{4}-\\d{2}', 'g')` — including multiline |
-| Bare constructor call | `RegExp("x\|y", "i")` |
+| Language | Form | Example |
+|---|---|---|
+| JavaScript, TypeScript, Ruby | Literal | `/[a-z]+/gi` |
+| JavaScript, TypeScript | Constructor | `new RegExp('\\d{4}-\\d{2}', 'g')` — including multiline |
+| JavaScript, TypeScript | Bare constructor call | `RegExp("x\|y", "i")` |
+| Python | `re.compile` and friends | `re.compile(r'(a+)+')` |
+| Rust | `Regex::new`, `RegexBuilder::new` | `Regex::new(r"(a+)+")` |
+| Go | `regexp.MustCompile`, `regexp.Compile` | ``regexp.MustCompile(`(a+)+`)`` |
+| Java | `Pattern.compile`, `Pattern.matches` | `Pattern.compile("(a+)+")` |
+| Ruby | `Regexp.new` | `Regexp.new('(a+)+')` |
+| PHP | `preg_match` and friends | `preg_match('/(a+)+/i', $s)` |
+| C# | `new Regex(…)`, `Regex.IsMatch` and friends | `new Regex(@"(a+)+")` |
+
+A language nothing recognises is not a refusal — every spelling above is looked for. Naming it buys precision: a Python file is not scanned for bare `/…/`, so `#!/usr/bin/env python` stops reading as a pattern.
 
 What is deliberately **not** extracted:
 
-- Division, dates, and filesystem paths (`a / b`, `10/29/2025`, `/usr/local/bin`): a `/` preceded by an identifier, number, `)`, `]`, `.`, or another `/` is not treated as a regex — after keywords like `return`, it is.
-- Candidates that do not compile as JavaScript regexes, or with invalid/duplicate flags.
+- Division, dates, and filesystem paths (`a / b`, `10/29/2025`, `/usr/local/bin`): a `/` preceded by an identifier, number, `)`, `]`, `.`, or another `/` is not treated as a regex — after keywords like `return`, it is. That question is only asked where a bare `/…/` is legal.
+- Candidates that are not a well-formed regular expression in any of these languages, or with invalid/duplicate flags. Another language's spelling is not a syntax error: `re.compile(r'(?P<word>\w+)+@')` is reported as written, and still flagged.
 - Constructor calls whose pattern argument is a variable or template literal (only literal string arguments are visible to a text scanner).
+- Flags, on anything but a JavaScript literal or constructor: every other language sets them with constants, builder methods or an inline `(?i)` rather than a string argument.
 
-Duplicate pattern+flags pairs are listed once. This is lexing by heuristic, not a full JS parser: a slash inside a string or comment can still be picked up when its context looks expression-like.
+Duplicate pattern+flags pairs are listed once. This is lexing by heuristic, not a parser for nine languages: a slash inside a string or comment can still be picked up when its context looks expression-like.
 
 ## ReDoS screening
 
@@ -246,12 +256,12 @@ a build only tells you how busy the runner was.
 <!-- coverage:start -->
 | Metric | Coverage |
 | --- | --- |
-| Statements | 90.66% |
-| Branches | 75.89% |
-| Functions | 97.36% |
-| Lines | 91.16% |
+| Statements | 91.27% |
+| Branches | 77.68% |
+| Functions | 97.74% |
+| Lines | 91.68% |
 
-133 test cases across 12 files, plus an integration suite that runs
+153 test cases across 14 files, plus an integration suite that runs
 in a real VS Code extension host and an end-to-end test that installs the
 built `.vsix` into a clean profile.
 

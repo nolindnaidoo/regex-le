@@ -14,6 +14,8 @@
  * it does not recognize may still backtrack badly on adversarial input.
  */
 
+import { isWellFormed } from './heuristics';
+
 export interface ReDoSResult {
 	readonly detected: boolean;
 	readonly severity: 'low' | 'medium' | 'high';
@@ -30,9 +32,11 @@ interface Group {
  * Check if a regex pattern is vulnerable to ReDoS
  */
 export function detectReDoS(pattern: string, flags: string): ReDoSResult {
-	try {
-		new RegExp(pattern, flags);
-	} catch {
+	// The judge is `isWellFormed` rather than `new RegExp` because this
+	// scan reads patterns from every language the extractor finds one
+	// in, and JavaScript is the only engine here: a Python named group
+	// would otherwise come back as a syntax error on working code.
+	if (!isWellFormed(pattern, flags)) {
 		// Invalid regex - not a ReDoS issue, but a syntax error
 		return Object.freeze({
 			detected: false,

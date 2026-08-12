@@ -72,14 +72,46 @@ floor per module**.
 
 ### What counts as a regex
 
-Two shapes, matching the extension:
+Matching the extension, per language:
 
 - **Literals** — `/pattern/flags`, where the pattern contains no
   unescaped slash or newline, and the flags are from `dgimsuvy`.
+  JavaScript, TypeScript and Ruby; nothing else has the shape.
 - **Constructors** — `new RegExp('…', '…')` and `RegExp("…")`, with
   escaped quotes handled in both arguments and whitespace allowed
   wherever a JavaScript parser allows it, so a constructor split across
-  lines is found.
+  lines is found. JavaScript and TypeScript.
+- **Call sites** — the place seven other languages write a pattern:
+
+  | language | forms |
+  |---|---|
+  | Python | `re.compile/match/fullmatch/search/sub/subn/split/findall/finditer`, with `r"…"`, `r'…'`, `"""…"""`, `'''…'''` and plain quotes |
+  | Rust | `Regex::new`, `RegexBuilder::new`, raw strings with any number of hashes |
+  | Go | `regexp.MustCompile`, `regexp.Compile`, and their POSIX variants, backquoted or quoted |
+  | Java | `Pattern.compile`, `Pattern.matches` |
+  | Ruby | `Regexp.new`, `Regexp.compile` |
+  | PHP | `preg_match`, `preg_match_all`, `preg_replace`, `preg_replace_callback`, `preg_split`, `preg_grep` |
+  | C# | `new Regex(…)`, `Regex.Match/Matches/IsMatch/Replace/Split/Count`, verbatim strings |
+
+**The language is a hint, never a gate.** It is resolved from a format
+name or a filename — `py`, `.py`, `validate.py` all land on Python — and
+when nothing recognises it **every** form is scanned for. That is close
+to what this did when it knew only JavaScript: a caller who cannot name
+the language gets answers rather than a refusal. What the language buys
+is precision, because the slash-versus-division walk is a guess and a
+`.py` file full of paths is where it guesses worst.
+
+**A call form reports no flags.** Every language but JavaScript sets them
+with constants, builder methods or an inline `(?i)` rather than a string
+argument; reading `re.I` or `RegexOptions.IgnoreCase` as a JavaScript
+flag string is not something a text scan could get right, and the ReDoS
+verdict does not depend on flags. PHP's modifiers are dropped for the
+same reason — its set is not JavaScript's, and handing `x` to a
+JavaScript parser would report a working PCRE pattern as a syntax error.
+
+**What is not read**: Ruby's `%r{…}`, Python's `regex` module, Java text
+blocks, PHP's bracket delimiters beyond `(){}[]<>`, and a C# static call
+whose subject argument is itself a call or an index.
 
 A slash is only a regex when it *can* be one. `isRegexContext` decides:
 after an identifier, a number or a closing bracket, a slash is division.
@@ -125,6 +157,19 @@ parser at all: `regress`, used to *parse* and nothing else. It never
 matches anything. That is the whole of the dependency, and it is the line
 between the lint half and the tester half.
 
+**`regress` speaks JavaScript, and most of these languages do not.**
+`re.compile(r"(?P<year>\d{4})")` is ordinary Python and a syntax error to
+a JavaScript parser; so are `(?i)` at the head of nearly every Go
+pattern, an atomic group, a possessive quantifier, `(?'name'…)` and a
+PCRE comment. Reporting one of those as `Pattern is invalid` would put a
+verdict on working code, so validity is asked of a **JavaScript
+rendering** of the pattern — `(?P<` becomes `(?<`, `(?>` becomes `(?:`,
+a mode switch is dropped — and only a pattern that fails *that* is a
+syntax error. The rendering answers a question and nothing more: the
+pattern reported, and the pattern the ReDoS scan reads, is always the
+source exactly as written. `(?P<word>\w+)+@` is reported as written and
+still comes back `high`.
+
 ### Group scanning
 
 `scanGroups` walks the pattern text tracking escapes and character
@@ -134,9 +179,9 @@ body. It is a string scan with a stack — no engine involved.
 
 ### What is walked
 
-Every text file, with no format filter — a regex literal is a regex
-literal wherever it appears, and the extension's engine takes raw text
-rather than a language id.
+Every text file. There is no format filter and nothing is excluded for
+having the wrong extension — the language only chooses which spellings
+to look for, and a name nothing recognises means all of them.
 
 A directory is walked the way ripgrep walks one: `.gitignore` honoured,
 hidden files skipped, `--no-ignore` and `--hidden` to reach the rest. A
@@ -210,7 +255,12 @@ Options:
 
 - **`extract_patterns` belongs to both servers.** The npm server and this
   one offer the same tool: same schema, same envelope, byte-identical
-  output. `fixtures/mcp-extract-patterns.json` runs against both.
+  output. `fixtures/mcp-extract-patterns.json` runs against both, and
+  `fixtures/aliases.json` holds the two language tables equal so a name
+  one server reads and the other ignores cannot ship.
+  `format` and `filename` are optional; a name neither resolves comes
+  back as a `warning` diagnostic saying every spelling was looked for,
+  rather than being silently ignored.
 - **`regex_le_lint` is this server's own**: files or directories in, the
   same reports the CLI writes.
 

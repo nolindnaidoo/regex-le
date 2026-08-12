@@ -87,6 +87,19 @@ crate/src/
 - **The keyword list is ported verbatim.** A second implementation
   guessing at which keywords may precede a regex is how two frontends
   start disagreeing about what is even a pattern.
+- **The language selects the forms and nothing else.** Nine languages
+  are read; a name nothing recognises means every form is scanned for,
+  which is what this did before it knew languages existed. The
+  slash-versus-division walk runs **only** where a bare `/…/` is legal —
+  JavaScript, TypeScript, Ruby — because everywhere else it is a guess
+  with no finding behind it and a Python file of paths behind it.
+- **Validity is asked of a JavaScript rendering, not the source.**
+  `heuristics::is_well_formed` translates the handful of spellings
+  `regress` refuses and other languages use daily — `(?P<n>…)`, `(?>…)`,
+  `(?i)`, a possessive quantifier — before asking. Nothing translated
+  reaches a report: the pattern reported and scanned is the source as
+  written. `compiles` keeps its strict JavaScript meaning and is what
+  the literal and constructor forms gate on.
 - **stdout is protocol, stderr is human. There is no `--json` flag.**
 - **Parity scope is detection only** — `src/extraction/**` on the
   extension side.

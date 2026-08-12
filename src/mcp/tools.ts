@@ -1,4 +1,5 @@
 import { extractRegexPatterns } from '../extraction/regex/extractPatterns';
+import { SUPPORTED_FORMATS } from '../extraction/regex/format';
 import { detectReDoS } from '../extraction/regex/redos';
 import {
 	analysisFailed,
@@ -10,6 +11,7 @@ import {
 	readMaxResults,
 	readString,
 } from './envelope';
+import { resolveFormat } from './fileType';
 import type { ToolDefinition } from './transport';
 
 /**
@@ -50,11 +52,26 @@ const MAX_RESULTS_SCHEMA = {
 function extract(args: Record<string, unknown>): Promise<unknown> {
 	const content = readString(args, 'content');
 	const maxResults = readMaxResults(args);
+	const format = typeof args.format === 'string' ? args.format : undefined;
+	const filename =
+		typeof args.filename === 'string' ? args.filename : undefined;
+	const language = resolveFormat(format, filename);
 
-	const found = extractRegexPatterns(content);
+	const found = extractRegexPatterns(content, language);
 	const { items, truncated } = capped(found, maxResults);
 
 	const diagnostics: Diagnostic[] = [];
+	// Named rather than silently ignored: a caller who asked for Kotlin and got
+	// JavaScript's answers should be told which question was actually run. It is
+	// a warning, not an error — the scan happened.
+	const named = format ?? filename;
+	if (language === undefined && named !== undefined) {
+		diagnostics.push({
+			severity: 'warning',
+			code: 'unknown-format',
+			message: `no regex spellings are known for ${named}, so every spelling was looked for`,
+		});
+	}
 	const analysed = items.map((item) => {
 		// A pattern that defeats the analyser is still a real finding: report it
 		// without a verdict rather than dropping it or failing the whole scan.
@@ -70,6 +87,7 @@ function extract(args: Record<string, unknown>): Promise<unknown> {
 					detected: redos.detected,
 					severity: redos.severity,
 					reason: redos.reason,
+					vulnerableGroups: redos.vulnerableGroups,
 				},
 			};
 		} catch (error) {
@@ -101,13 +119,22 @@ export const TOOLS: readonly ToolDefinition[] = Object.freeze([
 	Object.freeze({
 		name: 'extract_patterns',
 		description:
-			'Extract every regular expression from source code — literals and RegExp constructors — with its flags, 1-based position, and a ReDoS verdict saying whether the pattern can be driven into catastrophic backtracking. Duplicate pattern-and-flags pairs are reported once, at first occurrence: the output is a pattern list, not an occurrence list.',
+			'Extract every regular expression from source code — JavaScript and TypeScript literals and RegExp constructors, and the call sites Python, Rust, Go, Java, Ruby, PHP and C# write a pattern at — with its flags, 1-based position, and a ReDoS verdict saying whether the pattern can be driven into catastrophic backtracking. Duplicate pattern-and-flags pairs are reported once, at first occurrence: the output is a pattern list, not an occurrence list.',
 		inputSchema: {
 			type: 'object',
 			properties: {
 				content: {
 					type: 'string',
 					description: 'The source text to scan.',
+				},
+				format: {
+					type: 'string',
+					description: `Language of the document, so only its own spellings are looked for: ${SUPPORTED_FORMATS.join(', ')}. Common extensions and aliases are accepted. Optional — with no language every spelling is looked for, which finds more and mistakes a path for a pattern more often.`,
+				},
+				filename: {
+					type: 'string',
+					description:
+						'Filename used to infer the language when `format` is absent, e.g. "validate.py".',
 				},
 				maxResults: MAX_RESULTS_SCHEMA,
 			},

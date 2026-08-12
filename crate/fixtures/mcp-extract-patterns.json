@@ -359,5 +359,615 @@
 			"maxResults": 0
 		},
 		"expectedError": "maxResults must be a positive integer"
+	},
+	{
+		"name": "a python document",
+		"file": "patterns.py",
+		"arguments": {
+			"filename": "patterns.py"
+		},
+		"expected": {
+			"ok": true,
+			"data": {
+				"patterns": [
+					{
+						"pattern": "(a+)+",
+						"flags": "",
+						"match": "re.compile(r\"(a+)+\"",
+						"line": 4,
+						"column": 10,
+						"redos": {
+							"detected": true,
+							"severity": "high",
+							"reason": "Nested unbounded quantifiers can cause exponential backtracking",
+							"vulnerableGroups": [
+								"(a+)+"
+							]
+						}
+					},
+					{
+						"pattern": "\\d{3}-\\d{4}",
+						"flags": "",
+						"match": "re.compile(\"\\\\d{3}-\\\\d{4}\"",
+						"line": 7,
+						"column": 11,
+						"redos": {
+							"detected": false,
+							"severity": "low",
+							"reason": "No obvious ReDoS vulnerabilities detected"
+						}
+					},
+					{
+						"pattern": "^[a-z]+$",
+						"flags": "",
+						"match": "re.match(r'^[a-z]+$'",
+						"line": 10,
+						"column": 10,
+						"redos": {
+							"detected": false,
+							"severity": "low",
+							"reason": "No obvious ReDoS vulnerabilities detected"
+						}
+					},
+					{
+						"pattern": "(a|ab)+",
+						"flags": "",
+						"match": "re.search(\"\"\"(a|ab)+\"\"\"",
+						"line": 11,
+						"column": 10,
+						"redos": {
+							"detected": true,
+							"severity": "medium",
+							"reason": "Quantified alternation with overlapping branches may backtrack heavily",
+							"vulnerableGroups": [
+								"(a|ab)+"
+							]
+						}
+					}
+				]
+			},
+			"diagnostics": [],
+			"meta": {
+				"tool": "extract_patterns",
+				"count": 4,
+				"truncated": false
+			}
+		}
+	},
+	{
+		"name": "a rust document",
+		"file": "patterns.rs",
+		"arguments": {
+			"filename": "patterns.rs"
+		},
+		"expected": {
+			"ok": true,
+			"data": {
+				"patterns": [
+					{
+						"pattern": "(a+)+",
+						"flags": "",
+						"match": "Regex::new(r\"(a+)+\"",
+						"line": 5,
+						"column": 18,
+						"redos": {
+							"detected": true,
+							"severity": "high",
+							"reason": "Nested unbounded quantifiers can cause exponential backtracking",
+							"vulnerableGroups": [
+								"(a+)+"
+							]
+						}
+					},
+					{
+						"pattern": "say \"([a-z]+)*\"",
+						"flags": "",
+						"match": "Regex::new(r#\"say \"([a-z]+)*\"\"#",
+						"line": 7,
+						"column": 18,
+						"redos": {
+							"detected": true,
+							"severity": "high",
+							"reason": "Nested unbounded quantifiers can cause exponential backtracking",
+							"vulnerableGroups": [
+								"([a-z]+)*"
+							]
+						}
+					},
+					{
+						"pattern": "\\d{4}",
+						"flags": "",
+						"match": "RegexBuilder::new(\"\\\\d{4}\"",
+						"line": 9,
+						"column": 19,
+						"redos": {
+							"detected": false,
+							"severity": "low",
+							"reason": "No obvious ReDoS vulnerabilities detected"
+						}
+					},
+					{
+						"pattern": "^\\w+$",
+						"flags": "",
+						"match": "Regex::new(r\"^\\w+$\"",
+						"line": 11,
+						"column": 28,
+						"redos": {
+							"detected": false,
+							"severity": "low",
+							"reason": "No obvious ReDoS vulnerabilities detected"
+						}
+					}
+				]
+			},
+			"diagnostics": [],
+			"meta": {
+				"tool": "extract_patterns",
+				"count": 4,
+				"truncated": false
+			}
+		}
+	},
+	{
+		"name": "a go document",
+		"file": "patterns.go",
+		"arguments": {
+			"filename": "patterns.go"
+		},
+		"expected": {
+			"ok": true,
+			"data": {
+				"patterns": [
+					{
+						"pattern": "(a+)+",
+						"flags": "",
+						"match": "regexp.MustCompile(`(a+)+`",
+						"line": 7,
+						"column": 11,
+						"redos": {
+							"detected": true,
+							"severity": "high",
+							"reason": "Nested unbounded quantifiers can cause exponential backtracking",
+							"vulnerableGroups": [
+								"(a+)+"
+							]
+						}
+					},
+					{
+						"pattern": "\\d{2}:\\d{2}",
+						"flags": "",
+						"match": "regexp.Compile(\"\\\\d{2}:\\\\d{2}\"",
+						"line": 9,
+						"column": 12,
+						"redos": {
+							"detected": false,
+							"severity": "low",
+							"reason": "No obvious ReDoS vulnerabilities detected"
+						}
+					},
+					{
+						"pattern": "(?i)^[a-z]+$",
+						"flags": "",
+						"match": "regexp.MustCompile(`(?i)^[a-z]+$`",
+						"line": 11,
+						"column": 11,
+						"redos": {
+							"detected": false,
+							"severity": "low",
+							"reason": "No obvious ReDoS vulnerabilities detected"
+						}
+					}
+				]
+			},
+			"diagnostics": [],
+			"meta": {
+				"tool": "extract_patterns",
+				"count": 3,
+				"truncated": false
+			}
+		}
+	},
+	{
+		"name": "a java document",
+		"file": "patterns.java",
+		"arguments": {
+			"filename": "patterns.java"
+		},
+		"expected": {
+			"ok": true,
+			"data": {
+				"patterns": [
+					{
+						"pattern": "(a+)+",
+						"flags": "",
+						"match": "Pattern.compile(\"(a+)+\"",
+						"line": 4,
+						"column": 32,
+						"redos": {
+							"detected": true,
+							"severity": "high",
+							"reason": "Nested unbounded quantifiers can cause exponential backtracking",
+							"vulnerableGroups": [
+								"(a+)+"
+							]
+						}
+					},
+					{
+						"pattern": "\\d{4}-\\d{2}",
+						"flags": "",
+						"match": "Pattern.compile(\"\\\\d{4}-\\\\d{2}\"",
+						"line": 5,
+						"column": 33,
+						"redos": {
+							"detected": false,
+							"severity": "low",
+							"reason": "No obvious ReDoS vulnerabilities detected"
+						}
+					},
+					{
+						"pattern": "^[A-Z][a-z]+$",
+						"flags": "",
+						"match": "Pattern.compile(\"^[A-Z][a-z]+$\"",
+						"line": 6,
+						"column": 51,
+						"redos": {
+							"detected": false,
+							"severity": "low",
+							"reason": "No obvious ReDoS vulnerabilities detected"
+						}
+					},
+					{
+						"pattern": "(a|ab)+",
+						"flags": "",
+						"match": "Pattern.matches(\"(a|ab)+\"",
+						"line": 8,
+						"column": 10,
+						"redos": {
+							"detected": true,
+							"severity": "medium",
+							"reason": "Quantified alternation with overlapping branches may backtrack heavily",
+							"vulnerableGroups": [
+								"(a|ab)+"
+							]
+						}
+					}
+				]
+			},
+			"diagnostics": [],
+			"meta": {
+				"tool": "extract_patterns",
+				"count": 4,
+				"truncated": false
+			}
+		}
+	},
+	{
+		"name": "a ruby document",
+		"file": "patterns.rb",
+		"arguments": {
+			"filename": "patterns.rb"
+		},
+		"expected": {
+			"ok": true,
+			"data": {
+				"patterns": [
+					{
+						"pattern": "(a+)+",
+						"flags": "",
+						"match": "/(a+)+/",
+						"line": 2,
+						"column": 10,
+						"redos": {
+							"detected": true,
+							"severity": "high",
+							"reason": "Nested unbounded quantifiers can cause exponential backtracking",
+							"vulnerableGroups": [
+								"(a+)+"
+							]
+						}
+					},
+					{
+						"pattern": "^[a-z]+$",
+						"flags": "i",
+						"match": "/^[a-z]+$/i",
+						"line": 3,
+						"column": 12,
+						"redos": {
+							"detected": false,
+							"severity": "low",
+							"reason": "No obvious ReDoS vulnerabilities detected"
+						}
+					},
+					{
+						"pattern": "(a|ab)+",
+						"flags": "",
+						"match": "Regexp.new('(a|ab)+'",
+						"line": 6,
+						"column": 9,
+						"redos": {
+							"detected": true,
+							"severity": "medium",
+							"reason": "Quantified alternation with overlapping branches may backtrack heavily",
+							"vulnerableGroups": [
+								"(a|ab)+"
+							]
+						}
+					}
+				]
+			},
+			"diagnostics": [],
+			"meta": {
+				"tool": "extract_patterns",
+				"count": 3,
+				"truncated": false
+			}
+		}
+	},
+	{
+		"name": "a php document",
+		"file": "patterns.php",
+		"arguments": {
+			"filename": "patterns.php"
+		},
+		"expected": {
+			"ok": true,
+			"data": {
+				"patterns": [
+					{
+						"pattern": "(a+)+",
+						"flags": "",
+						"match": "preg_match('/(a+)+/'",
+						"line": 3,
+						"column": 1,
+						"redos": {
+							"detected": true,
+							"severity": "high",
+							"reason": "Nested unbounded quantifiers can cause exponential backtracking",
+							"vulnerableGroups": [
+								"(a+)+"
+							]
+						}
+					},
+					{
+						"pattern": "([a-z]+)*",
+						"flags": "",
+						"match": "preg_replace('#([a-z]+)*#i'",
+						"line": 5,
+						"column": 1,
+						"redos": {
+							"detected": true,
+							"severity": "high",
+							"reason": "Nested unbounded quantifiers can cause exponential backtracking",
+							"vulnerableGroups": [
+								"([a-z]+)*"
+							]
+						}
+					},
+					{
+						"pattern": "\\d{2,}",
+						"flags": "",
+						"match": "preg_split('~\\d{2,}~'",
+						"line": 7,
+						"column": 1,
+						"redos": {
+							"detected": false,
+							"severity": "low",
+							"reason": "No obvious ReDoS vulnerabilities detected"
+						}
+					},
+					{
+						"pattern": "^[A-Z]+$",
+						"flags": "",
+						"match": "preg_match_all('{^[A-Z]+$}'",
+						"line": 8,
+						"column": 1,
+						"redos": {
+							"detected": false,
+							"severity": "low",
+							"reason": "No obvious ReDoS vulnerabilities detected"
+						}
+					}
+				]
+			},
+			"diagnostics": [],
+			"meta": {
+				"tool": "extract_patterns",
+				"count": 4,
+				"truncated": false
+			}
+		}
+	},
+	{
+		"name": "a c# document",
+		"file": "patterns.cs",
+		"arguments": {
+			"filename": "patterns.cs"
+		},
+		"expected": {
+			"ok": true,
+			"data": {
+				"patterns": [
+					{
+						"pattern": "(a+)+",
+						"flags": "",
+						"match": "new Regex(@\"(a+)+\"",
+						"line": 5,
+						"column": 33,
+						"redos": {
+							"detected": true,
+							"severity": "high",
+							"reason": "Nested unbounded quantifiers can cause exponential backtracking",
+							"vulnerableGroups": [
+								"(a+)+"
+							]
+						}
+					},
+					{
+						"pattern": "\\d{4}",
+						"flags": "",
+						"match": "new Regex(\"\\\\d{4}\"",
+						"line": 7,
+						"column": 34,
+						"redos": {
+							"detected": false,
+							"severity": "low",
+							"reason": "No obvious ReDoS vulnerabilities detected"
+						}
+					},
+					{
+						"pattern": "(a|ab)+",
+						"flags": "",
+						"match": "Regex.IsMatch(s, @\"(a|ab)+\"",
+						"line": 9,
+						"column": 33,
+						"redos": {
+							"detected": true,
+							"severity": "medium",
+							"reason": "Quantified alternation with overlapping branches may backtrack heavily",
+							"vulnerableGroups": [
+								"(a|ab)+"
+							]
+						}
+					},
+					{
+						"pattern": "\\s+",
+						"flags": "",
+						"match": "Regex.Replace(s, \"\\\\s+\"",
+						"line": 10,
+						"column": 35,
+						"redos": {
+							"detected": false,
+							"severity": "low",
+							"reason": "No obvious ReDoS vulnerabilities detected"
+						}
+					}
+				]
+			},
+			"diagnostics": [],
+			"meta": {
+				"tool": "extract_patterns",
+				"count": 4,
+				"truncated": false
+			}
+		}
+	},
+	{
+		"name": "division in python is not a regex",
+		"file": "division.py",
+		"arguments": {
+			"filename": "division.py"
+		},
+		"expected": {
+			"ok": true,
+			"data": {
+				"patterns": []
+			},
+			"diagnostics": [],
+			"meta": {
+				"tool": "extract_patterns",
+				"count": 0,
+				"truncated": false
+			}
+		}
+	},
+	{
+		"name": "python spellings javascript cannot parse",
+		"file": "pcre.py",
+		"arguments": {
+			"filename": "pcre.py"
+		},
+		"expected": {
+			"ok": true,
+			"data": {
+				"patterns": [
+					{
+						"pattern": "(?P<year>\\d{4})-(?P<month>\\d{2})",
+						"flags": "",
+						"match": "re.compile(r\"(?P<year>\\d{4})-(?P<month>\\d{2})\"",
+						"line": 4,
+						"column": 9,
+						"redos": {
+							"detected": false,
+							"severity": "low",
+							"reason": "No obvious ReDoS vulnerabilities detected"
+						}
+					},
+					{
+						"pattern": "(?P<word>\\w+)+@",
+						"flags": "",
+						"match": "re.compile(r\"(?P<word>\\w+)+@\"",
+						"line": 8,
+						"column": 10,
+						"redos": {
+							"detected": true,
+							"severity": "high",
+							"reason": "Nested unbounded quantifiers can cause exponential backtracking",
+							"vulnerableGroups": [
+								"(?P<word>\\w+)+"
+							]
+						}
+					},
+					{
+						"pattern": "(?i)(?>[a-z]+)",
+						"flags": "",
+						"match": "re.compile(r\"(?i)(?>[a-z]+)\"",
+						"line": 11,
+						"column": 10,
+						"redos": {
+							"detected": false,
+							"severity": "low",
+							"reason": "No obvious ReDoS vulnerabilities detected"
+						}
+					}
+				]
+			},
+			"diagnostics": [],
+			"meta": {
+				"tool": "extract_patterns",
+				"count": 3,
+				"truncated": false
+			}
+		}
+	},
+	{
+		"name": "an unknown language is named, not ignored",
+		"content": "const re = /(a+)+/;\n",
+		"arguments": {
+			"format": "kotlin"
+		},
+		"expected": {
+			"ok": true,
+			"data": {
+				"patterns": [
+					{
+						"pattern": "(a+)+",
+						"flags": "",
+						"match": "/(a+)+/",
+						"line": 1,
+						"column": 12,
+						"redos": {
+							"detected": true,
+							"severity": "high",
+							"reason": "Nested unbounded quantifiers can cause exponential backtracking",
+							"vulnerableGroups": [
+								"(a+)+"
+							]
+						}
+					}
+				]
+			},
+			"diagnostics": [
+				{
+					"severity": "warning",
+					"code": "unknown-format",
+					"message": "no regex spellings are known for kotlin, so every spelling was looked for"
+				}
+			],
+			"meta": {
+				"tool": "extract_patterns",
+				"count": 1,
+				"truncated": false
+			}
+		}
 	}
 ]

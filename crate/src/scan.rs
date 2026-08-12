@@ -8,6 +8,7 @@ use std::path::PathBuf;
 use serde::Serialize;
 
 use crate::detect::extract::{Pattern, extract_patterns};
+use crate::detect::format::{Language, resolve_language};
 use crate::detect::redos::Severity;
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
@@ -89,9 +90,13 @@ fn at_or_above(severity: Severity, threshold: Severity) -> bool {
 
 pub(crate) fn scan_file(path: &PathBuf, options: ScanOptions) -> FileReport {
     let file = path.to_string_lossy().into_owned();
+    // The extension is handed a language id by the editor; a walk has
+    // only the name on disk, and an unrecognised one is not a refusal —
+    // it means every form is scanned for.
+    let language = resolve_language(None, Some(&file));
     match std::fs::read(path) {
         Ok(bytes) => match String::from_utf8(bytes) {
-            Ok(content) => scan_content(without_bom(&content), file, options),
+            Ok(content) => scan_content(without_bom(&content), file, language, options),
             // Named rather than dropped. A file that vanishes from the
             // report is a file the reader believes was covered.
             Err(_) => skipped(file, "not UTF-8 text"),
@@ -100,8 +105,13 @@ pub(crate) fn scan_file(path: &PathBuf, options: ScanOptions) -> FileReport {
     }
 }
 
-pub(crate) fn scan_content(content: &str, file: String, options: ScanOptions) -> FileReport {
-    let (patterns, diagnostics) = match extract_patterns(content) {
+pub(crate) fn scan_content(
+    content: &str,
+    file: String,
+    language: Option<Language>,
+    options: ScanOptions,
+) -> FileReport {
+    let (patterns, diagnostics) = match extract_patterns(content, language) {
         Ok(patterns) => (patterns, Vec::new()),
         // A refusal, not a clean result: reporting no patterns when the
         // scan gave up would overstate coverage.
@@ -183,6 +193,7 @@ mod tests {
         let report = scan_content(
             "const re = /[a-z]+/;",
             "a.js".into(),
+            Some(Language::JavaScript),
             ScanOptions::default(),
         );
         assert_eq!(report.summary.findings, 0);
@@ -191,7 +202,12 @@ mod tests {
 
     #[test]
     fn a_vulnerable_pattern_is_a_finding() {
-        let report = scan_content("const re = /(a+)+/;", "a.js".into(), ScanOptions::default());
+        let report = scan_content(
+            "const re = /(a+)+/;",
+            "a.js".into(),
+            Some(Language::JavaScript),
+            ScanOptions::default(),
+        );
         assert_eq!(report.summary.findings, 1);
         assert_eq!(exit_code(&[report], false), 1);
     }
@@ -201,12 +217,18 @@ mod tests {
     #[test]
     fn only_findings_are_reported_unless_all_is_asked_for() {
         let content = "const a = /[a-z]+/;\nconst b = /(a+)+/;\n";
-        let lint = scan_content(content, "a.js".into(), ScanOptions::default());
+        let lint = scan_content(
+            content,
+            "a.js".into(),
+            Some(Language::JavaScript),
+            ScanOptions::default(),
+        );
         assert_eq!(lint.patterns.len(), 1);
 
         let everything = scan_content(
             content,
             "a.js".into(),
+            Some(Language::JavaScript),
             ScanOptions {
                 all: true,
                 ..ScanOptions::default()
@@ -222,11 +244,17 @@ mod tests {
     #[test]
     fn the_threshold_narrows_what_counts() {
         let content = "const re = /(a|a)*/;";
-        let medium = scan_content(content, "a.js".into(), ScanOptions::default());
+        let medium = scan_content(
+            content,
+            "a.js".into(),
+            Some(Language::JavaScript),
+            ScanOptions::default(),
+        );
         assert_eq!(medium.summary.findings, 1);
         let high = scan_content(
             content,
             "a.js".into(),
+            Some(Language::JavaScript),
             ScanOptions {
                 threshold: Severity::High,
                 ..ScanOptions::default()
@@ -272,6 +300,7 @@ mod tests {
         let report = scan_content(
             "const re = /(a+)+/g;",
             "a.js".into(),
+            Some(Language::JavaScript),
             ScanOptions::default(),
         );
         let line = describe(&report, &report.patterns[0]);

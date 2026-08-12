@@ -120,7 +120,14 @@ fn scan_stdin(options: ScanOptions) -> Result<FileReport, String> {
     std::io::stdin()
         .read_to_string(&mut content)
         .map_err(|error| format!("could not read stdin: {error}"))?;
-    Ok(scan::scan_content(&content, "<stdin>".to_string(), options))
+    // A document arriving on a pipe has no name and no language, so
+    // every form is scanned for.
+    Ok(scan::scan_content(
+        &content,
+        "<stdin>".to_string(),
+        None,
+        options,
+    ))
 }
 
 fn parse(args: &[String]) -> Result<Options, String> {

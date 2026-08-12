@@ -55,7 +55,7 @@ export function registerExtractCommand(
 						const text = document.getText();
 
 						// Extract regex patterns from the file
-						const patterns = extractRegexPatterns(text);
+						const patterns = extractRegexPatterns(text, document.languageId);
 
 						if (token.isCancellationRequested) return;
 
