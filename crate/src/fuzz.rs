@@ -295,6 +295,20 @@ fn the_analyser_answers_whatever_pattern_it_is_given() {
 ///
 /// Every bound below is an order of magnitude above what the shapes
 /// actually cost here, so this catches a hang rather than a slow runner.
+///
+/// The bounds describe the **release** binary, which is what anyone
+/// runs. `cargo test` builds unoptimized, and the gap is not small: a
+/// megabyte of slashes is 490ms release and 6.4s debug on this machine,
+/// and 23.5s on a shared CI runner — enough to fail a 20s bound and
+/// claim the scanner hangs when the shipped artifact answers in half a
+/// second. `DEBUG_SCALE` keeps the assertion meaningful in both builds
+/// rather than deleting it in one; it is deliberately generous, because
+/// this test exists to catch a hang, not to measure a runner.
+#[cfg(debug_assertions)]
+const DEBUG_SCALE: u32 = 8;
+#[cfg(not(debug_assertions))]
+const DEBUG_SCALE: u32 = 1;
+
 #[test]
 fn a_scanner_for_backtracking_cannot_itself_be_made_to_hang() {
     let deep = format!("{}a{}", "(".repeat(20_000), ")".repeat(20_000));
@@ -366,6 +380,7 @@ fn a_scanner_for_backtracking_cannot_itself_be_made_to_hang() {
     ];
 
     for (name, input, bound) in cases {
+        let bound = bound * DEBUG_SCALE;
         let started = Instant::now();
         for language in LANGUAGES {
             check_report(&input, language);
