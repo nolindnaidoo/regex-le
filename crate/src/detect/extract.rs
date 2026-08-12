@@ -20,6 +20,7 @@ use serde::Serialize;
 
 use super::format::Language;
 use super::heuristics::{self, VALID_FLAGS};
+use super::js;
 use super::position::PositionIndex;
 use super::redos::{self, ReDoSResult};
 
@@ -61,7 +62,7 @@ const BACKTRACK_LIMIT: usize = 100_000_000;
 
 static CONSTRUCTOR: LazyLock<Regex> = LazyLock::new(|| {
     build(&format!(
-        r#"(?<![.\w$])(?:new\s+)?RegExp\s*\(\s*(?:'(?<sq>(?:[^'\\\r\n]|\\.)*)'|"(?<dq>(?:[^"\\\r\n]|\\.)*)")\s*(?:,\s*(?:'(?<sqf>[{VALID_FLAGS}]*)'|"(?<dqf>[{VALID_FLAGS}]*)")\s*)?,?\s*\)"#
+        r#"(?<![.\w$])(?:new[{SPACE}]+)?RegExp[{SPACE}]*\([{SPACE}]*(?:'(?<sq>(?:[^'\\\r\n]|\\.)*)'|"(?<dq>(?:[^"\\\r\n]|\\.)*)")[{SPACE}]*(?:,[{SPACE}]*(?:'(?<sqf>[{VALID_FLAGS}]*)'|"(?<dqf>[{VALID_FLAGS}]*)")[{SPACE}]*)?,?[{SPACE}]*\)"#
     ))
 });
 
@@ -71,6 +72,15 @@ fn build(source: &str) -> Regex {
         .build()
         .expect("a constant pattern compiles")
 }
+
+/// JavaScript's `\s`, spelled out as a class body.
+///
+/// The extension writes `\s` in every one of these patterns, and `\s`
+/// there is not `\s` here: `regex` reads Unicode's `White_Space`, which
+/// holds U+0085 and not U+FEFF, and JavaScript reads the opposite. A
+/// `re.compile` with a byte-order mark before its bracket was a pattern
+/// to one server and nothing at all to the other. See `detect/js.rs`.
+const SPACE: &str = js::JS_SPACE_CLASS;
 
 /// A double-quoted string body, as JavaScript, Python, Java, Go, C# and
 /// PHP all spell one: anything but a quote, a backslash or a newline,
@@ -108,7 +118,7 @@ struct CallForm {
 
 static PYTHON: LazyLock<Regex> = LazyLock::new(|| {
     build(&format!(
-        r#"(?<![A-Za-z0-9_$.])re\.(?:compile|fullmatch|finditer|findall|match|search|split|subn|sub)\s*\(\s*(?:[rR][bB]?"""(?<raw1>[\s\S]*?)"""|[rR][bB]?'''(?<raw2>[\s\S]*?)'''|[rR][bB]?"(?<raw3>{DOUBLE_QUOTED})"|[rR][bB]?'(?<raw4>{SINGLE_QUOTED})'|"""(?<esc1>[\s\S]*?)"""|'''(?<esc2>[\s\S]*?)'''|"(?<esc3>{DOUBLE_QUOTED})"|'(?<esc4>{SINGLE_QUOTED})')"#
+        r#"(?<![A-Za-z0-9_$.])re\.(?:compile|fullmatch|finditer|findall|match|search|split|subn|sub)[{SPACE}]*\([{SPACE}]*(?:[rR][bB]?"""(?<raw1>[\s\S]*?)"""|[rR][bB]?'''(?<raw2>[\s\S]*?)'''|[rR][bB]?"(?<raw3>{DOUBLE_QUOTED})"|[rR][bB]?'(?<raw4>{SINGLE_QUOTED})'|"""(?<esc1>[\s\S]*?)"""|'''(?<esc2>[\s\S]*?)'''|"(?<esc3>{DOUBLE_QUOTED})"|'(?<esc4>{SINGLE_QUOTED})')"#
     ))
 });
 
@@ -117,31 +127,31 @@ static PYTHON: LazyLock<Regex> = LazyLock::new(|| {
 /// list of two or three levels.
 static RUST: LazyLock<Regex> = LazyLock::new(|| {
     build(&format!(
-        r#"(?<![A-Za-z0-9_$])(?:Regex|RegexBuilder)::new\s*\(\s*(?:r(?<hash>#*)"(?<raw1>[\s\S]*?)"\k<hash>|"(?<esc1>{DOUBLE_QUOTED})")"#
+        r#"(?<![A-Za-z0-9_$])(?:Regex|RegexBuilder)::new[{SPACE}]*\([{SPACE}]*(?:r(?<hash>#*)"(?<raw1>[\s\S]*?)"\k<hash>|"(?<esc1>{DOUBLE_QUOTED})")"#
     ))
 });
 
 static GO: LazyLock<Regex> = LazyLock::new(|| {
     build(&format!(
-        r#"(?<![A-Za-z0-9_$.])regexp\.(?:MustCompilePOSIX|MustCompile|CompilePOSIX|Compile)\s*\(\s*(?:`(?<raw1>[^`]*)`|"(?<esc1>{DOUBLE_QUOTED})")"#
+        r#"(?<![A-Za-z0-9_$.])regexp\.(?:MustCompilePOSIX|MustCompile|CompilePOSIX|Compile)[{SPACE}]*\([{SPACE}]*(?:`(?<raw1>[^`]*)`|"(?<esc1>{DOUBLE_QUOTED})")"#
     ))
 });
 
 static JAVA: LazyLock<Regex> = LazyLock::new(|| {
     build(&format!(
-        r#"(?<![A-Za-z0-9_$])Pattern\.(?:compile|matches)\s*\(\s*"(?<esc1>{DOUBLE_QUOTED})""#
+        r#"(?<![A-Za-z0-9_$])Pattern\.(?:compile|matches)[{SPACE}]*\([{SPACE}]*"(?<esc1>{DOUBLE_QUOTED})""#
     ))
 });
 
 static RUBY: LazyLock<Regex> = LazyLock::new(|| {
     build(&format!(
-        r#"(?<![A-Za-z0-9_$])Regexp\.(?:new|compile)\s*\(\s*(?:"(?<esc1>{DOUBLE_QUOTED})"|'(?<esc2>{SINGLE_QUOTED})')"#
+        r#"(?<![A-Za-z0-9_$])Regexp\.(?:new|compile)[{SPACE}]*\([{SPACE}]*(?:"(?<esc1>{DOUBLE_QUOTED})"|'(?<esc2>{SINGLE_QUOTED})')"#
     ))
 });
 
 static PHP: LazyLock<Regex> = LazyLock::new(|| {
     build(&format!(
-        r#"(?<![A-Za-z0-9_$])preg_(?:match_all|match|replace_callback|replace|split|grep)\s*\(\s*(?:'(?<esc1>{SINGLE_QUOTED})'|"(?<esc2>{DOUBLE_QUOTED})")"#
+        r#"(?<![A-Za-z0-9_$])preg_(?:match_all|match|replace_callback|replace|split|grep)[{SPACE}]*\([{SPACE}]*(?:'(?<esc1>{SINGLE_QUOTED})'|"(?<esc2>{DOUBLE_QUOTED})")"#
     ))
 });
 
@@ -149,7 +159,7 @@ static PHP: LazyLock<Regex> = LazyLock::new(|| {
 /// the body is taken as written.
 static CSHARP_NEW: LazyLock<Regex> = LazyLock::new(|| {
     build(&format!(
-        r#"(?<![A-Za-z0-9_$])(?:new\s+)?Regex\s*\(\s*(?:@"(?<raw1>(?:[^"]|"")*)"|"(?<esc1>{DOUBLE_QUOTED})")"#
+        r#"(?<![A-Za-z0-9_$])(?:new[{SPACE}]+)?Regex[{SPACE}]*\([{SPACE}]*(?:@"(?<raw1>(?:[^"]|"")*)"|"(?<esc1>{DOUBLE_QUOTED})")"#
     ))
 });
 
@@ -159,7 +169,7 @@ static CSHARP_NEW: LazyLock<Regex> = LazyLock::new(|| {
 /// reach of a scan that does not parse C#.
 static CSHARP_STATIC: LazyLock<Regex> = LazyLock::new(|| {
     build(&format!(
-        r#"(?<![A-Za-z0-9_$])Regex\.(?:Matches|Match|IsMatch|Replace|Split|Count)\s*\(\s*(?:@"(?:[^"]|"")*"|"{DOUBLE_QUOTED}"|[^,()"']*)\s*,\s*(?:@"(?<raw1>(?:[^"]|"")*)"|"(?<esc1>{DOUBLE_QUOTED})")"#
+        r#"(?<![A-Za-z0-9_$])Regex\.(?:Matches|Match|IsMatch|Replace|Split|Count)[{SPACE}]*\([{SPACE}]*(?:@"(?:[^"]|"")*"|"{DOUBLE_QUOTED}"|[^,()"']*)[{SPACE}]*,[{SPACE}]*(?:@"(?<raw1>(?:[^"]|"")*)"|"(?<esc1>{DOUBLE_QUOTED})")"#
     ))
 });
 
@@ -307,6 +317,12 @@ fn scan_literals(text: &str, push: &mut Push<'_>) -> Result<(), String> {
         if !heuristics::is_regex_context(text, found.start()) {
             continue;
         }
+        // A bare `/…/` is a guess about a slash, not a declared pattern,
+        // so one past the parser limits is dropped here rather than
+        // refused: `compiles` answers `false` without asking the parser.
+        // Refusing the file instead would exit 2 over a division chain
+        // with a hundred brackets in it, which is the mistake the PNG
+        // rule already taught this crate once.
         if !heuristics::is_valid_flag_string(flags) || !heuristics::compiles(body, flags) {
             continue;
         }
@@ -318,6 +334,21 @@ fn scan_literals(text: &str, push: &mut Push<'_>) -> Result<(), String> {
         );
     }
     Ok(())
+}
+
+/// The refusal for a pattern the parser cannot be asked about.
+///
+/// It reads as a refusal rather than a clean result because that is what
+/// it is: the shape is a pattern, and this could not judge it. Silence
+/// would read to whoever ran the scan as a file with nothing in it. No
+/// flag is named — an MCP caller has no command line.
+fn too_complex(form: &str) -> String {
+    format!(
+        "the {form} pattern is nested past {} groups or carries more than {} alternation \
+         branches, which cannot be judged without overflowing the stack",
+        heuristics::MAX_GROUP_DEPTH,
+        heuristics::MAX_ALTERNATION_BRANCHES
+    )
 }
 
 fn scan_constructors(text: &str, push: &mut Push<'_>) -> Result<(), String> {
@@ -338,6 +369,11 @@ fn scan_constructors(text: &str, push: &mut Push<'_>) -> Result<(), String> {
             .map(|found| found.as_str())
             .unwrap_or_default();
         let pattern = unescape_string_literal(body);
+        // A constructor argument is unambiguously a pattern, so one this
+        // cannot judge is refused by name rather than dropped.
+        if !heuristics::is_within_parser_limits(&pattern) {
+            return Err(too_complex("constructor"));
+        }
         if !heuristics::compiles(&pattern, flags) {
             continue;
         }
@@ -367,6 +403,11 @@ fn scan_call_form(form: CallForm, text: &str, push: &mut Push<'_>) -> Result<(),
         let Some(pattern) = candidate else {
             continue;
         };
+        // A call argument is unambiguously a pattern, so one this cannot
+        // judge is refused by name rather than dropped.
+        if !heuristics::is_within_parser_limits(&pattern) {
+            return Err(too_complex(form.name));
+        }
         // The validity judge is the language-tolerant one: `regress`
         // speaks JavaScript, and a Python or Go pattern that it refuses
         // is far more often valid than a typo.
@@ -408,7 +449,10 @@ const PHP_MODIFIERS: &str = "imsxeADSUXJnu";
 /// guessed at.
 fn strip_php_delimiters(value: &str) -> Option<String> {
     let open = value.chars().next()?;
-    if open.is_ascii_alphanumeric() || open == '\\' || open.is_whitespace() {
+    // `/[A-Za-z0-9\\\s]/` on the extension side, and `\s` there is
+    // JavaScript's set rather than Unicode's — a byte-order mark is
+    // whitespace to it and not to `char::is_whitespace`.
+    if open.is_ascii_alphanumeric() || open == '\\' || js::is_js_whitespace(open) {
         return None;
     }
     let close = match open {
@@ -706,6 +750,38 @@ mod tests {
         assert_eq!(found.len(), 1);
         assert_eq!(found[0].pattern, r"(?P<w>\w+)+@", "reported as written");
         assert_eq!(found[0].redos.severity, super::redos::Severity::High);
+    }
+
+    /// The regression a fuzzer found. A pattern nested past what
+    /// `regress` can parse used to abort the process on `SIGABRT`,
+    /// taking the whole tree's scan with it. Where the text is
+    /// unambiguously a pattern the answer is a refusal that names it,
+    /// never silence.
+    #[test]
+    fn a_pattern_too_deep_to_parse_is_refused_rather_than_aborted() {
+        let deep = format!("{}a{}", "(".repeat(20_000), ")".repeat(20_000));
+
+        let error = extract_patterns(&format!(r#"re.compile(r"{deep}")"#), Some(Language::Python))
+            .expect_err("a refusal");
+        assert!(error.contains("python"), "{error}");
+        assert!(error.contains("nested past"), "{error}");
+
+        let error =
+            extract_patterns(&format!("new RegExp('{deep}')"), None).expect_err("a refusal");
+        assert!(error.contains("constructor"), "{error}");
+    }
+
+    /// A bare `/…/` is a guess about a slash rather than a declared
+    /// pattern, so the same shape is dropped there instead of failing
+    /// the file — the division chain in a minified bundle is not a
+    /// reason to refuse to answer about the rest of it.
+    #[test]
+    fn a_slash_literal_too_deep_to_parse_is_dropped_not_refused() {
+        let deep = format!("{}a{}", "(".repeat(20_000), ")".repeat(20_000));
+        let found = extract_patterns(&format!("const p = /{deep}/;\nconst q = /(a+)+/;\n"), None)
+            .expect("the rest of the document still answers");
+        assert_eq!(found.len(), 1);
+        assert_eq!(found[0].pattern, "(a+)+");
     }
 
     /// A real syntax error is still a real syntax error.

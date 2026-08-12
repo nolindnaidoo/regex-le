@@ -58,6 +58,49 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   source as written. `(?P<word>\w+)+@` is reported verbatim and comes
   back `high`.
 
+### Fixed
+
+Every one of these was found by a CI job added in this release, and each
+ships with the test that fails without the fix.
+
+- **A pattern nested deep enough no longer kills the process.**
+  `regress` parses by recursive descent, so a generated pattern a few
+  thousand groups deep overflowed the stack and the process died on
+  `SIGABRT` — no report, no exit code, and a whole tree's scan lost to
+  one file. Three shapes reached it: nesting, an alternation of tens of
+  thousands of branches, and — under the `v` flag, where a character
+  class nests as a class — five hundred `[`. A structural bound is now
+  measured before the parser is asked; past it a pattern is **refused by
+  name** with an `incomplete` diagnostic and exit 2 where the text is
+  unambiguously a pattern, and dropped where a bare `/…/` was only ever
+  a guess about a slash. A pattern between the ordinary case and that
+  bound is parsed on a thread sized for it rather than on the caller's.
+- **Whitespace is JavaScript's, not Unicode's, everywhere the extension
+  writes `\s` or calls `trim`.** `String.prototype.trim` and JavaScript's
+  `\s` hold U+FEFF and not U+0085; Rust's `str::trim`, `char::is_whitespace`
+  and `regex`'s `\s` have it exactly the other way round. A byte-order
+  mark in a format name, before a `re.compile(`, or as a PHP delimiter
+  made the two `extract_patterns` servers answer differently for the same
+  document. The set is now spelled out once, in `detect/js.rs`, and every
+  trim and every `\s` in the call-form patterns goes through it.
+- **The alternation-overlap test uses JavaScript's character classes.**
+  `/[\w\s]/` on the extension side is ASCII `\w` and JavaScript `\s`;
+  this crate borrowed `char::is_alphanumeric` and `char::is_whitespace`,
+  so `(é|é)*` came back `medium` here and `low` there. It is `low` on
+  both now.
+- **A byte-order mark on `--stdin` no longer moves the reported
+  column.** A file read stripped it and a pipe did not, so
+  `cat x.js | regex-le --stdin` and `regex-le x.js` gave the same pattern
+  two different positions.
+- **Report paths use `/` on every platform.** A Windows path arrived with
+  `\` in it, against SPEC.md's own output contract, so the same tree
+  scanned on two machines produced two reports that could not be diffed.
+- **The ReDoS analyser is no longer quadratic in the pattern length.**
+  Reading a `{n,m}` quantifier copied the rest of the pattern each time;
+  fifty thousand braces cost three seconds. A scanner for catastrophic
+  backtracking that can itself be made to hang is the joke that writes
+  itself.
+
 ## [0.1.0] - 2026-08-09
 
 First release. The extension's lint engine, ported and pinned against a

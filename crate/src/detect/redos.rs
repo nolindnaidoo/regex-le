@@ -21,6 +21,7 @@
 use serde::{Deserialize, Serialize};
 
 use super::heuristics;
+use super::js;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
@@ -162,22 +163,27 @@ fn read_quantifier(characters: &[char], offset: usize) -> Option<String> {
         '{' => {
             // `{n}` or `{n,}` or `{n,m}` — anything else is a literal
             // brace and not a quantifier.
-            let rest: String = characters[offset..].iter().collect();
+            //
+            // Read off the slice rather than a copy of it: collecting
+            // the rest of the pattern here made this quadratic in the
+            // pattern length, and a generated validator carrying
+            // thousands of bounded quantifiers is exactly the shape that
+            // reaches it.
+            let rest = &characters[offset..];
             let mut end = 1;
-            let bytes: Vec<char> = rest.chars().collect();
-            if !bytes.get(1)?.is_ascii_digit() {
+            if !rest.get(1)?.is_ascii_digit() {
                 return None;
             }
-            while bytes.get(end).is_some_and(char::is_ascii_digit) {
+            while rest.get(end).is_some_and(char::is_ascii_digit) {
                 end += 1;
             }
-            if bytes.get(end) == Some(&',') {
+            if rest.get(end) == Some(&',') {
                 end += 1;
-                while bytes.get(end).is_some_and(char::is_ascii_digit) {
+                while rest.get(end).is_some_and(char::is_ascii_digit) {
                     end += 1;
                 }
             }
-            (bytes.get(end) == Some(&'}')).then(|| bytes[..=end].iter().collect())
+            (rest.get(end) == Some(&'}')).then(|| rest[..=end].iter().collect())
         }
         _ => None,
     }
@@ -235,12 +241,13 @@ fn contains_unbounded_quantifier(body: &str) -> bool {
         match character {
             '[' => in_class = true,
             '*' | '+' => return true,
-            '{' => {
-                let rest: String = characters[index..].iter().collect();
-                if open_ended_brace(&rest) {
-                    return true;
-                }
-            }
+            // Read off the slice rather than a copy of it. Collecting
+            // the rest of the body here made this quadratic in the
+            // pattern length: fifty thousand braces cost three seconds,
+            // and a scanner for catastrophic backtracking that can be
+            // made to hang on its own input is the joke that writes
+            // itself.
+            '{' if open_ended_brace(&characters[index..]) => return true,
             _ => {}
         }
         index += 1;
@@ -254,14 +261,12 @@ fn contains_unbounded_quantifier(body: &str) -> bool {
 /// makes `{1,3}` look unbounded, which reported `(a{1,3})*` as an
 /// exponential shape — a false high-severity finding on a perfectly
 /// bounded pattern.
-fn open_ended_brace(rest: &str) -> bool {
-    let mut chars = rest.chars().skip(1).peekable();
-    let mut digits = 0;
-    while chars.peek().is_some_and(char::is_ascii_digit) {
-        chars.next();
-        digits += 1;
+fn open_ended_brace(rest: &[char]) -> bool {
+    let mut at = 1;
+    while rest.get(at).is_some_and(char::is_ascii_digit) {
+        at += 1;
     }
-    digits > 0 && chars.next() == Some(',') && chars.next() == Some('}')
+    at > 1 && rest.get(at) == Some(&',') && rest.get(at + 1) == Some(&'}')
 }
 
 fn has_overlapping_alternation(body: &str) -> bool {
@@ -329,9 +334,18 @@ fn split_top_level_alternation(body: &str) -> Vec<String> {
 
 /// A branch's first character, when it is one an overlap can be judged
 /// from. A branch starting with a metacharacter is not compared.
+///
+/// The test is `/[\w\s]/` on the extension side, and **neither half of
+/// that class means in JavaScript what the Rust spelling means**. `\w`
+/// there is ASCII, so `char::is_alphanumeric` made `(é|é)*` an
+/// overlapping alternation here and an ordinary pattern there; `\s`
+/// there is JavaScript's set, which holds U+FEFF and not U+0085, and
+/// `char::is_whitespace` has it exactly backwards. Same rule as
+/// `is_word_character` in `heuristics`: spell out what the extension
+/// means rather than borrowing what this language happens to give you.
 fn first_literal_char(branch: &str) -> Option<char> {
     let character = branch.chars().next()?;
-    (character.is_alphanumeric() || character == '_' || character.is_whitespace())
+    (character.is_ascii_alphanumeric() || character == '_' || js::is_js_whitespace(character))
         .then_some(character)
 }
 
@@ -405,9 +419,14 @@ mod tests {
         assert!(!is_unbounded("{2,4}"));
         assert_eq!(verdict("(a{1,3})*"), (false, Severity::Low));
         assert_eq!(verdict("(a{1,})*"), (true, Severity::High));
-        assert!(open_ended_brace("{2,}"));
-        assert!(!open_ended_brace("{2,4}"));
-        assert!(!open_ended_brace("{2}"));
+        let chars = |value: &str| value.chars().collect::<Vec<char>>();
+        assert!(open_ended_brace(&chars("{2,}")));
+        assert!(!open_ended_brace(&chars("{2,4}")));
+        assert!(!open_ended_brace(&chars("{2}")));
+        assert!(
+            !open_ended_brace(&chars("{,}")),
+            "no digits is not a quantifier"
+        );
     }
 
     #[test]
@@ -436,6 +455,26 @@ mod tests {
     #[test]
     fn a_clean_result_names_no_groups() {
         assert_eq!(detect_redos("[a-z]+", "").vulnerable_groups, None);
+    }
+
+    /// JavaScript's `\w` is ASCII and its `\s` is not Unicode's
+    /// `White_Space`. Borrowing Rust's spelling of either made this
+    /// crate disagree with the extension about whether an alternation
+    /// overlaps — a different severity for the same pattern.
+    #[test]
+    fn the_overlap_test_uses_javascripts_character_classes() {
+        assert_eq!(first_literal_char("abc"), Some('a'));
+        assert_eq!(first_literal_char("_x"), Some('_'));
+        assert_eq!(first_literal_char(" x"), Some(' '));
+        assert_eq!(
+            first_literal_char("\u{feff}x"),
+            Some('\u{feff}'),
+            "JS \\s holds it"
+        );
+        assert_eq!(first_literal_char("\u{85}x"), None, "JS \\s does not");
+        assert_eq!(first_literal_char("éx"), None, "JS \\w is ASCII");
+        assert_eq!(verdict("(é|é)*"), (false, Severity::Low));
+        assert_eq!(verdict("(a|a)*"), (true, Severity::Medium));
     }
 
     #[test]

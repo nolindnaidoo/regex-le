@@ -109,8 +109,17 @@ const ALIASES: [(&str, &str); 32] = [
     ("cake", "csharp"),
 ];
 
+/// `raw.trim().toLowerCase().replace(/^\./, '')`, spelled out.
+///
+/// `str::trim` is not `String.prototype.trim`: Rust trims Unicode's
+/// `White_Space`, JavaScript trims its own set, and the two disagree
+/// about U+FEFF and U+0085. A format name arriving with a byte-order
+/// mark resolved to Python on one server and to nothing on the other,
+/// which — because an unresolved name means *every* language's spellings
+/// are looked for — is not a refusal but two different pattern lists for
+/// the same document.
 fn normalise(value: &str) -> String {
-    let trimmed = value.trim().to_lowercase();
+    let trimmed = super::js::trim(value).to_lowercase();
     trimmed.strip_prefix('.').unwrap_or(&trimmed).to_string()
 }
 

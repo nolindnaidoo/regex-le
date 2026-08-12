@@ -126,9 +126,13 @@ fn scan_stdin(options: ScanOptions) -> Result<FileReport, String> {
         .read_to_string(&mut content)
         .map_err(|error| format!("could not read stdin: {error}"))?;
     // A document arriving on a pipe has no name and no language, so
-    // every form is scanned for.
+    // every form is scanned for. It is still a document read off a disk
+    // somewhere, so the byte-order mark goes the same way it does for a
+    // file read: leaving it in shifted every column on the first line by
+    // one, which made `cat x.js | regex-le --stdin` and `regex-le x.js`
+    // report different positions for the same pattern.
     Ok(scan::scan_content(
-        &content,
+        scan::without_bom(&content),
         "<stdin>".to_string(),
         None,
         options,

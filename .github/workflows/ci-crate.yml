@@ -194,3 +194,144 @@ jobs:
       - name: Extraction and MCP parity
         working-directory: .
         run: bun scripts/check-extraction-parity.ts
+
+  # ---------------------------------------------------------------------
+  # The six below exist because something real got through. Each names the
+  # bug it would have caught; none of them may be softened to go green.
+  # ---------------------------------------------------------------------
+
+  # A crafted tree, built at runtime rather than checked in: Windows
+  # cannot hold a FIFO, a symlink loop or a mode-000 file, so the cases
+  # it cannot express skip by name. Caught here in 0.2.0: a pattern
+  # nested deep enough to overflow the stack killed the process with
+  # SIGABRT, so a whole tree's scan died on one generated file.
+  hazards:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-15, windows-2025, ubuntu-24.04]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: dtolnay/rust-toolchain@2c7215f132e9ebf062739d9130488b56d53c060c # master
+        with:
+          toolchain: stable
+      - name: Hazards, against the built binary
+        run: cargo test --locked --test hazards
+
+  # Behaviour that differs by operating system, asserted rather than
+  # hoped. Caught here in 0.2.0: report paths carried `\` on Windows,
+  # against SPEC.md's own output contract.
+  #
+  # The suite runs twice because Windows ignores TZ: a suite that depends
+  # on the variable is green on two platforms and red on the third for a
+  # reason nobody can reproduce.
+  platform:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-15, windows-2025, ubuntu-24.04]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: dtolnay/rust-toolchain@2c7215f132e9ebf062739d9130488b56d53c060c # master
+        with:
+          toolchain: stable
+      - name: Platform behaviour
+        run: cargo test --locked --test platform
+      - name: The whole suite with TZ set
+        env:
+          TZ: UTC
+        run: cargo test --locked
+      - name: The whole suite with TZ absent
+        run: cargo test --locked
+
+  # The corpus pins the cases somebody thought of. This generates the
+  # rest and requires the two `extract_patterns` servers — the npm one and
+  # the crate's — to answer them identically. One tool, one schema, two
+  # implementations, so a disagreement is a bug in the tool.
+  #
+  # The two *surfaces* are deliberately not compared: the extension is
+  # IDE-first and the CLI is terminal-first, and SPEC.md lists what each
+  # has that the other does not.
+  #
+  # Caught here in 0.2.0: `str::trim` is not `String.prototype.trim` and
+  # `\s` is not `\s`, so a byte-order mark resolved a language on one
+  # server and not the other.
+  differential:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: dtolnay/rust-toolchain@2c7215f132e9ebf062739d9130488b56d53c060c # master
+        with:
+          toolchain: stable
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: 1.3.13
+      - name: Install dependencies
+        working-directory: .
+        run: bun install --frozen-lockfile
+      - run: cargo build --release --locked
+      - name: Generated documents, both servers, one answer
+        working-directory: .
+        # The seed is fixed so a failure reproduces; the script prints it
+        # either way and names the document, the language and the
+        # arguments that broke.
+        env:
+          DIFFERENTIAL_SEED: '20260812'
+        run: bun scripts/check-extraction-differential.ts
+
+  # A standing net over the pure layer, time-boxed rather than run to
+  # convergence. A ReDoS scanner that can itself be driven into
+  # catastrophic backtracking is the joke that writes itself, so the
+  # pathological inputs are asserted to terminate inside a bound.
+  #
+  # Caught here in 0.2.0: two more stack-overflow shapes nobody had
+  # thought of — nested character classes under the `v` flag, and a class
+  # followed by a thousand groups that are never closed — plus a
+  # quadratic in the analyser that cost three seconds on fifty thousand
+  # braces.
+  fuzz:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: dtolnay/rust-toolchain@2c7215f132e9ebf062739d9130488b56d53c060c # master
+        with:
+          toolchain: stable
+      - name: Sixty seconds per target
+        env:
+          REGEX_LE_FUZZ_SECONDS: '60'
+        # Release, because a debug build spends the budget on the
+        # instrumentation rather than on cases.
+        # Quoted: `fuzz:: ` is a mapping key to a YAML parser otherwise.
+        run: 'cargo test --release --locked --bin regex-le fuzz:: -- --nocapture --test-threads=1'
+
+  # A wall-clock ceiling on a fixed tree, and the linearity check beside
+  # it. secrets-le was fifty times slower than its siblings for a release
+  # because nothing measured it; this crate got faster this release, and
+  # an unmeasured improvement is one regression from being gone.
+  budget:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: dtolnay/rust-toolchain@2c7215f132e9ebf062739d9130488b56d53c060c # master
+        with:
+          toolchain: stable
+      - name: The scan budget
+        # Release: timing a debug binary measures the compiler.
+        run: cargo test --release --locked --test budget -- --nocapture
+
+  # Does this crate open what it claims to open? One file per alias, a
+  # dozen extensions it has never heard of, and a report line required
+  # for every one — plus a finding per language, because a report line
+  # proves only that the file was opened.
+  coverage-matrix:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: dtolnay/rust-toolchain@2c7215f132e9ebf062739d9130488b56d53c060c # master
+        with:
+          toolchain: stable
+      - name: Every advertised name, opened and understood
+        run: cargo test --locked --test coverage_matrix

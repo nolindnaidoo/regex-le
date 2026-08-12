@@ -8,7 +8,8 @@ catastrophic backtracking.
 **Parity first.** For extraction and for the ReDoS verdict, the extension
 is the reference implementation. Anything this produces for a given
 document must match what the extension produces for that document. A
-difference is a regression until proven otherwise.
+difference is a regression until proven otherwise — see "Deliberate
+divergences" for the short list of differences that are not.
 
 ## The one question
 
@@ -120,6 +121,53 @@ and is ported verbatim, because a second implementation guessing at that
 list is how the two frontends start disagreeing about what is even a
 pattern.
 
+### Deliberate divergences
+
+Everything else is a regression. These are not, and each says why.
+
+**The shared tool is not one of them.** `extract_patterns` has one name,
+one schema and two servers, so an agent must get the same answer
+whichever it reaches. `scripts/check-extraction-differential.ts`
+generates documents neither side has seen and requires them to agree; a
+disagreement there is a bug in the tool, never a difference of surface.
+
+**The two surfaces do differ, and should.** The extension is IDE-first —
+one open buffer, a person reading results in an editor. This is
+terminal-first — trees, exit codes, piping, automation. So the walk,
+`--severity`, `--all`, `--strict`, the JSON Lines report and the exit
+codes exist here and not there, and neither is held to the other's
+shape.
+
+**Read the same way on both sides, deliberately:**
+
+- **A call form reports no flags.** Every language but JavaScript sets
+  them with constants, builder methods or an inline `(?i)`, and reading
+  `re.I` or `RegexOptions.IgnoreCase` as a JavaScript flag string is not
+  something a text scan could get right. The ReDoS verdict does not
+  depend on flags.
+- **PHP's modifiers are dropped rather than reported.** Its set is not
+  JavaScript's, and handing `x` to a JavaScript parser would report a
+  working PCRE pattern as a syntax error.
+- **Some forms are not read at all**: Ruby's `%r{…}`, Python's `regex`
+  module, Java text blocks, PHP's bracket delimiters beyond `(){}[]<>`,
+  and a C# static call whose subject argument is itself a call or an
+  index. Each needs a parser for the host language rather than a scan.
+
+**This crate alone, because a process is not a buffer:**
+
+- **A pattern past a structural bound is refused rather than judged.**
+  `regress` parses by recursive descent, so nesting and alternation cost
+  stack; past 1,000 levels of bracket nesting or 5,000 alternation
+  branches the parser is not asked, because running out of stack aborts
+  the *process* — no report, no exit code, and a whole tree's scan lost
+  to one generated file. The extension runs inside an editor's engine,
+  which has its own much higher limits and throws rather than dying.
+  Where the text is unambiguously a pattern — a constructor or a call
+  argument — the refusal is named, carried as an `incomplete` diagnostic
+  and exits 2. Where it is a bare `/…/`, which was a guess about a slash
+  in the first place, the candidate is dropped as any unparseable one
+  is. No hand-written pattern comes near either bound.
+
 ### Duplicates are collapsed
 
 A pattern-and-flags pair is reported **once, at its first occurrence**.
@@ -219,6 +267,13 @@ line per file.
   "summary": { "patterns": 1, "findings": 1 }
 }
 ```
+
+**Paths are spelled with `/` on every platform**, in the JSON and in the
+human lines alike. A report that describes the same tree two ways cannot
+be diffed between two machines, and a consumer splitting a path should
+not have to know which operating system produced it. The rewrite happens
+only where `\` is the separator: a backslash is a legal character in a
+POSIX filename and rewriting it there would rename the file.
 
 ### Exit codes are the API
 
@@ -321,3 +376,17 @@ entirely.
 
 A BOM anywhere other than the start is a zero-width no-break space and
 belongs to the text.
+
+It goes the same way for a document arriving on `--stdin` as for one
+read off the disk: `cat x.js | regex-le --stdin` and `regex-le x.js`
+answer with the same columns for the same bytes.
+
+Elsewhere a byte-order mark is **whitespace**, because it is whitespace
+to JavaScript. `String.prototype.trim` and JavaScript's `\s` hold U+FEFF
+and not U+0085; Rust's `str::trim`, `char::is_whitespace` and the `regex`
+crate's `\s` hold exactly the opposite. Everywhere the extension trims or
+matches `\s` — resolving a format name, reading the space before a
+`re.compile(`, judging a PHP delimiter, comparing the first character of
+an alternation branch — this spells JavaScript's set out rather than
+borrowing Rust's. Same rule as `\w`, which is ASCII in a JavaScript regex
+and Unicode here.

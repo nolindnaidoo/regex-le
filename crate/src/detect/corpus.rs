@@ -62,6 +62,14 @@ const DOCUMENTS: [(&str, &str); 13] = [
     ("pcre.py", include_str!("../../fixtures/documents/pcre.py")),
 ];
 
+/// Every embedded document, for the fuzzer to seed itself from. Real
+/// source in nine grammars is a better starting point than random bytes:
+/// a mutation of something the extractor already reaches gets past the
+/// first character far more often than noise does.
+pub(crate) fn documents() -> &'static [(&'static str, &'static str)] {
+    &DOCUMENTS
+}
+
 pub(crate) fn document(name: &str) -> &'static str {
     DOCUMENTS
         .iter()

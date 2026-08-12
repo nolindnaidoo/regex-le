@@ -47,8 +47,11 @@ pub(crate) fn collect(inputs: &[PathBuf], options: &WalkOptions) -> Result<Walke
     let mut files = Vec::new();
 
     for input in inputs {
-        let metadata =
-            std::fs::metadata(input).map_err(|error| format!("{}: {error}", input.display()))?;
+        // Named the way the report names it: a refusal and a report
+        // line that spell the same path two ways is the same problem as
+        // two machines' reports that cannot be diffed.
+        let metadata = std::fs::metadata(input)
+            .map_err(|error| format!("{}: {error}", crate::scan::reported_path(input)))?;
 
         if metadata.is_file() {
             files.push(input.clone());
@@ -85,7 +88,8 @@ fn walk_directory(root: &StdPath, options: &WalkOptions) -> Result<Walked, Strin
 fn files_under(builder: &mut ignore::WalkBuilder, root: &StdPath) -> Result<Vec<PathBuf>, String> {
     let mut files = Vec::new();
     for entry in builder.build() {
-        let entry = entry.map_err(|error| format!("{}: {error}", root.display()))?;
+        let entry =
+            entry.map_err(|error| format!("{}: {error}", crate::scan::reported_path(root)))?;
         if entry.file_type().is_some_and(|kind| kind.is_file()) {
             files.push(entry.path().to_path_buf());
         }

@@ -288,6 +288,36 @@ fn a_document_on_stdin_is_scanned() {
     assert_eq!(report["patterns"][0]["redos"]["severity"], "high");
 }
 
+/// A byte-order mark is three invisible bytes a Windows editor adds, and
+/// it went the same way for a file read and not for a pipe — so
+/// `regex-le x.js` said column 12 and the same bytes on stdin said 13.
+/// One document, one answer, whichever way it arrives.
+#[test]
+fn a_byte_order_mark_on_stdin_does_not_move_the_column() {
+    let scan = |bytes: &[u8]| -> serde_json::Value {
+        let mut child = Command::new(BINARY)
+            .args(["--stdin", "--all"])
+            .stdin(Stdio::piped())
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped())
+            .spawn()
+            .expect("the binary runs");
+        child
+            .stdin
+            .as_mut()
+            .expect("stdin")
+            .write_all(bytes)
+            .expect("written");
+        let output = child.wait_with_output().expect("finishes");
+        serde_json::from_slice(&output.stdout).expect("stdout carries JSON")
+    };
+
+    let plain = scan(b"const re = /(a+)+/g;\n");
+    let marked = scan("\u{feff}const re = /(a+)+/g;\n".as_bytes());
+    assert_eq!(plain["patterns"], marked["patterns"]);
+    assert_eq!(marked["patterns"][0]["column"], 12);
+}
+
 #[test]
 fn stdin_with_file_arguments_exits_two() {
     let tree = source_tree("stdin-and-files");

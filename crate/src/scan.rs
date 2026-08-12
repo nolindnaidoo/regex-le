@@ -110,7 +110,7 @@ fn is_binary(bytes: &[u8]) -> bool {
 /// the tree. What it is not is a per-file report line, and it does not
 /// reach `--strict`.
 pub(crate) fn scan_file(path: &PathBuf, options: ScanOptions) -> Option<FileReport> {
-    let file = path.to_string_lossy().into_owned();
+    let file = reported_path(path);
     // The extension is handed a language id by the editor; a walk has
     // only the name on disk, and an unrecognised one is not a refusal —
     // it means every form is scanned for.
@@ -357,6 +357,33 @@ mod tests {
     }
 }
 
+/// The path as the report spells it: **`/` on every platform**.
+///
+/// The JSON on stdout is protocol, and SPEC.md's output contract writes
+/// `src/validate.ts`. A Windows path carries `\`, so left alone the same
+/// tree scanned on two machines produced two reports that could not be
+/// diffed against each other — and a sibling in this family shipped that
+/// for a whole release because nothing asserted otherwise. The human
+/// lines on stderr are a projection of the same field, so they follow.
+///
+/// The rewrite happens **only where `\` is the separator**. A backslash
+/// is a legal character in a POSIX filename, and rewriting it there
+/// would rename the file in the report.
+pub(crate) fn reported_path(path: &std::path::Path) -> String {
+    let rendered = path.to_string_lossy();
+    if std::path::MAIN_SEPARATOR != '\\' {
+        return rendered.into_owned();
+    }
+    forward_slashes(&rendered)
+}
+
+/// The Windows half of `reported_path`, written as a pure string
+/// function so that every platform compiles and tests it. A branch only
+/// Windows can execute is a branch only Windows CI can catch.
+fn forward_slashes(rendered: &str) -> String {
+    rendered.replace('\\', "/")
+}
+
 /// The report for a file that was not read: named, warned about, and
 /// not a failure by itself.
 fn skipped(file: String, reason: &str) -> FileReport {
@@ -402,5 +429,31 @@ mod hazards {
         // Only a leading one: elsewhere it is a zero-width no-break
         // space and belongs to the text.
         assert_eq!(without_bom("a\u{feff}b"), "a\u{feff}b");
+    }
+
+    /// The rewrite itself, tested on every platform because the branch
+    /// that runs it only exists on one. envsync-le shipped a release
+    /// writing `\` into its reports; SPEC.md's contract says `/`.
+    #[test]
+    fn the_windows_half_rewrites_every_separator() {
+        assert_eq!(
+            forward_slashes(r"C:\src\deep\validate.ts"),
+            "C:/src/deep/validate.ts"
+        );
+        assert_eq!(forward_slashes("already/forward"), "already/forward");
+    }
+
+    /// And on a platform whose separator is not `\`, a backslash in a
+    /// filename is part of the name and must survive.
+    #[test]
+    fn a_posix_filename_keeps_its_backslash() {
+        if std::path::MAIN_SEPARATOR == '\\' {
+            eprintln!("SKIPPED a POSIX filename with a backslash: this platform has no such name");
+            return;
+        }
+        assert_eq!(
+            reported_path(std::path::Path::new(r"dir/a\b.js")),
+            r"dir/a\b.js"
+        );
     }
 }

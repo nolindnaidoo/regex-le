@@ -30,9 +30,11 @@ reproduces.
 crate/src/
 ├── detect/      pure: pattern extraction, the ReDoS scan, the
 │                heuristics, positions. No filesystem, pub(crate).
+│   └── js.rs    JavaScript's trim and `\s`, where Rust's differ
 ├── walk.rs      ignore-aware tree walking
 ├── scan.rs      one file end to end — the only path either surface calls
 ├── cli.rs       the terminal surface
+├── fuzz.rs      test-only: the standing net over detect/
 └── mcp/         the agent surface
 ```
 
@@ -80,7 +82,21 @@ crate/src/
 - **JavaScript's character classes are not Rust's.** `\w` is ASCII in a
   JavaScript regex and Unicode in `regex`, so `is_regex_context` spells
   the rule out rather than borrowing `\w`. Borrowing it makes
-  `café /x/` division here and a regex in the extension.
+  `café /x/` division here and a regex in the extension. The same trap
+  runs the other way for whitespace: `String.prototype.trim` and
+  JavaScript's `\s` hold U+FEFF and not U+0085, and `str::trim`,
+  `char::is_whitespace` and `regex`'s `\s` hold the opposite. **Every
+  trim and every `\s` goes through `detect/js.rs`**, which defines the
+  set once in two forms and tests that the two agree. Reaching for
+  `str::trim` or `\s` directly in `detect/` is a bug.
+- **The parser is asked about a bounded shape or not at all.** `regress`
+  recurses, and running out of stack aborts the *process* — no report,
+  no exit code. `heuristics::structure` measures nesting and alternation
+  before the parser sees anything; past the bound extraction refuses by
+  name, and between the ordinary case and the bound the parse runs on a
+  thread sized for it. Three different shapes reached the abort before
+  the fuzzer found them, so a new bound needs a fuzz run behind it
+  rather than an argument.
 - **A pattern-and-flags pair is reported once**, at its first
   occurrence — the extension's design, and the reason a file using one
   validation regex ten times reports one finding.
@@ -206,7 +222,35 @@ The bar, enforced by review:
   and none of them was large enough to reach it. Run the binary, not
   only the tests.
 - Tests are deterministic: no clocks, no randomness, and **no filesystem
-  in `detect/` tests** — everything there runs from the corpus.
+  in `detect/` tests** — everything there runs from the corpus. The one
+  carve-out is `src/fuzz.rs`, which needs both and is the only place
+  either is allowed: its generator is seeded and prints the seed
+  (`REGEX_LE_FUZZ_SEED` pins it), and its clock only ever asserts that a
+  pathological input terminated, against a bound an order of magnitude
+  above the measured cost.
+- **The tiers CI adds beyond the above**, each because something real
+  got through:
+  - `tests/hazards.rs` — a tree built at runtime (BOM, CRLF, a NUL byte,
+    invalid UTF-8, a FIFO, a symlink loop, a 260-character path) run
+    against the built binary on all three platforms. Every case asserts
+    the process exits 0, 1 or 2 and **never on a signal**. Cases the
+    platform cannot express skip by name.
+  - `tests/platform.rs` — what differs by operating system: `/` in every
+    reported path, independence from `TZ`, a case-insensitive filesystem
+    reporting each file once, reserved Windows names, and a child that
+    refuses before its stdin is written.
+  - `tests/budget.rs` — a wall-clock ceiling on a generated 500-file
+    tree, plus a linearity check. Release only; a debug binary measures
+    the compiler.
+  - `tests/coverage_matrix.rs` — one file per alias in
+    `fixtures/aliases.json` plus a dozen extensions nothing resolves. A
+    report line is required for every one, and a *finding* for every
+    language, because a report line only proves the file was opened.
+  - `src/fuzz.rs` — sixty seconds per target in CI over mutations of the
+    corpus, and the pathological inputs written on purpose.
+  - `scripts/check-extraction-differential.ts` — generated documents
+    through **both** `extract_patterns` servers, byte-identical answers
+    required. It compares the shared tool, never the two surfaces.
 
 ## Verification — the definition of done
 
@@ -223,7 +267,11 @@ CI additionally builds on macOS, Windows and Linux, checks the Rust 1.88
 minimum version, runs `cargo audit`, the no-inline-`#[allow]` and
 no-filesystem-in-`detect/` policy jobs, the per-module coverage floor,
 the gated scenarios, and parity — including on extension-side edits to
-`src/extraction/**`, so neither frontend can drift green. A change is
+`src/extraction/**`, so neither frontend can drift green. On top of
+those: `hazards` and `platform` on all three OSes, and `differential`,
+`fuzz`, `budget` and `coverage-matrix` on Linux. **None of them may be
+softened to go green** — no `continue-on-error`, no `|| true`. If one is
+red, the bug is real until proven otherwise. A change is
 not done because it compiles; it is done when it is tested, linted,
 documented where behavior changed (README / CHANGELOG / SPEC / this
 file), and honest — claims in docs must match the code.

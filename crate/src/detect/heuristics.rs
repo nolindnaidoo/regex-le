@@ -40,17 +40,151 @@ pub(crate) fn is_valid_flag_string(flags: &str) -> bool {
     true
 }
 
+/// The structure the parser pays stack for.
+///
+/// `regress` parses by recursive descent, so nesting and alternation
+/// cost **stack** rather than heap, and running out of it is not an
+/// error a caller sees: the process dies on a signal with no report and
+/// no exit code, and one generated file takes a whole tree's scan with
+/// it. Measured on a debug build of this crate against an 8 MB stack:
+/// about 5.4 KB per nesting level, and about 1.1 KB per alternation
+/// branch.
+///
+/// Both bracket kinds count towards the depth, and a group that is never
+/// closed keeps counting. Two fuzzer findings shaped that: under the `v`
+/// flag a character class nests as a class rather than as a literal, and
+/// 510 of those aborted a 2 MB test thread; and `[(]+(]+(]+…` is a class
+/// followed by a thousand groups nobody ever closes, which recursed just
+/// as deep while looking balanced to anything counting brackets in
+/// pairs.
+struct Structure {
+    depth: usize,
+    branches: usize,
+}
+
+/// Past this, the parse gets a stack of its own rather than the caller's.
+const DEEP_GROUP_DEPTH: usize = 32;
+const DEEP_ALTERNATION_BRANCHES: usize = 256;
+
+/// Past this, nothing parses it on any stack. Deep enough that no
+/// hand-written pattern comes close and no generated one this crate has
+/// met does either; a pattern beyond it is refused by name rather than
+/// silently mis-judged.
+pub(crate) const MAX_GROUP_DEPTH: usize = 1_000;
+pub(crate) const MAX_ALTERNATION_BRANCHES: usize = 5_000;
+
+/// The stack a deep parse is given: enough for the bounds above three
+/// times over. It is *reserved* address space committed page by page as
+/// it is used, so a pattern that needs none of it costs none of it.
+const DEEP_STACK: usize = 32 * 1024 * 1024;
+
+/// One pass over the pattern, stopping as soon as either bound is
+/// exceeded so a hostile input costs no more than an ordinary one.
+///
+/// The open brackets are kept as a stack rather than a counter, because
+/// which bracket is open changes what the next character means: inside a
+/// character class a `(` is a literal and a `)` closes nothing, and
+/// outside one a `]` with no class open is a literal too. Counting them
+/// in pairs read `[(]+(]+(]+…` as balanced when it is a thousand groups
+/// deep.
+fn structure(pattern: &str) -> Structure {
+    let mut characters = pattern.chars();
+    let mut open: Vec<char> = Vec::new();
+    let mut classes: usize = 0;
+    let mut deepest: usize = 0;
+    let mut branches: usize = 0;
+
+    while let Some(character) = characters.next() {
+        match character {
+            '\\' => {
+                characters.next();
+            }
+            '[' => {
+                open.push('[');
+                classes += 1;
+                deepest = deepest.max(open.len());
+            }
+            ']' if classes > 0 => {
+                open.pop();
+                classes -= 1;
+            }
+            '(' if classes == 0 => {
+                open.push('(');
+                deepest = deepest.max(open.len());
+            }
+            ')' if classes == 0 => {
+                if open.last() == Some(&'(') {
+                    open.pop();
+                }
+            }
+            '|' if classes == 0 => branches += 1,
+            _ => continue,
+        }
+        if deepest > MAX_GROUP_DEPTH || branches > MAX_ALTERNATION_BRANCHES {
+            break;
+        }
+    }
+    Structure {
+        depth: deepest,
+        branches,
+    }
+}
+
+/// Whether the parser can be asked about this pattern at all.
+///
+/// Extraction consults this before handing over anything that is
+/// unambiguously a pattern, so a shape past the bounds becomes a
+/// refusal that names itself rather than a pattern that quietly vanished.
+pub(crate) fn is_within_parser_limits(pattern: &str) -> bool {
+    let found = structure(pattern);
+    found.depth <= MAX_GROUP_DEPTH && found.branches <= MAX_ALTERNATION_BRANCHES
+}
+
 /// Whether `new RegExp(pattern, flags)` would succeed.
 ///
 /// The **only** place this crate needs a JavaScript-compatible engine,
 /// and it is used to parse rather than to match. An invalid pattern is a
 /// syntax error, not a vulnerability, and telling the two apart is what
 /// this answers.
+///
+/// A pattern past every bound is answered `false` without the parser
+/// being asked. That is not the same claim as "JavaScript would refuse
+/// it" — V8 accepts deeper nesting than this — and it is why extraction
+/// refuses such a pattern by name before it reaches here. This is the
+/// guard for every other caller, and the reason no input can abort the
+/// process.
 pub(crate) fn compiles(pattern: &str, flags: &str) -> bool {
     if !is_valid_flag_string(flags) {
         return false;
     }
+    let found = structure(pattern);
+    if found.depth > MAX_GROUP_DEPTH || found.branches > MAX_ALTERNATION_BRANCHES {
+        return false;
+    }
+    if found.depth <= DEEP_GROUP_DEPTH && found.branches <= DEEP_ALTERNATION_BRANCHES {
+        return parse(pattern, flags);
+    }
+    parse_with_room(pattern, flags)
+}
+
+fn parse(pattern: &str, flags: &str) -> bool {
     regress::Regex::with_flags(pattern, flags).is_ok()
+}
+
+/// Parse on a thread sized for the job.
+///
+/// Reached only by a pattern deeper or wider than anything hand-written,
+/// so the thread costs nothing in the common case. A thread that cannot
+/// be started, or a parse that ends any way but normally, answers `false`
+/// — the same answer the caller would get for a pattern that does not
+/// compile, and the one that cannot take the process with it.
+fn parse_with_room(pattern: &str, flags: &str) -> bool {
+    std::thread::scope(|scope| {
+        std::thread::Builder::new()
+            .stack_size(DEEP_STACK)
+            .spawn_scoped(scope, || parse(pattern, flags))
+            .is_ok_and(|handle| handle.join().unwrap_or(false))
+    })
 }
 
 /// Whether a pattern is a well-formed regular expression in **some**
@@ -307,6 +441,93 @@ mod tests {
             assert!(!is_well_formed(pattern, ""), "{pattern}");
         }
         assert!(!is_well_formed("x", "zz"), "the flags are still judged");
+    }
+
+    /// The regression a fuzzer found: `regress` parses by recursive
+    /// descent, so a deep enough pattern overflowed the stack and the
+    /// process died on `SIGABRT` — no report, no exit code, the whole
+    /// tree's scan gone because one file held a generated pattern.
+    #[test]
+    fn a_pattern_too_deep_to_parse_is_answered_rather_than_aborted() {
+        let deep = format!("{}a{}", "(".repeat(20_000), ")".repeat(20_000));
+        assert!(!is_within_parser_limits(&deep));
+        assert!(!compiles(&deep, ""), "answered, not aborted");
+        assert!(!is_well_formed(&deep, ""));
+
+        let wide = vec!["a"; 20_000].join("|");
+        assert!(!is_within_parser_limits(&wide));
+        assert!(!compiles(&wide, ""));
+    }
+
+    /// Nested character classes cost the parser stack under the `v`
+    /// flag, where a class nests as a class rather than as a literal.
+    /// Five hundred of them aborted a test thread, and no test written
+    /// by hand had thought to try it.
+    #[test]
+    fn nested_character_classes_are_answered_rather_than_aborted() {
+        let nested = "[".repeat(20_000);
+        assert!(!is_within_parser_limits(&nested));
+        for flags in ["", "v", "dgimsuvy"] {
+            assert!(!compiles(&nested, flags), "{flags}");
+            assert!(!is_well_formed(&nested, flags), "{flags}");
+        }
+    }
+
+    /// The fuzzer's second finding, and the subtler one: a class
+    /// followed by groups nobody closes. `]` outside a class is a
+    /// literal, so counting brackets in pairs called this balanced while
+    /// the parser recursed a thousand deep through it.
+    #[test]
+    fn unclosed_groups_after_a_class_still_count_as_depth() {
+        let unbalanced = format!("-{}", "[(]+(]+".repeat(2_000));
+        assert!(!is_within_parser_limits(&unbalanced));
+        for flags in ["", "g", "dgimsuvy"] {
+            assert!(!compiles(&unbalanced, flags), "{flags}");
+        }
+        // And the balanced spelling of the same characters is ordinary.
+        assert!(is_within_parser_limits(&"[(]+[)]+".repeat(2_000)));
+    }
+
+    /// The bound has to leave ordinary patterns alone, and a bracket
+    /// behind an escape is not a bracket at all.
+    #[test]
+    fn an_ordinary_pattern_is_within_the_parser_limits() {
+        for pattern in [
+            r"^\d{4}-\d{2}-\d{2}$",
+            "(a+)+",
+            "(?<name>a|b|c)*",
+            r"[(|]+\(\|",
+            "",
+        ] {
+            assert!(is_within_parser_limits(pattern), "{pattern}");
+            assert!(compiles(pattern, ""), "{pattern}");
+        }
+        assert!(
+            is_within_parser_limits(&"(a)".repeat(20_000)),
+            "wide but never deep: 20,000 groups at depth one"
+        );
+        assert!(
+            is_within_parser_limits(&r"\(\[".repeat(MAX_GROUP_DEPTH + 10)),
+            "an escaped bracket is a literal, not a level"
+        );
+    }
+
+    /// Exactly at the bound is judged; one past it is not. The pattern
+    /// at the bound is judged on a stack of its own, which is the whole
+    /// point of having one.
+    #[test]
+    fn the_parser_limits_are_inclusive() {
+        let at = |depth: usize| format!("{}a{}", "(".repeat(depth), ")".repeat(depth));
+        assert!(is_within_parser_limits(&at(MAX_GROUP_DEPTH)));
+        assert!(compiles(&at(MAX_GROUP_DEPTH), ""), "judged, not refused");
+        assert!(!is_within_parser_limits(&at(MAX_GROUP_DEPTH + 1)));
+
+        let branches = |count: usize| vec!["a"; count + 1].join("|");
+        assert!(is_within_parser_limits(&branches(MAX_ALTERNATION_BRANCHES)));
+        assert!(compiles(&branches(MAX_ALTERNATION_BRANCHES), ""));
+        assert!(!is_within_parser_limits(&branches(
+            MAX_ALTERNATION_BRANCHES + 1
+        )));
     }
 
     /// The rewrite answers a question; it never reaches a report. These
