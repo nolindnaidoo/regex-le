@@ -94,6 +94,23 @@ jobs:
             echo 'detect/ must not touch the filesystem — that belongs in walk.rs and scan.rs.'
             exit 1
           fi
+      # The two frontends share one MCP tool and nothing else. A doc that
+      # says the crate must reproduce the extension's output re-imposes
+      # the constraint the surfaces were deliberately freed from — and it
+      # spreads, because the next SPEC.md gets written from a sibling.
+      - name: Forbid a doc holding the two surfaces equal
+        working-directory: .
+        run: |
+          hits=$(grep -rniE \
+            'difference is a regression|reproduces its output exactly|is the reference implementation for' \
+            --include='*.md' . 2>/dev/null | grep -vE '/target/|CHANGELOG\.md' || true)
+          if [ -n "$hits" ]; then
+            echo "$hits"
+            echo
+            echo 'Only the shared MCP tool is held equal. The surfaces are IDE-first'
+            echo 'and terminal-first and are meant to differ — say which one you mean.'
+            exit 1
+          fi
 
   # AGENTS.md sets a 90% line coverage floor per module for detect/.
   # Enforced per module, not on the total: a total hides one module

@@ -5,11 +5,11 @@ VS Code extension to a Rust CLI and MCP server: find every regular
 expression in a codebase and report which of them can be driven into
 catastrophic backtracking.
 
-**Parity first.** For extraction and for the ReDoS verdict, the extension
-is the reference implementation. Anything this produces for a given
-document must match what the extension produces for that document. A
-difference is a regression until proven otherwise — see "Deliberate
-divergences" for the short list of differences that are not.
+**One answer is held equal; the surfaces are not.** The shared
+`extract_patterns` MCP tool must return the same patterns, their positions, and the ReDoS verdict
+from either server — a difference there is a bug. Everything else is
+IDE-first in the extension and terminal-first here, and is meant to
+differ. See "Deliberate divergences".
 
 ## The one question
 
