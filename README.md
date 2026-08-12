@@ -288,7 +288,7 @@ All ten also ship as MCP servers — `npx <name>-mcp` gives any agent the same e
 
 ## Also by nolindnaidoo
 
-**Rust** — pixelcoords and pixelactions are one loop: pixelcoords answers *where*, pixelactions *acts* there. The nine LE crates are the terminal half of the extensions they sit in — the same detection, held to the extension's own corpus, and an exit code instead of a results editor.
+**Rust** — pixelcoords and pixelactions are one loop: pixelcoords answers *where*, pixelactions *acts* there. The ten LE crates are the terminal half of the extensions they sit in — the same detection, held to the extension's own corpus, and an exit code instead of a results editor.
 
 - **[pixelcoords](https://github.com/nolindnaidoo/pixelcoords)** — Freeze your screen, mark regions, get pixel-exact coordinates and crops
   [pixelcoords.dev](https://pixelcoords.dev) · [crates.io](https://crates.io/crates/pixelcoords) · [docs.rs](https://docs.rs/pixelcoords)
@@ -310,6 +310,8 @@ All ten also ship as MCP servers — `npx <name>-mcp` gives any agent the same e
   [crates.io](https://crates.io/crates/envsync-le)
 - **[colors-le](https://github.com/nolindnaidoo/colors-le/tree/main/crate)** — Find every colour in a codebase, and say which are not in your palette
   [crates.io](https://crates.io/crates/colors-le)
+- **[dates-le](https://github.com/nolindnaidoo/dates-le/tree/main/crate)** — Find every date and timestamp in a codebase, and the instant each one resolves to
+  [crates.io](https://crates.io/crates/dates-le)
 - **[scrape-le](https://github.com/nolindnaidoo/scrape-le/tree/main/crate)** — Check whether a page is scrapeable before the scraper is written
   [crates.io](https://crates.io/crates/scrape-le)
 

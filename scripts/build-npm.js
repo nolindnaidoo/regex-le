@@ -34,6 +34,19 @@ if (!fs.existsSync(bundlePath)) {
 	process.exit(1);
 }
 
+// The version is baked into the bundle by esbuild --define, so a bundle left
+// over from the last release copies cleanly into a package claiming the new
+// one. The published server then announces the old version over stdio, which
+// only shows up once it is installed — and npm will not take the version
+// again.
+const bundle = fs.readFileSync(bundlePath, 'utf8');
+if (!bundle.includes(JSON.stringify(root.version))) {
+	console.error(
+		`FAIL: dist/mcp-server.js does not carry ${root.version} — it is stale. Run \`bun run build:mcp:prod\` first.`,
+	);
+	process.exit(1);
+}
+
 if (manifest.version !== root.version) {
 	manifest.version = root.version;
 	fs.writeFileSync(manifestPath, `${JSON.stringify(manifest, null, '\t')}\n`);
