@@ -189,5 +189,5 @@ flag and no tool schema offers text to match against.
 extension's wording and it ports with the code. Silence is not a
 clearance, and the help text says so rather than implying otherwise.
 
-[0.2.0]: https://github.com/nolindnaidoo/regex-le/releases/tag/crate-v0.2.0
-[0.1.0]: https://github.com/nolindnaidoo/regex-le/releases/tag/crate-v0.1.0
+[0.2.0]: https://crates.io/crates/regex-le/0.2.0
+[0.1.0]: https://crates.io/crates/regex-le/0.1.0
