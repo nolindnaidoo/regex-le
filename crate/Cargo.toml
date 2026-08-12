@@ -5,12 +5,12 @@ edition = "2024"
 rust-version = "1.88"
 license = "MIT"
 readme = "README.md"
-description = "Find every regex in a codebase and report which can be driven into catastrophic backtracking"
+description = "Find every regex in a codebase and report which can be driven into catastrophic backtracking — a ReDoS scanner for JavaScript, TypeScript, Python, Rust, Go, Java, Ruby, PHP and C#"
 authors = ["Nolin D Naidoo"]
 homepage = "https://letools.dev/tools/regex-le"
 repository = "https://github.com/nolindnaidoo/regex-le"
-keywords = ["regex", "redos", "security", "lint", "cli"]
-categories = ["command-line-utilities", "development-tools"]
+keywords = ["redos", "regex", "backtracking", "security", "sast"]
+categories = ["command-line-utilities", "development-tools", "development-tools::testing", "text-processing", "parsing"]
 # What a consumer gets, and why.
 #
 # Ships: src/, Cargo.toml, Cargo.lock, LICENSE, README.md — needed to
