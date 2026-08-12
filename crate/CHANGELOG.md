@@ -7,16 +7,28 @@ this repository release on their own cadence.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.2.0] - 2026-08-12
 
 ### Added
 
-- **Seven more languages.** Patterns are now found at the call sites
-  Python, Rust, Go, Java, Ruby, PHP and C# write them at, alongside the
-  JavaScript and TypeScript literals and `RegExp` constructors that were
-  all this read before. A `.py`, `.rs` or `.go` file holding `(a+)+`
-  came back clean; each is now a `high` finding, and the corpus carries
-  one document per language so neither frontend can lose them again.
+- **A regex written in Python, Rust, Go, Java, Ruby, PHP or C# is now
+  found.** Only JavaScript and TypeScript were read before, so pointing
+  this at a Python codebase reported nothing and exited 0 — a ReDoS
+  scanner with nothing to say about the file that actually holds the
+  pattern. `re.compile`, `Regex::new`, `regexp.MustCompile`,
+  `Pattern.compile`, `Regexp.new`, `preg_match` and `new Regex` are all
+  read now, and a `.py`, `.rs` or `.go` file holding `(a+)+` is a `high`
+  finding. The corpus carries one document per language, so neither
+  frontend can lose them again.
+
+  **Expect the pattern count to fall on some trees, and that is the
+  point.** Deciding whether a slash opens a regex or divides is a guess,
+  and it was being made in languages that have no `/…/` literal at all —
+  so a Python file full of `/var/log/...` read as a page of patterns. On
+  one tree, 183 of the patterns previously reported were file paths and
+  division signs of exactly that kind; they are gone, and the real call
+  sites in the same files are reported instead. Its Python files went
+  from 175 patterns to 25, and all 25 are regexes.
 - **`extract_patterns` takes an optional `format` or `filename`** on
   both MCP servers, resolved through a shared alias table
   (`fixtures/aliases.json`) so a name one server reads and the other
@@ -60,8 +72,31 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
-Every one of these was found by a CI job added in this release, and each
-ships with the test that fails without the fix.
+- **A leading byte-order mark is no longer part of the document.** Three
+  invisible bytes, added by Notepad, Excel and a PowerShell redirect, and
+  stripped by VS Code before the extension ever sees a file — so the two
+  frontends read the same file differently. It shifted every column on
+  line one, and before a `{` it made a structured parser reject the whole
+  document, which is indistinguishable from a file with no patterns in it.
+
+- **A file that cannot be read no longer fails the run.** Every
+  repository has a PNG, a zip and something the runner lacks permission
+  for. Exiting 2 on those made the tool unusable in CI, which is the one
+  place it is most worth running. Such a file is now named on stderr and
+  carried in the report with a `skipped` diagnostic, and the exit code
+  reflects what was found. `--strict` restores the old behaviour for a
+  pipeline that wants zero tolerance.
+
+  A scan that gives up part way through a file still fails without
+  asking — that is a coverage failure, and it is now a different thing
+  from a file that was never text.
+
+- **A file that is not text is named rather than dropped.** It used to
+  vanish from the report entirely, which reads to whoever ran it as
+  "that file was clean".
+
+The rest were found by a CI job added in this release, and each ships
+with the test that fails without the fix.
 
 - **A pattern nested deep enough no longer kills the process.**
   `regress` parses by recursive descent, so a generated pattern a few
@@ -100,6 +135,19 @@ ships with the test that fails without the fix.
   fifty thousand braces cost three seconds. A scanner for catastrophic
   backtracking that can itself be made to hang is the joke that writes
   itself.
+
+### The scope has not moved
+
+**It flags shapes and it cannot prove a pattern safe.** Nine languages
+instead of two means more places a dangerous shape is found, not a
+stronger claim about the ones it stays quiet on. This is a scanner, not
+an automaton analysis; a pattern it does not recognise may still
+backtrack badly on adversarial input, and silence is not a clearance.
+
+Some forms are still not read, and SPEC.md names them: Ruby's `%r{…}`,
+Python's `regex` module, Java text blocks, PHP's bracket delimiters
+beyond `(){}[]<>`, and a C# static call whose subject argument is itself
+a call or an index.
 
 ## [0.1.0] - 2026-08-09
 
@@ -141,29 +189,5 @@ flag and no tool schema offers text to match against.
 extension's wording and it ports with the code. Silence is not a
 clearance, and the help text says so rather than implying otherwise.
 
+[0.2.0]: https://github.com/nolindnaidoo/regex-le/releases/tag/crate-v0.2.0
 [0.1.0]: https://github.com/nolindnaidoo/regex-le/releases/tag/crate-v0.1.0
-
-### Fixed
-
-- **A leading byte-order mark is no longer part of the document.** Three
-  invisible bytes, added by Notepad, Excel and a PowerShell redirect, and
-  stripped by VS Code before the extension ever sees a file — so the two
-  frontends read the same file differently. It shifted every column on
-  line one, and before a `{` it made a structured parser reject the whole
-  document, which is indistinguishable from a file with no patterns in it.
-
-- **A file that cannot be read no longer fails the run.** Every
-  repository has a PNG, a zip and something the runner lacks permission
-  for. Exiting 2 on those made the tool unusable in CI, which is the one
-  place it is most worth running. Such a file is now named on stderr and
-  carried in the report with a `skipped` diagnostic, and the exit code
-  reflects what was found. `--strict` restores the old behaviour for a
-  pipeline that wants zero tolerance.
-
-  A scan that gives up part way through a file still fails without
-  asking — that is a coverage failure, and it is now a different thing
-  from a file that was never text.
-
-- **A file that is not text is named rather than dropped.** It used to
-  vanish from the report entirely, which reads to whoever ran it as
-  "that file was clean".

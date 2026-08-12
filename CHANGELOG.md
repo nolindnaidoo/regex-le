@@ -9,15 +9,25 @@ This file covers the **VS Code extension**. The Rust CLI in `crate/` is a
 separate product on its own cadence and keeps its own
 [CHANGELOG](crate/CHANGELOG.md).
 
-## [Unreleased]
+## [2.3.0] - 2026-08-12
 
 ### Added
 
-- **Seven more languages.** `extractRegexPatterns` now finds patterns at
-  the call sites Python, Rust, Go, Java, Ruby, PHP and C# write them at,
-  alongside the JavaScript and TypeScript literals and `RegExp`
-  constructors it read before. A `.py`, `.rs` or `.go` file holding
-  `(a+)+` came back with nothing; each is now a high-severity finding.
+- **A regex written in Python, Rust, Go, Java, Ruby, PHP or C# is now
+  found.** Only JavaScript and TypeScript were read before, so running
+  Extract on a Python file came back with nothing — no matches, no
+  warnings, no reason given. `re.compile`, `Regex::new`,
+  `regexp.MustCompile`, `Pattern.compile`, `Regexp.new`, `preg_match`
+  and `new Regex` are all read now, and a `.py`, `.rs` or `.go` file
+  holding `(a+)+` is a high-severity finding.
+
+  **Expect fewer patterns on some files, and that is the point.**
+  Deciding whether a slash opens a regex or divides is a guess, and it
+  was being made in languages that have no `/…/` literal at all — so a
+  Python file full of `/var/log/...` listed a page of "patterns" that
+  were file paths. Those are gone, and the real call sites in the same
+  files are listed instead: on one tree, its Python files went from 175
+  patterns to 25, and all 25 are regexes.
 - `extractRegexPatterns(text, languageId?)` takes the document's
   language. The `Extract`, `Test` and `Validate` commands pass the
   editor's; `extract_patterns` over MCP takes an optional `format` or
@@ -25,20 +35,6 @@ separate product on its own cadence and keeps its own
   diagnostic rather than being silently ignored.
 - MCP `extract_patterns` now reports `redos.vulnerableGroups`, which the
   Rust server already did.
-
-### Changed
-
-- **The language selects which spellings are looked for**, and the
-  slash-versus-division walk runs only where a bare `/…/` is legal —
-  JavaScript, TypeScript, Ruby. A Python document no longer reports
-  `#!/usr/bin/env python` as a pattern. A document whose language is
-  absent or unrecognised is scanned exactly as before, for everything.
-- **Another language's spelling is no longer a syntax error.**
-  `re.compile(r'(?P<year>\d{4})')` is ordinary Python that JavaScript
-  refuses; `detectReDoS` used to answer `Pattern is invalid` for it.
-  Validity is now judged against a JavaScript rendering of the pattern,
-  while the pattern reported and scanned stays the source as written.
-
 - A **Rust CLI and MCP server**, in [`crate/`](crate/README.md), published
   to crates.io as [`regex-le`](https://crates.io/crates/regex-le). It runs
   the same pattern detection and ReDoS screen over a whole tree, with exit
@@ -51,6 +47,36 @@ separate product on its own cadence and keeps its own
   stays the reference implementation, `crate/fixtures/` is the contract,
   and `ci-crate.yml` watches `src/extraction/**` so neither side can drift
   green.
+
+### Fixed
+
+- **A valid Python or Go regex is no longer called invalid.**
+  `re.compile(r'(?P<year>\d{4})')` is ordinary Python, and a leading
+  `(?i)` heads most Go and Rust patterns; both are syntax errors to a
+  JavaScript engine, which was the only judge here. Validate answered
+  `Pattern is invalid` on working code, and the ReDoS check refused to
+  look at its shape. Validity is now asked of a JavaScript *rendering*
+  of the pattern — the reported pattern stays the source exactly as
+  written, so `(?P<word>\w+)+@` is shown as you wrote it and still comes
+  back high severity.
+
+### Changed
+
+- **The language selects which spellings are looked for**, and the
+  slash-versus-division walk runs only where a bare `/…/` is legal —
+  JavaScript, TypeScript, Ruby. A document whose language is absent or
+  unrecognised is scanned exactly as before, for everything.
+
+### The scope has not moved
+
+**It flags shapes and it cannot prove a pattern safe.** Nine languages
+instead of two means more places a dangerous shape is found, not a
+stronger claim about the ones it stays quiet on. A pattern it does not
+recognise may still backtrack badly on adversarial input.
+
+Some forms are still not read: Ruby's `%r{…}`, Python's `regex` module,
+Java text blocks, PHP's bracket delimiters beyond `(){}[]<>`, and a C#
+static call whose subject argument is itself a call or an index.
 
 ## [2.2.4] - 2026-08-07
 
