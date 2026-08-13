@@ -2,7 +2,7 @@
 	"name": "regex-le",
 	"publisher": "nolindnaidoo",
 	"displayName": "Regex-LE",
-	"description": "Zero-Hassle Regex Extraction & Validation - Find, test, and validate the regular expressions in any file, with match reports and built-in ReDoS screening.",
+	"description": "Find every regex in a codebase, and report which can be driven into catastrophic backtracking",
 	"version": "2.3.0",
 	"license": "MIT",
 	"author": {
