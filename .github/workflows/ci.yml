@@ -19,6 +19,71 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # A prose commit cannot behave differently on Windows, so repeating the whole
+  # matrix for one is three runners answering a question with one answer. This
+  # narrows the matrix rather than skipping anything: on a docs-only push every
+  # check still runs, once, on the leg that carries the checks the other two do
+  # not — the README coverage gate, the integration suite and the installed
+  # VSIX end-to-end are all Linux-only already.
+  #
+  # "Docs" is deliberately narrow: `*.md` and `LICENSE`, nothing else.
+  # Anything unrecognised counts as code, and an unreadable diff counts as
+  # code — the default is always to run more, never less.
+  #
+  # Note what this is NOT: `GEMINI.md` is documentation by that rule and is
+  # also read by `src/agent-files.test.ts`. That is fine precisely because
+  # nothing is skipped. `.cursorrules` and the other non-`.md` mirrors count
+  # as code and widen the matrix; a `.md` one narrows it, and the suite that
+  # covers it still runs on the leg that remains.
+  changes:
+    name: What changed
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      code: ${{ steps.classify.outputs.code }}
+      matrix: ${{ steps.classify.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - id: classify
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            range="origin/${{ github.base_ref }}...HEAD"
+          else
+            before="${{ github.event.before }}"
+            if [ -z "$before" ] || [ "$before" = "0000000000000000000000000000000000000000" ]; then
+              before="$(git rev-list --max-parents=0 HEAD | tail -1)"
+            fi
+            range="$before..HEAD"
+          fi
+
+          # An unreadable range is not evidence of a docs-only push. Fall back
+          # to the full matrix rather than quietly checking less.
+          if ! files="$(git diff --name-only "$range")"; then files=""; fi
+
+          code=false
+          if [ -z "$files" ]; then code=true; fi
+          while IFS= read -r file; do
+            [ -z "$file" ] && continue
+            case "$file" in
+              *.md | LICENSE) ;;
+              *) code=true; break ;;
+            esac
+          done <<EOF
+          $files
+          EOF
+
+          if [ "$code" = "true" ]; then
+            echo 'matrix=["ubuntu-latest","macos-latest","windows-latest"]' >> "$GITHUB_OUTPUT"
+          else
+            echo 'matrix=["ubuntu-latest"]' >> "$GITHUB_OUTPUT"
+          fi
+          echo "code=$code" >> "$GITHUB_OUTPUT"
+          echo "code=$code, files changed:"
+          echo "$files"
+
   commits:
     name: Commit messages
     runs-on: ubuntu-latest
@@ -42,13 +107,14 @@ jobs:
 
   ci:
     name: CI on ${{ matrix.os }}
+    needs: changes
     runs-on: ${{ matrix.os }}
     # Integration tests drive a real extension host; without a cap a hung
     # vscode-test sits for the 6h runner default.
     timeout-minutes: 20
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: ${{ fromJSON(needs.changes.outputs.matrix) }}
       fail-fast: false
 
     steps:
@@ -124,6 +190,11 @@ jobs:
   # extraction logic in the crate to test.
   zed:
     name: Zed extension
+    needs: changes
+    # A wasm build and a version-agreement check over package.json, server.json
+    # and the Zed manifests. Every input is a code file, so a docs-only push
+    # cannot move it.
+    if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:

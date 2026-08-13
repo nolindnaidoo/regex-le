@@ -37,11 +37,20 @@ artifact users actually install.
 - **Output changes must update the characterization goldens** in the same
   commit, with a CHANGELOG entry describing the behaviour change.
 - **Every claim must be provable.** No feature, metric or format goes in a
-  README, the manifest, or help text unless the code backs it.
-- **This repo is one of ten identical ones.** Config files and workflows are
-  byte-identical across the family; a change here needs copying to the other
-  nine. See `../CLAUDE.md`. `ci-crate.yml` and `release-crate.yml` are the
-  exception — they exist only in the repos that ship a crate.
+  README, the manifest, or help text unless the code backs it. That governs
+  **behaviour and numbers** — not **availability**. Whether something is
+  published, listed or installable is a fact about a registry at a moment in
+  time, and it is false right up until you make it true. Copy for a release you
+  are about to make is **staged, never forbidden**: write it, and let the
+  release commit be what makes it true.
+- **This repo is one of ten identical ones.** The shared config files, scripts
+  and workflows are byte-identical across the family, and
+  `letools-site/scripts/check-fleet.ts` is what holds them there rather than
+  memory: run `bun run check:fleet ../` from a checkout of the site with the
+  ten beside it, or dispatch its **Fleet** workflow. It names the file and the
+  repos that drifted, so a missed copy is a report rather than something you
+  find months later. Anything under `crate/` is outside the check on purpose —
+  the crates stand on their own.
 - **Detection is shared with the Rust CLI**, and the corpus under `crate/` is
   the contract. Changing detection behaviour means running
   `bun scripts/check-extraction-parity.ts` and updating the corpus — on both
@@ -60,4 +69,13 @@ artifact users actually install.
   integration test. Never call `l10n.t()` at module scope, never compare a
   translated label against an English literal, and use positional `{0}`
   placeholders rather than template literals.
-- **Coverage thresholds are a floor**, never lowered to make CI pass.
+- **CI narrows itself on a docs-only push.** A change touching only `*.md` and
+  `LICENSE` runs the Linux leg alone and skips the Zed build; `ci-crate.yml`
+  runs its `policy` gate with every Rust job skipped. Nothing that covers the
+  change is skipped — the README coverage gate, the integration suite and the
+  installed-VSIX end-to-end are Linux-only anyway. Anything unrecognised, and an
+  unreadable diff, counts as code and runs everything. A release commit always
+  touches `package.json`, so a release still sees the full three-OS matrix.
+- **Coverage floors are a backstop, not a target.** They sit well below where
+  the code actually is, and they are not raised to track it — a floor that
+  follows real coverage becomes a tax on writing the next module.

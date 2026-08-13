@@ -6,10 +6,20 @@
 name: CodeQL
 
 on:
+  # A prose commit cannot change what a code scanner finds, and this workflow
+  # is four jobs. The weekly run below is what keeps coverage honest — it
+  # reaches the whole repository whether or not anything was pushed — so
+  # skipping a scan of unchanged code costs nothing.
   push:
     branches: [main]
+    paths-ignore:
+      - '**/*.md'
+      - 'LICENSE'
   pull_request:
     branches: [main]
+    paths-ignore:
+      - '**/*.md'
+      - 'LICENSE'
   schedule:
     # Weekly, so new queries reach existing code without waiting for a commit.
     - cron: "27 4 * * 1"

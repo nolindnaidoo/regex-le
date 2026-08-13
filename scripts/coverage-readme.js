@@ -53,28 +53,38 @@ if (newestSourceTime(path.join(root, 'src')) > fs.statSync(summaryPath).mtimeMs)
 const total = JSON.parse(fs.readFileSync(summaryPath, 'utf8')).total;
 const pkg = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
 
-// Test count: every `it(` / `test(` across the unit suites. Approximate by
-// construction, so it is reported as a file+case count rather than a precise
-// claim about assertions.
-function countTests(dir) {
-	let files = 0;
-	let cases = 0;
-	for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
-		const p = path.join(dir, entry.name);
-		if (entry.isDirectory()) {
-			const sub = countTests(p);
-			files += sub.files;
-			cases += sub.cases;
-		} else if (entry.name.endsWith('.test.ts')) {
-			files += 1;
-			const src = fs.readFileSync(p, 'utf8');
-			cases += (src.match(/^\s*(?:it|test)(?:\.\w+)?\s*\(/gm) || []).length;
-		}
-	}
-	return { files, cases };
+// Test counts come from the run, not from a regex over the source.
+//
+// They used to be counted by matching `it(` / `test(` per line, which counts a
+// table-driven `it.each(CASES)(...)` as one case while it runs as many. Every
+// README in the fleet understated itself as a result — by between 21 and 105
+// cases — and `--check` then enforced the wrong number exactly. A gate that is
+// precise about a figure nobody can reproduce is worse than no figure: the
+// reader runs the suite, sees a different number, and learns that the README is
+// decorative. (No sibling is named here on purpose: the fleet check normalises
+// a repo's own name away, so naming two of them gives one file three different
+// shapes and reports drift that is not there.)
+const resultsPath = path.join(root, 'coverage', 'test-results.json');
+if (!fs.existsSync(resultsPath)) {
+	console.error(
+		'coverage/test-results.json not found — run `bun run test:coverage` first.',
+	);
+	process.exit(1);
 }
 
-const { files, cases } = countTests(path.join(root, 'src'));
+const results = JSON.parse(fs.readFileSync(resultsPath, 'utf8'));
+const cases = results.numTotalTests;
+const files = results.testResults.length;
+
+// `numTotalTestSuites` counts describe blocks, not files; the file count is the
+// length of testResults. Both are asserted here rather than trusted, because a
+// reporter shape change would otherwise write `undefined` into the README.
+if (!Number.isInteger(cases) || !Number.isInteger(files)) {
+	console.error(
+		'coverage/test-results.json has no numTotalTests / testResults — the vitest JSON reporter shape changed.',
+	);
+	process.exit(1);
+}
 const pct = (m) => m.pct.toFixed(2);
 
 const block = `${START}
@@ -89,9 +99,10 @@ ${cases} test cases across ${files} files, plus an integration suite that runs
 in a real VS Code extension host and an end-to-end test that installs the
 built \`.vsix\` into a clean profile.
 
-Generated from \`coverage/coverage-summary.json\` by
-\`scripts/coverage-readme.js\`; CI fails if this section drifts from a fresh
-run. Reproduce with \`bun run test:coverage\`.
+Generated from a real run — \`coverage/coverage-summary.json\` and
+\`coverage/test-results.json\` — by \`scripts/coverage-readme.js\`; CI fails if
+this section drifts. Reproduce with \`bun run test:coverage\`, and the case
+count is the one vitest prints.
 ${END}`;
 
 const readme = fs.readFileSync(readmePath, 'utf8');
