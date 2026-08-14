@@ -67,6 +67,12 @@ separate product on its own cadence and keeps its own
   JavaScript, TypeScript, Ruby. A document whose language is absent or
   unrecognised is scanned exactly as before, for everything.
 
+- **New icon artwork.** All sixteen tools were redrawn in one style, so
+  the family reads as one set wherever the listings sit side by side —
+  the Marketplace, Open VSX and letools.dev. The framing is unchanged:
+  the drawing fills 65.8% of an 800×800 canvas, and every smaller size
+  is derived from that one file rather than drawn again.
+
 ### The scope has not moved
 
 **It flags shapes and it cannot prove a pattern safe.** Nine languages
