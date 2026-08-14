@@ -8,6 +8,9 @@
 # Scope is deliberately narrow. Runtime dependencies are bundled into
 # dist/extension.js and ship to every install, so they are never merged
 # unreviewed. Majors are never merged unreviewed either.
+#
+# Workflow actions are in scope. They run in CI, never reach a user, and every
+# one is pinned to a commit SHA that Dependabot rewrites here.
 name: Dependabot auto-merge
 
 on:
@@ -35,14 +38,26 @@ jobs:
         env:
           UPDATE_TYPE: ${{ steps.meta.outputs.update-type }}
           DEP_TYPE: ${{ steps.meta.outputs.dependency-type }}
+          ECOSYSTEM: ${{ steps.meta.outputs.package-ecosystem }}
         run: |
           eligible=false
-          if [ "$DEP_TYPE" = "direct:development" ] && \
-             { [ "$UPDATE_TYPE" = "version-update:semver-patch" ] || \
-               [ "$UPDATE_TYPE" = "version-update:semver-minor" ]; }; then
+          small=false
+          if [ "$UPDATE_TYPE" = "version-update:semver-patch" ] || \
+             [ "$UPDATE_TYPE" = "version-update:semver-minor" ]; then
+            small=true
+          fi
+          # Every action reports as direct:production — the ecosystem has no
+          # dev/prod split — so the devDependency arm below can never admit one.
+          # That left every actions bump open forever while this run still
+          # exited green, which is why nothing looked broken.
+          if [ "$small" = true ] && [ "$ECOSYSTEM" = "github_actions" ]; then
+            eligible=true
+          fi
+          if [ "$small" = true ] && [ "$DEP_TYPE" = "direct:development" ]; then
             eligible=true
           fi
           echo "eligible=$eligible" >> "$GITHUB_OUTPUT"
+          echo "ecosystem:       $ECOSYSTEM"
           echo "dependency-type: $DEP_TYPE"
           echo "update-type:     $UPDATE_TYPE"
           echo "eligible:        $eligible"
@@ -85,6 +100,6 @@ jobs:
       - name: Explain a skip
         if: steps.gate.outputs.eligible != 'true'
         run: |
-          echo "Left for manual review: only patch/minor devDependency updates"
-          echo "are merged automatically. Runtime dependencies bundle into the"
-          echo "shipped VSIX, and majors need a human."
+          echo "Left for manual review. Merged unattended: patch and minor"
+          echo "workflow-action bumps, and patch/minor devDependencies. Runtime"
+          echo "dependencies bundle into the shipped VSIX, and majors need a human."
