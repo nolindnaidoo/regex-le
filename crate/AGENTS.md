@@ -279,7 +279,7 @@ file), and honest — claims in docs must match the code.
 ## Commits and pull requests
 
 The repo root's convention applies unchanged (root `AGENTS.md`):
-conventional prefix, imperative subject under 72 characters, body
+conventional prefix, imperative subject under 100 characters, body
 carrying the *why* — enforced by the `commit-msg` hook and the
 `Commit messages` CI job. One concern per change; if docs describe the
 thing you changed, update them in the same commit. Release tags are

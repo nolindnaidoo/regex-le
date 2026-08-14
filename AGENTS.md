@@ -274,7 +274,7 @@ one, so check `git config user.email` in a fresh clone before the first commit.
 
 Subjects use a conventional prefix — `feat:`, `fix:`, `docs:`, `test:`, `ci:`,
 `build:`, `chore:`, `refactor:`, `perf:`, `revert:` — an optional `(scope)`,
-and an imperative summary under 72 characters with no trailing period. The body
+and an imperative summary under 100 characters with no trailing period. The body
 says why the change was needed and what it prevents; a subject alone is rarely
 enough to reconstruct a decision six months later.
 

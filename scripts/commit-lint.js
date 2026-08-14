@@ -82,7 +82,7 @@ function checkMessage(message) {
 const SUBJECT = new RegExp(
 	`^(${TYPES.join('|')})(\\([a-z0-9._-]+\\))?!?: .+`,
 );
-const MAX_SUBJECT = 72;
+const MAX_SUBJECT = 100;
 
 // Past tense reads like a changelog entry rather than an instruction to the
 // tree; the convention is imperative mood.
