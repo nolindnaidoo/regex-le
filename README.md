@@ -17,6 +17,9 @@
   <a href="https://www.npmjs.com/package/regex-le-mcp">
     <img src="https://img.shields.io/npm/v/regex-le-mcp?style=for-the-badge&label=MCP%20server&color=blue&logo=npm" alt="regex-le-mcp on npm" />
   </a>
+  <a href="https://crates.io/crates/regex-le">
+    <img src="https://img.shields.io/crates/v/regex-le?style=for-the-badge&label=Rust%20CLI&color=blue&logo=rust" alt="regex-le on crates.io" />
+  </a>
   <a href="https://letools.dev/tools/regex-le">
     <img src="https://img.shields.io/badge/LE%20Tools-letools.dev-blue?style=for-the-badge" alt="LE Tools" />
   </a>
@@ -36,6 +39,16 @@
 ## What it does
 
 Open any file and run one of three commands. **Extract** lists every regex pattern found in the document. **Test** (`Ctrl+Alt+R` / `Cmd+Alt+R`) runs a found — or manually entered — pattern against the file content and reports matches with real line/column positions and capture groups (named groups included). **Validate** checks every found pattern for syntax errors and screens it for ReDoS-prone shapes. Works in VS Code and VS Code–based editors like Cursor and VSCodium (installable from Open VSX).
+
+## Install
+
+| Where | What you get | Install |
+|---|---|---|
+| **VS Code** | The lint *and* the tester, in your editor | [Marketplace](https://marketplace.visualstudio.com/items?itemName=nolindnaidoo.regex-le) |
+| **Cursor, VSCodium, Windsurf** | The same extension | [Open VSX](https://open-vsx.org/extension/OffensiveEdge/regex-le) |
+| **A terminal or a CI step** | The same run over a whole tree, with exit codes | `cargo install regex-le` · [crates.io](https://crates.io/crates/regex-le) |
+| **Any MCP agent, via Node** | `extract_patterns` over stdio | `npx regex-le-mcp` · [npm](https://www.npmjs.com/package/regex-le-mcp) |
+| **Zed** | The MCP server as a context server | [add it by hand](https://zed.dev/docs/ai/mcp) *(no listing yet)* |
 
 ## Use it from an AI agent
 
@@ -72,7 +85,7 @@ Most hosts read a JSON config. Add one entry:
 }
 ```
 
-`-y` skips the install prompt on first run. Pin a version if you would rather not track releases — `regex-le-mcp@2.2.1`.
+`-y` skips the install prompt on first run. Pin a version if you would rather not track releases — `regex-le-mcp@2.3.0`.
 
 Prefer not to go through `npx` on every launch? Install it once and point at the binary instead:
 
@@ -162,19 +175,6 @@ pattern text — which is what makes it a cheap deterministic CI step.
 It flags shapes and **cannot prove a pattern safe**, exactly as the
 screening in this extension cannot.
 
-Install it with `cargo install regex-le`
-([crates.io](https://crates.io/crates/regex-le)). The spec
-([`crate/SPEC.md`](crate/SPEC.md)) and the engineering standard
-([`crate/AGENTS.md`](crate/AGENTS.md)) live alongside it, and it keeps
-its own [CHANGELOG](crate/CHANGELOG.md).
-
-**Two MCP servers, one tool.** `regex-le mcp` offers `extract_patterns`
-exactly as [`regex-le-mcp`](https://www.npmjs.com/package/regex-le-mcp)
-does — [`crate/fixtures/mcp-extract-patterns.json`](crate/fixtures/mcp-extract-patterns.json)
-runs against both and CI fails if they diverge. Take the npm one if Node
-is already there; take the binary if you want no runtime, or if you want
-`regex_le_lint` too.
-
 ## Commands
 
 | Command | Description |
@@ -220,19 +220,15 @@ setting of its own.
 - **The MCP server holds the same line.** It takes content as an argument and returns data: no filesystem access, no network calls, no telemetry. Your agent already has file-read tools, so duplicating them inside the server would add a path-traversal surface for no capability. `check:mcp-bundle` fails the build if the server ever imports something that could reach either.
 - Error notifications redact home directories and credential-shaped fragments.
 
-## Development
+## Documentation
 
-```bash
-bun install
-bun run build            # esbuild bundle -> dist/extension.js
-bun run typecheck        # tsc --noEmit (includes tests)
-bun run test             # vitest unit suite
-bun run test:integration # real VS Code extension host
-bun run lint             # biome
-bun run package          # VSIX into release/
-```
-
-Architecture and conventions live in [AGENTS.md](AGENTS.md). Changes are tracked in [CHANGELOG.md](CHANGELOG.md).
+| What | Where |
+|---|---|
+| What the tool is allowed to say — scope, output contract, refusals, non-goals | [`crate/SPEC.md`](crate/SPEC.md) |
+| How the extension is built and held together — architecture, invariants, toolchain, release | [AGENTS.md](AGENTS.md) |
+| How the CLI is built and held together | [`crate/AGENTS.md`](crate/AGENTS.md) |
+| What changed | [CHANGELOG.md](CHANGELOG.md) · [`crate/CHANGELOG.md`](crate/CHANGELOG.md) |
+| The tool's page, and the other fifteen | [letools.dev/tools/regex-le](https://letools.dev/tools/regex-le) |
 
 ## Performance
 
@@ -305,6 +301,7 @@ Each stands on its own: no shared crate, no published core. Where two of them
 agree, it is because the same answer was right twice.
 
 **Contact** — [nolindnaidoo.com](https://nolindnaidoo.com) · [GitHub](https://github.com/nolindnaidoo) · [LinkedIn](https://www.linkedin.com/in/nolindnaidoo/)
+
 ## Also by nolindnaidoo
 
 **Rust** — pixelcoords and pixelactions are one loop: pixelcoords answers
