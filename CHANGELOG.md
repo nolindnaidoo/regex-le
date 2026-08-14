@@ -9,7 +9,7 @@ This file covers the **VS Code extension**. The Rust CLI in `crate/` is a
 separate product on its own cadence and keeps its own
 [CHANGELOG](crate/CHANGELOG.md).
 
-## [2.3.0] - 2026-08-12
+## [2.3.0] - 2026-08-14
 
 ### Added
 
@@ -414,3 +414,4 @@ integration suite on every CI run.
 
 ## [1.7.0] - 2025-11-02 — Initial public release: extract/test/validate
 commands, ReDoS warnings, safety thresholds, local-only telemetry.
+[0.2.0]: https://crates.io/crates/regex-le/0.2.0
