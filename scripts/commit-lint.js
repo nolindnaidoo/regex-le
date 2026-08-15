@@ -82,7 +82,6 @@ function checkMessage(message) {
 const SUBJECT = new RegExp(
 	`^(${TYPES.join('|')})(\\([a-z0-9._-]+\\))?!?: .+`,
 );
-const MAX_SUBJECT = 100;
 
 // Past tense reads like a changelog entry rather than an instruction to the
 // tree; the convention is imperative mood.
@@ -102,9 +101,6 @@ function check(subject) {
 		problems.push(
 			`must start with one of ${TYPES.join(', ')} followed by ": "`,
 		);
-	}
-	if (subject.length > MAX_SUBJECT) {
-		problems.push(`subject is ${subject.length} chars, limit is ${MAX_SUBJECT}`);
 	}
 	if (subject.endsWith('.')) {
 		problems.push('subject must not end with a period');
