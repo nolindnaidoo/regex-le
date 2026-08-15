@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="https://raw.githubusercontent.com/nolindnaidoo/regex-le/main/src/assets/images/icon.png" alt="regex-le logo" width="96" height="96"/>
+</p>
+
 <h1 align="center">regex-le</h1>
 
 <p align="center">

@@ -7,6 +7,23 @@ this repository release on their own cadence.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.1] - 2026-08-15
+
+### Fixed
+
+- **The crates.io page shows the icon.** It lived only in the repository
+  README, and that file is not the one `cargo publish` ships — the
+  published README is this directory's. A relative path would not have
+  fixed it: the crate is published from `crate/`, so crates.io resolves
+  a relative link against `path_in_vcs` and looks for the asset below
+  the crate directory rather than beside it. The image is an absolute
+  URL, which every surface renders.
+
+  No demo goes with it. `src/assets/images/demo.gif` records the
+  extension reading an editor buffer, which is not what this binary
+  does; the demo that belongs here is a recording of the CLI, and there
+  is not one yet.
+
 ## [0.2.0] - 2026-08-14
 
 ### Added
@@ -189,5 +206,6 @@ flag and no tool schema offers text to match against.
 extension's wording and it ports with the code. Silence is not a
 clearance, and the help text says so rather than implying otherwise.
 
+[0.2.1]: https://crates.io/crates/regex-le/0.2.1
 [0.2.0]: https://crates.io/crates/regex-le/0.2.0
 [0.1.0]: https://crates.io/crates/regex-le/0.1.0
