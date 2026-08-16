@@ -369,3 +369,55 @@ fn the_cli_and_the_mcp_server_report_the_same_thing() {
         .clone();
     assert_eq!(from_mcp, from_cli, "the two surfaces disagree");
 }
+
+/// **The detector against measured truth, not against its own rule.**
+///
+/// `fixtures/redos-truth.json` records, per pattern, whether it actually
+/// backtracks — established by running it against adversarial input with
+/// a timeout (`scripts/measure-redos.py`), never by reading the rule.
+/// `reportedAt0_2_2` is what this detector said when the file was made.
+///
+/// This is a characterisation test: it asserts the detector still
+/// answers what that file records, so any change to the rule shows up as
+/// a diff with a measured verdict beside it. The numbers it pins are
+/// **not** the target — at the time of writing they are 6 correct out of
+/// 20, with 5 patterns that backtrack reported clean and 9 that do not
+/// reported `high`. Moving them is the point; moving them silently is
+/// what this prevents.
+#[test]
+fn the_detector_is_measured_against_ground_truth() {
+    const TRUTH: &str = include_str!("../fixtures/redos-truth.json");
+    let truth: serde_json::Value = serde_json::from_str(TRUTH).expect("valid JSON");
+    let cases = truth["cases"].as_array().expect("cases");
+    assert!(!cases.is_empty(), "the corpus is empty");
+
+    let tree = Tree::new("redos-truth");
+    let (mut agree, mut misses, mut alarms) = (0, 0, 0);
+    for case in cases {
+        let pattern = case["pattern"].as_str().expect("a pattern");
+        let recorded = case["reportedAt0_2_2"].as_str().expect("a verdict");
+        let file = tree.write("probe.js", &format!("const r = /{pattern}/;\n"));
+        let run = run(&["--all", &file.to_string_lossy()]);
+        let reports = reports(&run);
+        let severity = reports
+            .first()
+            .and_then(|report| report["patterns"][0]["redos"]["severity"].as_str())
+            .unwrap_or("none");
+        assert_eq!(
+            severity, recorded,
+            "the detector changed its answer for {pattern} without the corpus being updated"
+        );
+
+        let flagged = matches!(severity, "high" | "medium");
+        match (case["measured"] == "exponential", flagged) {
+            (true, true) | (false, false) => agree += 1,
+            (true, false) => misses += 1,
+            (false, true) => alarms += 1,
+        }
+    }
+    assert_eq!(
+        (agree, misses, alarms),
+        (6, 5, 9),
+        "the detector's accuracy moved; update the corpus deliberately"
+    );
+}
