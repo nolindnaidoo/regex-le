@@ -41,6 +41,36 @@ separate product on its own cadence and keeps its own
   In the other direction `(.*a){20}` is now reported, and so is
   `say "([a-z]+)*"`, whose loop sits behind a literal the attack string
   has to reach first.
+
+  **A loop whose body can match empty is not one of them.** `(\w*)+`,
+  `((a)*)*`, `(.*)+` and `(a*)*` are reported clean: a real engine
+  abandons a loop iteration that consumed nothing, so all four run in
+  microseconds in CPython and V8 at every length. The walk now abandons
+  it too, blocking a state only *while it is on the current path* — a
+  block that never lifted would memoise the search and silence every
+  genuine blow-up instead. Behind an anchor or a failing tail the same
+  bodies are still catastrophic and still reported: `^(\w*)+$` and
+  `(\w*)+@` both exceed a five second budget at 28 characters.
+- **A regex written in a comment or a string is no longer reported.** A
+  JSDoc block explaining a dangerous pattern, a commented-out line, a
+  Python docstring holding an example — all three were extracted and
+  judged, so documenting a hazard failed the build that documented it.
+  Comment state was never tracked across lines, and a block comment that
+  opened and closed on one line only looked handled, because the phantom
+  pattern it produced was invalid and got dropped on the way out.
+  Comments and strings are now lexed per grammar and a candidate whose
+  *start* falls in one is skipped — which keeps `re.compile(r"(a+)+b")`,
+  whose argument is a string and whose call is not. **Only when the
+  language is known**: a document nothing recognises is scanned as
+  written, because a comment rule guessed from the wrong grammar would
+  drop real patterns rather than phantom ones.
+- **A counted minimum no longer builds a prefix to match it.**
+  `a{4000000000}(b+)+c` tried to construct a four-billion-character
+  attack string. The automaton already approximates a repeat past its
+  unroll ceiling, so a prefix that long could not have been honest; past
+  4096 characters the loop is left unreached and the pattern
+  undemonstrated, which is the answer this gives when it cannot show its
+  work.
 - **Silence is no longer ambiguous.** A pattern this cannot read — a
   backreference or lookaround, which are not regular languages, syntax it
   does not parse, or an automaton over its size ceiling — is reported as

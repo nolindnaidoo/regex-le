@@ -136,8 +136,9 @@ What is deliberately **not** extracted:
 - Candidates that are not a well-formed regular expression in any of these languages, or with invalid/duplicate flags. Another language's spelling is not a syntax error: `re.compile(r'(?P<word>\w+)+@')` is reported as written, and still flagged.
 - Constructor calls whose pattern argument is a variable or template literal (only literal string arguments are visible to a text scanner).
 - Flags, on anything but a JavaScript literal or constructor: every other language sets them with constants, builder methods or an inline `(?i)` rather than a string argument.
+- **Anything written in a comment or a string.** A JSDoc block explaining a hazard, a commented-out line, a Python docstring with an example — none of them is code, and reporting one fails a build over a sentence. The rule is about where a candidate *starts*, so `re.compile(r"(a+)+b")` keeps its quoted argument while a docstring holding that whole line is prose. Only when the language is known: a document nothing recognises is scanned as written, because a comment rule guessed from the wrong grammar would drop real patterns instead of phantom ones.
 
-Duplicate pattern+flags pairs are listed once. This is lexing by heuristic, not a parser for nine languages: a slash inside a string or comment can still be picked up when its context looks expression-like.
+Duplicate pattern+flags pairs are listed once. This is lexing by heuristic, not a parser for nine languages: a slash inside a string can still be picked up when its context looks expression-like.
 
 ## ReDoS screening
 
@@ -256,12 +257,12 @@ a build only tells you how busy the runner was.
 <!-- coverage:start -->
 | Metric | Coverage |
 | --- | --- |
-| Statements | 91.91% |
-| Branches | 78.80% |
-| Functions | 97.77% |
-| Lines | 94.24% |
+| Statements | 92.32% |
+| Branches | 79.83% |
+| Functions | 97.94% |
+| Lines | 94.56% |
 
-233 test cases across 16 files, plus an integration suite that runs
+260 test cases across 17 files, plus an integration suite that runs
 in a real VS Code extension host and an end-to-end test that installs the
 built `.vsix` into a clean profile.
 

@@ -76,6 +76,8 @@ const PUMP_LOW = 14;
 const PUMP_HIGH = 40;
 /** What counts as a blow-up between them. Linear is ~2x, quadratic ~4x. */
 const BLOWUP_RATIO = 1_000;
+/** The longest concrete prefix worth building to reach a loop. */
+const MAX_PREFIX = 4_096;
 /** The automaton's ceiling, past which the pattern is refused. */
 const MAX_STATES = 4_000;
 /**
@@ -455,8 +457,17 @@ function shortest(node: Node): string | undefined {
 		return shortestOf(found);
 	}
 	if (node.min === 0) return '';
+
+	// **A counted minimum is not a length to trust.** `a{4000000000}(b+)+c`
+	// would build a four-billion-character prefix and emit it as a witness.
+	// The automaton already approximates a repeat past `MAX_UNROLL`, so a
+	// prefix that long could not be honest anyway: refusing to build one
+	// leaves the loop unreached and the pattern undemonstrated, which is
+	// the answer this gives when it cannot show its work.
 	const body = shortest(node.node);
-	return body === undefined ? undefined : body.repeat(node.min);
+	if (body === undefined) return undefined;
+	if (byteLength(body) * node.min > MAX_PREFIX) return undefined;
+	return body.repeat(node.min);
 }
 
 function shortestOfClass(ranges: Ranges): string | undefined {
@@ -515,18 +526,48 @@ function accepts(node: Node, point: number): boolean {
 // ---------------------------------------------------------------------
 
 /**
+ * A step of the walk. `FRAME_LEAVE` is what makes the pruning
+ * path-local: it is pushed under a state's edges, so the state is
+ * released only once every path through it has been tried.
+ */
+const FRAME_ENTER = 0;
+const FRAME_LEAVE = 1;
+
+/**
  * How many steps a backtracking engine spends before it gives up.
  *
  * Depth-first over the automaton with no memoisation, which is what a
  * backtracking engine is: every edge tried in order, a dead end unwound
  * rather than remembered. Capped at `STEP_BUDGET`, which is also the
  * signal that the pattern lost.
+ *
+ * **The empty-iteration rule, and it is not an optimisation.** A real
+ * engine abandons a loop iteration that consumed nothing, because
+ * otherwise it never terminates. Without it this walk prefers the back
+ * edge of `(\w*)+` forever and burns the budget, reporting a pattern
+ * that every real engine runs in microseconds — a finding whose own
+ * witness does not reproduce, which is the one thing this module must
+ * never emit.
+ *
+ * The pruning is **path-local**: a state is blocked only while it is on
+ * the current path, and released on the way back out. Blocking it
+ * globally — a plain visited set that never releases — would memoise the
+ * search into polynomial time and hide the very blow-up being measured,
+ * and no corpus would catch that, because every exponential case would
+ * go quiet in both frontends at once.
  */
 function steps(nfa: Nfa, entry: number, exit: number, input: string): number {
 	const chars = Array.from(input, (character) => character.codePointAt(0) ?? 0);
-	// State and position interleaved: one array, no allocation per step.
+	const width = chars.length + 1;
+	// Which (state, position) pairs are on the current path. Stamped with
+	// the start position's generation rather than cleared, so beginning a
+	// new search costs nothing.
+	const stamp = new Uint32Array(nfa.edges.length * width);
+	// Frame kind, state and position interleaved: one array, no allocation
+	// per step.
 	const stack: number[] = [];
 	let spent = 0;
+	let generation = 0;
 
 	// **A search, not a full match.** An engine tries every start position
 	// and stops at the first success, so an unanchored loop that matches
@@ -534,14 +575,24 @@ function steps(nfa: Nfa, entry: number, exit: number, input: string): number {
 	// that reason, though it looks like one. Requiring the whole input to
 	// be consumed reported it as exponential.
 	for (let start = 0; start <= chars.length; start++) {
+		generation += 1;
 		stack.length = 0;
-		stack.push(entry, start);
+		stack.push(FRAME_ENTER, entry, start);
 		while (stack.length > 0) {
 			const at = stack.pop() ?? 0;
 			const state = stack.pop() ?? 0;
+			const kind = stack.pop() ?? 0;
+			const mark = state * width + at;
+			if (kind === FRAME_LEAVE) {
+				stamp[mark] = 0;
+				continue;
+			}
+			if (stamp[mark] === generation) continue;
 			spent += 1;
 			if (spent >= STEP_BUDGET) return STEP_BUDGET;
 			if (state === exit) return spent;
+			stamp[mark] = generation;
+			stack.push(FRAME_LEAVE, state, at);
 			follow(nfa, state, at, chars, stack);
 		}
 	}
@@ -567,20 +618,22 @@ function follow(
 		const edge = edges[i];
 		if (edge === undefined) continue;
 		if (edge.kind === EPSILON) {
-			stack.push(edge.to, at);
+			stack.push(FRAME_ENTER, edge.to, at);
 			continue;
 		}
 		if (edge.kind === AT_START) {
-			if (at === 0) stack.push(edge.to, at);
+			if (at === 0) stack.push(FRAME_ENTER, edge.to, at);
 			continue;
 		}
 		if (edge.kind === AT_END) {
-			if (at === chars.length) stack.push(edge.to, at);
+			if (at === chars.length) stack.push(FRAME_ENTER, edge.to, at);
 			continue;
 		}
 		const point = chars[at];
 		const range = nfa.alphabet[edge.symbol];
 		if (point === undefined || range === undefined) continue;
-		if (point >= range[0] && point <= range[1]) stack.push(edge.to, at + 1);
+		if (point >= range[0] && point <= range[1]) {
+			stack.push(FRAME_ENTER, edge.to, at + 1);
+		}
 	}
 }

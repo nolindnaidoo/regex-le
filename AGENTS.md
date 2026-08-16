@@ -19,6 +19,7 @@ extraction/regex/
   heuristics.ts          THE single regex-vs-division context rule + flag/compile checks
   position.ts            offset -> {line, column} via newline index (1-based)
   extractPatterns.ts     whole-content extraction, both forms route through heuristics
+  mask.ts                the comment and string spans a candidate must not start in
   regexTest.ts           executes with the 'd' flag; group positions from match.indices
   patternSyntax.ts       the pattern text as a tree; refuses what it cannot read
   ambiguity.ts           the ReDoS decider: NFA + backtracking walk under a
@@ -198,6 +199,7 @@ most valuable line in the file, and it is what keeps the next person from
 - **`CONFIG_DEFAULTS` must equal package.json defaults.** `config.test.ts` asserts parity over every declared setting; add new settings to both plus the KEY_MAP in the test.
 - **Every declared setting must have a consumer.** v1 shipped 4 no-op settings; don't add a setting without wiring it.
 - **Extractor/ReDoS behavior is pinned by golden snapshots** (`extraction/regex/characterization.test.ts` + `__fixtures__/`). Any output change must update goldens in the same commit and be listed in the CHANGELOG. The witness is quoted into those goldens rather than written raw: one NUL byte — which is the usual rejecting tail — makes git treat the whole `.snap` as binary and stop diffing it.
+- **The walk's pruning is path-local, and that is load-bearing.** `steps()` blocks a (state, position) pair only while it is on the current path, releasing it on the way back out — which is how a real engine abandons a loop iteration that consumed nothing. A plain visited set that never releases would memoise the search into polynomial time and silence *every* exponential case, and no corpus would catch it, because both frontends would go quiet together. `ambiguity.test.ts` keeps canaries on both sides of that line.
 - **The ReDoS decider is scored, never asserted.** `extraction/regex/ambiguity.test.ts` runs it over `crate/fixtures/redos-truth.json`, whose `measured` column comes from timing a real engine (`scripts/measure-redos.py`), and requires 20 of 20 with no miss and no false alarm. A rule that grades its own homework can be wrong in both places at once, which is how the shape rule this replaced held a green suite while scoring 6 of 20.
 - **Regex-vs-division context lives in one place** (`extraction/regex/heuristics.ts`). Never re-implement it inside an extractor form.
 - **The two nls catalogues stay in key parity** with each other and with exactly the `%key%` set the manifest uses.
@@ -312,7 +314,8 @@ Order matters beyond this repo: npm must be published *before* any Zed registry 
 
 ## Known limitations (documented, not bugs)
 
-- Extraction is lexing by heuristic, not a JS parser: a slash inside a string or comment can false-positive when its context looks expression-like (`https://…` and division chains are specifically rejected).
+- Extraction is lexing by heuristic, not a JS parser: a slash inside a string can false-positive when its context looks expression-like (`https://…` and division chains are specifically rejected).
+- Comments and strings are masked per grammar (`mask.ts`), so a documented example is not a finding — but **only when the language is known**. A document nothing recognises is scanned as written, because a comment rule guessed from the wrong grammar would drop real patterns rather than phantom ones.
 - Constructor extraction only sees literal string arguments — variables and template literals are invisible.
 - Duplicate pattern+flags pairs are reported once (the location shown is the first occurrence of that form).
 - The ReDoS decider searches for a witness; finding none is not a proof that none exists. What it cannot read — a backreference, lookaround, unparsed syntax, an automaton over its size ceiling — is reported as undecided rather than clean.

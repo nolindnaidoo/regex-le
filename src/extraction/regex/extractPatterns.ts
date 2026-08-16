@@ -6,6 +6,7 @@ import {
 	isWellFormed,
 	VALID_FLAGS,
 } from './heuristics';
+import { isProse, proseSpans, type Span } from './mask';
 import { createPositionIndex } from './position';
 
 /**
@@ -223,20 +224,25 @@ export function extractRegexPatterns(
 		patterns.push(Object.freeze({ pattern, flags, line, column, match }));
 	};
 
+	// A regex written inside a comment or a string is an example, not
+	// code — see `mask`. The test is on where a candidate *starts*, so a
+	// real call keeps its quoted argument.
+	const prose = proseSpans(text, language);
+
 	// JavaScript, TypeScript and Ruby are the grammars with a bare
 	// `/…/`, and the only ones the slash-versus-division walk runs for.
 	if (language === undefined || hasSlashLiterals(language)) {
-		scanLiterals(text, push);
+		scanLiterals(text, prose, push);
 	}
 	if (
 		language === undefined ||
 		language === 'javascript' ||
 		language === 'typescript'
 	) {
-		scanConstructors(text, push);
+		scanConstructors(text, prose, push);
 	}
 	for (const form of callForms(language)) {
-		scanCallForm(form, text, push);
+		scanCallForm(form, text, prose, push);
 	}
 
 	patterns.sort((a, b) =>
@@ -252,14 +258,14 @@ type Push = (
 	match: string,
 ) => void;
 
-function scanLiterals(text: string, push: Push): void {
+function scanLiterals(text: string, prose: readonly Span[], push: Push): void {
 	LITERAL.lastIndex = 0;
 	let m: RegExpExecArray | null;
 	while ((m = LITERAL.exec(text)) !== null) {
 		const full = m[0];
 		const body = full.slice(1, full.lastIndexOf('/'));
 		const flags = full.slice(full.lastIndexOf('/') + 1);
-		if (!isRegexContext(text, m.index)) {
+		if (isProse(prose, m.index) || !isRegexContext(text, m.index)) {
 			continue;
 		}
 		if (!isValidFlagString(flags) || !compiles(body, flags)) {
@@ -269,10 +275,17 @@ function scanLiterals(text: string, push: Push): void {
 	}
 }
 
-function scanConstructors(text: string, push: Push): void {
+function scanConstructors(
+	text: string,
+	prose: readonly Span[],
+	push: Push,
+): void {
 	CONSTRUCTOR.lastIndex = 0;
 	let m: RegExpExecArray | null;
 	while ((m = CONSTRUCTOR.exec(text)) !== null) {
+		if (isProse(prose, m.index)) {
+			continue;
+		}
 		const groups = m.groups ?? {};
 		const body = groups.sq ?? groups.dq ?? '';
 		const flags = groups.sqf ?? groups.dqf ?? '';
@@ -288,10 +301,20 @@ function scanConstructors(text: string, push: Push): void {
 	}
 }
 
-function scanCallForm(form: CallForm, text: string, push: Push): void {
+function scanCallForm(
+	form: CallForm,
+	text: string,
+	prose: readonly Span[],
+	push: Push,
+): void {
 	form.matcher.lastIndex = 0;
 	let m: RegExpExecArray | null;
 	while ((m = form.matcher.exec(text)) !== null) {
+		// The *call* must start in code. Its argument is a string by
+		// definition, which is why this is not a blanket string rule.
+		if (isProse(prose, m.index)) {
+			continue;
+		}
 		const body = callBody(m.groups);
 		if (body === undefined) {
 			continue;

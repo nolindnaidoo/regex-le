@@ -33,6 +33,43 @@ describe('per-language regex literals', () => {
 		});
 	}
 
+	it('does not report a pattern documented in a block comment', () => {
+		// The bug: a JSDoc block explaining a hazard was extracted and
+		// judged, so documenting a dangerous pattern failed the build that
+		// documented it. The copy below the comment is the real one.
+		const found = extractRegexPatterns(
+			'/**\n * Never write /(a+)+b/ — it backtracks.\n */\nconst ok = /[a-z]+/;\n',
+			'javascript',
+		);
+		expect(found.map((p) => p.pattern)).toEqual(['[a-z]+']);
+		expect(found[0]?.line).toBe(4);
+	});
+
+	it('does not report a call site quoted inside a python docstring', () => {
+		const found = extractRegexPatterns(
+			'"""\nExample: re.compile(r"(a+)+b")\n"""\nGOOD = re.compile(r"[a-z]+")\n',
+			'python',
+		);
+		expect(found.map((p) => p.pattern)).toEqual(['[a-z]+']);
+	});
+
+	it('still reports a call site whose argument is a string', () => {
+		// The rule is about where the *candidate* starts. Masking every
+		// string would delete the extractor.
+		expect(patterns('P = re.compile(r"(a+)+b")\n', 'python')).toEqual([
+			'(a+)+b',
+		]);
+	});
+
+	it('masks nothing when the language is unknown', () => {
+		// A comment rule guessed from the wrong grammar would drop real
+		// patterns rather than phantom ones, so a document nobody named is
+		// scanned as written. Named as Python, the same line is a comment.
+		const doc = '# P = re.compile(r"(a+)+b")\n';
+		expect(patterns(doc)).toEqual(['(a+)+b']);
+		expect(patterns(doc, 'python')).toEqual([]);
+	});
+
 	it('reads a raw string verbatim and unescapes a quoted one', () => {
 		expect(patterns('re.compile(r"\\d+")', 'python')).toEqual(['\\d+']);
 		expect(patterns('re.compile("\\\\d+")', 'python')).toEqual(['\\d+']);

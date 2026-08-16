@@ -88,6 +88,39 @@ describe('a holdout set the thresholds were never tuned against', () => {
 	}
 });
 
+describe('a loop whose body can match empty', () => {
+	// **The corpus could not have told you this**: none of the twenty
+	// measured cases is an empty-body loop. Each of these was reported
+	// `high` with a witness that runs in microseconds in CPython and V8 —
+	// a receipt that does not reproduce, which is worse than no receipt.
+	// A real engine abandons an iteration that consumed nothing; the walk
+	// now does too, path-locally.
+	for (const pattern of ['(\\w*)+', '((a)*)*', '(.*)+', '(a*)*']) {
+		it(`does not report ${pattern} without a reproducing witness`, () => {
+			expect(blows(pattern)).toBe(false);
+		});
+	}
+
+	// The other half of the same rule: an empty-matching body behind an
+	// anchor or a failing tail *is* catastrophic, and narrowing the false
+	// alarm must not take these with it. Both exceed a five second budget
+	// at 28 characters in CPython.
+	for (const pattern of ['^(\\w*)+$', '(\\w*)+@']) {
+		it(`still reports ${pattern}`, () => {
+			expect(blows(pattern)).toBe(true);
+		});
+	}
+
+	it('prunes on the current path only, never globally', () => {
+		// A visited set that never releases would memoise the search into
+		// polynomial time and silence every exponential case at once — and
+		// no corpus would catch it, because both frontends would go quiet
+		// together. These are the canaries for that.
+		expect(blows('(a+)+b')).toBe(true);
+		expect(blows('^(a?){26}a{26}$')).toBe(true);
+	});
+});
+
 describe('the tail is what makes a loop exploitable', () => {
 	it('does not report a loop that always succeeds', () => {
 		// `(a+)+` matches any input holding an `a` on the first path it
@@ -141,6 +174,13 @@ describe('what cannot be decided says so', () => {
 			expect(decide(pattern)).toEqual({ kind: 'undecided', reason });
 		});
 	}
+
+	it('leaves a pattern undemonstrated rather than building an absurd prefix', () => {
+		// A counted minimum is a number in the pattern text, not a promise
+		// about length: building this one literally emitted a witness of
+		// four billion characters.
+		expect(decide('a{4000000000}(b+)+c').kind).toBe('clean');
+	});
 
 	it('reads a named group as the ordinary capture it is', () => {
 		expect(decide('(?<year>\\d{4})').kind).toBe('clean');
