@@ -7,6 +7,18 @@ this repository release on their own cadence.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.1] - 2026-08-16
+
+### Fixed
+
+- **The scan stays inside its budget again.** Deciding a pattern is now a
+  simulation rather than a shape match, and 500 files took twice the
+  ceiling. The decision is memoised per pattern and flags — `decide` is a
+  pure function of the pattern text, and one validation regex appears in
+  a dozen files of a real repository, so the repeat is the common case.
+  Bounded at 4096 distinct patterns, because a cache that grows with the
+  input is a leak with a friendlier name. No verdict changes.
+
 ## [0.3.0] - 2026-08-16
 
 ### Changed
