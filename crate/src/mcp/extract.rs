@@ -23,9 +23,11 @@ pub(crate) fn definition() -> Value {
         "description": "Find every regular expression in a document — JavaScript and \
                         TypeScript literals and RegExp constructors, and the call sites \
                         Python, Rust, Go, Java, Ruby, PHP and C# write a pattern at — with \
-                        1-based line and column and a ReDoS verdict for each. Nothing is \
-                        executed: the verdict comes from the shape of the pattern text. It \
-                        flags dangerous shapes and cannot prove a pattern safe.",
+                        1-based line and column and a ReDoS verdict for each. A pattern is \
+                        reported only when an input was found that demonstrably drives it \
+                        into exponential backtracking, and that input comes back as \
+                        `witness`. Your pattern is never run. Silence is not a clearance: \
+                        what could not be decided says so.",
         "inputSchema": {
             "type": "object",
             "properties": {

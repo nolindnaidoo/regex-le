@@ -680,6 +680,8 @@ const PUMP_LOW: usize = 14;
 const PUMP_HIGH: usize = 40;
 /// What counts as a blow-up between them. Linear is ~2x, quadratic ~4x.
 const BLOWUP_RATIO: u64 = 1_000;
+/// The longest concrete prefix worth building to reach a loop.
+const MAX_PREFIX: usize = 4_096;
 
 /// Decide the pattern by demonstration.
 ///
@@ -838,10 +840,22 @@ fn shortest(node: &Node) -> Option<String> {
         Node::Alt(parts) => parts.iter().filter_map(shortest).min_by_key(String::len),
         Node::Repeat { node, min, .. } => {
             if *min == 0 {
-                Some(String::new())
-            } else {
-                shortest(node).map(|text| text.repeat(*min as usize))
+                return Some(String::new());
             }
+            // **A counted minimum is not a length to trust.**
+            // `a{4000000000}(b+)+c` would build a four-billion-character
+            // prefix and emit it as a witness. The automaton already
+            // approximates a repeat past `MAX_UNROLL`, so a prefix that
+            // long could not be honest anyway: refusing to build one
+            // leaves the loop unreached and the pattern undemonstrated,
+            // which is the answer this gives when it cannot show its
+            // work.
+            let text = shortest(node)?;
+            let length = text.len().checked_mul(*min as usize)?;
+            if length > MAX_PREFIX {
+                return None;
+            }
+            Some(text.repeat(*min as usize))
         }
     }
 }
@@ -872,9 +886,36 @@ fn steps(nfa: &Nfa, entry: usize, exit: usize, input: &str) -> u64 {
     // matches empty at position 0 returns at once — `(a{1,3})*` is not a
     // hazard for that reason, though it looks like one. Requiring the
     // whole input to be consumed reported it as exponential.
+    // **The empty-iteration rule, and it is not an optimisation.** A real
+    // engine abandons a loop iteration that consumed nothing, because
+    // otherwise it never terminates. Without it this walk prefers the
+    // back edge of `(\w*)+` forever and burns the budget, reporting a
+    // pattern that every real engine runs in microseconds — a finding
+    // whose own witness does not reproduce, which is the one thing this
+    // module must never emit.
+    //
+    // The pruning is **path-local**: a state is blocked only while it is
+    // on the current path, and released on the way back out. Blocking it
+    // globally would memoise the search into polynomial time and hide
+    // the very blow-up being measured.
+    let width = chars.len() + 1;
+    let mut stamp: Vec<u32> = vec![0; nfa.len() * width];
+    let mut generation: u32 = 0;
+
     for start in 0..=chars.len() {
-        let mut stack: Vec<(usize, usize)> = vec![(entry, start)];
-        while let Some((state, at)) = stack.pop() {
+        generation += 1;
+        let mut stack: Vec<Frame> = vec![Frame::Enter(entry, start)];
+        while let Some(frame) = stack.pop() {
+            let (state, at) = match frame {
+                Frame::Leave(state, at) => {
+                    stamp[state * width + at] = 0;
+                    continue;
+                }
+                Frame::Enter(state, at) => (state, at),
+            };
+            if stamp[state * width + at] == generation {
+                continue;
+            }
             spent += 1;
             if spent >= STEP_BUDGET {
                 return STEP_BUDGET;
@@ -882,17 +923,19 @@ fn steps(nfa: &Nfa, entry: usize, exit: usize, input: &str) -> u64 {
             if state == exit {
                 return spent;
             }
+            stamp[state * width + at] = generation;
+            stack.push(Frame::Leave(state, at));
             for edge in nfa.edges[state].iter().rev() {
                 match edge.kind {
-                    Step::Epsilon => stack.push((edge.to, at)),
-                    Step::AtStart if at == 0 => stack.push((edge.to, at)),
-                    Step::AtEnd if at == chars.len() => stack.push((edge.to, at)),
+                    Step::Epsilon => stack.push(Frame::Enter(edge.to, at)),
+                    Step::AtStart if at == 0 => stack.push(Frame::Enter(edge.to, at)),
+                    Step::AtEnd if at == chars.len() => stack.push(Frame::Enter(edge.to, at)),
                     Step::AtStart | Step::AtEnd => {}
                     Step::Symbol(symbol) => {
                         if let Some(&ch) = chars.get(at) {
                             let (low, high) = nfa.alphabet[symbol];
                             if (low..=high).contains(&(ch as u32)) {
-                                stack.push((edge.to, at + 1));
+                                stack.push(Frame::Enter(edge.to, at + 1));
                             }
                         }
                     }
@@ -903,11 +946,57 @@ fn steps(nfa: &Nfa, entry: usize, exit: usize, input: &str) -> u64 {
     spent
 }
 
+/// A step of the walk. `Leave` is what makes the pruning path-local: it
+/// is pushed under a state's edges, so the state is released only once
+/// every path through it has been tried.
+#[derive(Clone, Copy)]
+enum Frame {
+    Enter(usize, usize),
+    Leave(usize, usize),
+}
+
 #[cfg(test)]
 mod tests {
     use std::fmt::Write as _;
 
     use super::decide;
+
+    /// **A loop whose body can match empty is not a hazard**, and the
+    /// corpus could not have told you: none of the twenty measured cases
+    /// is one. `(\w*)+` was reported `high` with a witness that runs in
+    /// microseconds in `CPython` and V8 — a receipt that does not
+    /// reproduce, which is worse than no receipt.
+    #[test]
+    fn a_loop_that_can_match_empty_is_not_reported() {
+        for pattern in [r"(\w*)+", "((a)*)*", "(.*)+", "(a*)*"] {
+            assert!(
+                matches!(decide(pattern), Ok(None)),
+                "{pattern} was reported without a reproducing witness"
+            );
+        }
+    }
+
+    /// The other half of the same rule: an empty-matching body behind an
+    /// anchor or a failing tail *is* catastrophic, and narrowing the
+    /// false alarm must not take these with it. Both exceed a five
+    /// second budget at 28 characters in `CPython`.
+    #[test]
+    fn an_empty_body_loop_that_cannot_bail_out_is_still_reported() {
+        for pattern in [r"^(\w*)+$", r"(\w*)+@"] {
+            assert!(
+                matches!(decide(pattern), Ok(Some(_))),
+                "{pattern} stopped being reported"
+            );
+        }
+    }
+
+    /// A counted minimum is a number in the pattern text, not a promise
+    /// about length. Building its prefix literally emitted a witness of
+    /// four billion characters.
+    #[test]
+    fn a_prefix_too_long_to_build_leaves_the_pattern_undemonstrated() {
+        assert!(matches!(decide("a{4000000000}(b+)+c"), Ok(None)));
+    }
 
     #[test]
     fn scored_against_measured_truth() {

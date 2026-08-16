@@ -44,6 +44,35 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   verdict lands between the two, that test says so. `low` is still
   refused, still pointing at `--all`.
 
+- **A regex inside a comment or a docstring is no longer scanned as
+  code.** A JSDoc block explaining a hazard, a commented-out line, a
+  Python docstring showing an example — each was extracted and judged,
+  so documenting a dangerous pattern failed the build that documented
+  it. Multi-line comments leaked because comment state was never tracked
+  across lines; a single-line `/* … */` only appeared to work, because
+  the phantom pattern it produced was invalid and got dropped.
+  Extraction now skips any candidate whose *start* falls inside a
+  comment or a string. The test is on the start deliberately:
+  `re.compile(r"(a+)+b")` has its argument in a string and is a real
+  call, while a docstring holding that same line has the call itself in
+  a string and is prose. No corpus document had a regex in a multi-line
+  comment, which is why nothing caught this.
+- **A loop whose body can match empty is no longer reported.** `(\w*)+`,
+  `((a)*)*` and `(.*)+` came back `high` with a witness that runs in
+  microseconds — a receipt that does not reproduce, which is the one
+  thing a demonstrated verdict must never emit. A real engine abandons a
+  loop iteration that consumed nothing; the walk now does the same,
+  pruning a state only while it is on the current path so the blow-up
+  being measured is still measured. `^(\w*)+$` and `(\w*)+@` stay
+  `high`, and are catastrophic in CPython at 28 characters. None of the
+  twenty measured cases is an empty-body loop, so the score could not
+  have caught this either.
+- **A counted minimum no longer builds a prefix to match it.**
+  `a{4000000000}(b+)+c` emitted a four-billion-character witness and 3.7
+  GB of JSON. The automaton already approximates a repeat past its
+  unroll ceiling, so a prefix that long could not be honest; the pattern
+  is now left undemonstrated instead.
+
 ### Removed
 
 - **`redos.vulnerableGroups`.** It named the sub-expression a shape rule

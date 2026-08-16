@@ -1,6 +1,6 @@
 {
-	"note": "Ground truth measured by running each pattern against adversarial input, not derived from the detector's rule. `measured` is exponential when doubling the input multiplied the time by more than 50x or blew a 2s budget. `reportedAt0_2_2` records what the detector said when this file was created, so a change to the rule is visible as a diff rather than a claim.",
-	"harness": "scripts/measure-redos.py",
+	"note": "Ground truth measured by running each pattern against adversarial input, not derived from the detector's rule. `measured` is exponential when doubling the input multiplied the time by more than 50x or blew a 2s budget. `reported` records what the detector says now, so a change to it is visible as a diff rather than a claim.",
+	"harness": "scripts/measure-redos.py, from the repository root (not crate/)",
 	"cases": [
 		{
 			"pattern": "(a+)+b",
