@@ -688,24 +688,18 @@
 			"pattern": "(a+)+",
 			"flags": "",
 			"expected": {
-				"detected": true,
-				"severity": "high",
-				"reason": "Nested unbounded quantifiers can cause exponential backtracking",
-				"vulnerableGroups": [
-					"(a+)+"
-				]
+				"detected": false,
+				"severity": "low",
+				"reason": "no input was found that drives this into backtracking"
 			}
 		},
 		{
 			"pattern": "([a-z]+)*",
 			"flags": "",
 			"expected": {
-				"detected": true,
-				"severity": "high",
-				"reason": "Nested unbounded quantifiers can cause exponential backtracking",
-				"vulnerableGroups": [
-					"([a-z]+)*"
-				]
+				"detected": false,
+				"severity": "low",
+				"reason": "no input was found that drives this into backtracking"
 			}
 		},
 		{
@@ -714,34 +708,26 @@
 			"expected": {
 				"detected": true,
 				"severity": "high",
-				"reason": "Nested unbounded quantifiers can cause exponential backtracking",
-				"vulnerableGroups": [
-					"(\\w*)+"
-				]
+				"reason": "exponential backtracking: 2000000 steps on 41 characters, against 2000000 on 20",
+				"witness": "0000000000000000000000000000000000000000\u0000"
 			}
 		},
 		{
 			"pattern": "(a|a)*",
 			"flags": "",
 			"expected": {
-				"detected": true,
-				"severity": "medium",
-				"reason": "Quantified alternation with overlapping branches may backtrack heavily",
-				"vulnerableGroups": [
-					"(a|a)*"
-				]
+				"detected": false,
+				"severity": "low",
+				"reason": "no input was found that drives this into backtracking"
 			}
 		},
 		{
 			"pattern": "(a|ab)+",
 			"flags": "",
 			"expected": {
-				"detected": true,
-				"severity": "medium",
-				"reason": "Quantified alternation with overlapping branches may backtrack heavily",
-				"vulnerableGroups": [
-					"(a|ab)+"
-				]
+				"detected": false,
+				"severity": "low",
+				"reason": "no input was found that drives this into backtracking"
 			}
 		},
 		{
@@ -750,7 +736,7 @@
 			"expected": {
 				"detected": false,
 				"severity": "low",
-				"reason": "No obvious ReDoS vulnerabilities detected"
+				"reason": "no input was found that drives this into backtracking"
 			}
 		},
 		{
@@ -759,7 +745,7 @@
 			"expected": {
 				"detected": false,
 				"severity": "low",
-				"reason": "No obvious ReDoS vulnerabilities detected"
+				"reason": "no input was found that drives this into backtracking"
 			}
 		},
 		{
@@ -768,7 +754,7 @@
 			"expected": {
 				"detected": false,
 				"severity": "low",
-				"reason": "No obvious ReDoS vulnerabilities detected"
+				"reason": "no input was found that drives this into backtracking"
 			}
 		},
 		{
@@ -777,7 +763,7 @@
 			"expected": {
 				"detected": false,
 				"severity": "low",
-				"reason": "No obvious ReDoS vulnerabilities detected"
+				"reason": "no input was found that drives this into backtracking"
 			}
 		},
 		{
@@ -786,10 +772,8 @@
 			"expected": {
 				"detected": true,
 				"severity": "high",
-				"reason": "Nested unbounded quantifiers can cause exponential backtracking",
-				"vulnerableGroups": [
-					"(a+)+"
-				]
+				"reason": "exponential backtracking: 2000000 steps on 41 characters, against 229328 on 20",
+				"witness": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\u0000"
 			}
 		},
 		{
@@ -798,22 +782,17 @@
 			"expected": {
 				"detected": true,
 				"severity": "high",
-				"reason": "Nested unbounded quantifiers can cause exponential backtracking",
-				"vulnerableGroups": [
-					"((a)*)*"
-				]
+				"reason": "exponential backtracking: 2000000 steps on 41 characters, against 2000000 on 20",
+				"witness": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\u0000"
 			}
 		},
 		{
 			"pattern": "(?:a+)+",
 			"flags": "",
 			"expected": {
-				"detected": true,
-				"severity": "high",
-				"reason": "Nested unbounded quantifiers can cause exponential backtracking",
-				"vulnerableGroups": [
-					"(a+)+"
-				]
+				"detected": false,
+				"severity": "low",
+				"reason": "no input was found that drives this into backtracking"
 			}
 		},
 		{
@@ -822,7 +801,7 @@
 			"expected": {
 				"detected": false,
 				"severity": "low",
-				"reason": "No obvious ReDoS vulnerabilities detected"
+				"reason": "no input was found that drives this into backtracking"
 			}
 		},
 		{
@@ -831,7 +810,7 @@
 			"expected": {
 				"detected": false,
 				"severity": "low",
-				"reason": "No obvious ReDoS vulnerabilities detected"
+				"reason": "no input was found that drives this into backtracking"
 			}
 		},
 		{
@@ -840,7 +819,7 @@
 			"expected": {
 				"detected": false,
 				"severity": "low",
-				"reason": "No obvious ReDoS vulnerabilities detected"
+				"reason": "no input was found that drives this into backtracking"
 			}
 		},
 		{
@@ -849,7 +828,7 @@
 			"expected": {
 				"detected": false,
 				"severity": "low",
-				"reason": "No obvious ReDoS vulnerabilities detected"
+				"reason": "no input was found that drives this into backtracking"
 			}
 		},
 		{
@@ -883,12 +862,9 @@
 			"pattern": "(?<name>a+)+",
 			"flags": "",
 			"expected": {
-				"detected": true,
-				"severity": "high",
-				"reason": "Nested unbounded quantifiers can cause exponential backtracking",
-				"vulnerableGroups": [
-					"(a+)+"
-				]
+				"detected": false,
+				"severity": "low",
+				"reason": "no input was found that drives this into backtracking"
 			}
 		},
 		{
@@ -897,7 +873,7 @@
 			"expected": {
 				"detected": false,
 				"severity": "low",
-				"reason": "Pattern is invalid"
+				"reason": "no input was found that drives this into backtracking"
 			}
 		}
 	],

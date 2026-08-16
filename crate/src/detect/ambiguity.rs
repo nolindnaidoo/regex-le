@@ -58,8 +58,14 @@ impl Undecidable {
 
 #[derive(Debug, Clone)]
 enum Node {
-    /// Consumes nothing: an anchor, a boundary, an empty alternative.
+    /// Consumes nothing: a boundary, an empty alternative.
     Empty,
+    /// `^` and `$`. **Not `Empty`.** Discarding them modelled every
+    /// anchored pattern as unanchored, and an unanchored loop usually
+    /// matches empty at position 0 and returns at once — so `^(a{2,4})+$`
+    /// looked safe while `(a{1,3})*` looked dangerous. Both backwards.
+    Start,
+    End,
     Class(Ranges),
     Concat(Vec<Node>),
     Alt(Vec<Node>),
@@ -221,9 +227,13 @@ impl<'a> Parser<'a> {
                     (14, MAX_CODE_POINT),
                 ])))
             }
-            Some(b'^' | b'$') => {
+            Some(b'^') => {
                 self.at += 1;
-                Ok(Node::Empty)
+                Ok(Node::Start)
+            }
+            Some(b'$') => {
+                self.at += 1;
+                Ok(Node::End)
             }
             Some(b'\\') => self.escape(),
             Some(b'*' | b'+' | b'?') => Err(Undecidable::Unsupported),
@@ -249,6 +259,25 @@ impl<'a> Parser<'a> {
                     }
                     // `(?<name>` is an ordinary capture.
                     self.at += 1;
+                    while !self.eat(b'>') {
+                        if self.bump().is_none() {
+                            return Err(Undecidable::Unsupported);
+                        }
+                    }
+                }
+                // `(?P<name>` is Python's spelling of the same thing, and
+                // `(?P=name)` its backreference. Patterns are read from
+                // every language the extractor finds one in, so refusing
+                // Python's syntax would leave `(?P<w>\w+)+@` — the classic
+                // dangerous shape — undecided on working code.
+                Some(b'P') => {
+                    self.at += 1;
+                    if self.peek() == Some(b'=') {
+                        return Err(Undecidable::Backreference);
+                    }
+                    if !self.eat(b'<') {
+                        return Err(Undecidable::Unsupported);
+                    }
                     while !self.eat(b'>') {
                         if self.bump().is_none() {
                             return Err(Undecidable::Unsupported);
@@ -434,7 +463,7 @@ fn alphabet(node: &Node) -> Vec<(u32, u32)> {
 
 fn collect_cuts(node: &Node, cuts: &mut Vec<u32>) {
     match node {
-        Node::Empty => {}
+        Node::Empty | Node::Start | Node::End => {}
         Node::Class(ranges) => {
             for &(low, high) in ranges {
                 cuts.push(low);
@@ -465,9 +494,21 @@ fn symbols_of(ranges: &[(u32, u32)], alphabet: &[(u32, u32)]) -> Vec<usize> {
 
 #[derive(Debug, Clone)]
 struct Edge {
-    /// `None` is epsilon.
-    symbol: Option<usize>,
+    kind: Step,
     to: usize,
+}
+
+/// What crossing an edge requires.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum Step {
+    /// Free.
+    Epsilon,
+    /// Consumes one character from the alphabet class.
+    Symbol(usize),
+    /// Passable only at the start of the input.
+    AtStart,
+    /// Passable only at the end.
+    AtEnd,
 }
 
 #[derive(Debug, Default)]
@@ -484,42 +525,15 @@ impl Nfa {
         self.edges.len() - 1
     }
 
-    fn link(&mut self, from: usize, symbol: Option<usize>, to: usize) {
-        self.edges[from].push(Edge { symbol, to });
+    fn link(&mut self, from: usize, kind: Step, to: usize) {
+        self.edges[from].push(Edge { kind, to });
     }
 
     fn len(&self) -> usize {
         self.edges.len()
     }
 
-    /// Every state reachable from `states` without consuming input.
-    fn closure(&self, states: &[usize]) -> Vec<usize> {
-        let mut seen: HashSet<usize> = states.iter().copied().collect();
-        let mut queue: VecDeque<usize> = states.iter().copied().collect();
-        while let Some(state) = queue.pop_front() {
-            for edge in &self.edges[state] {
-                if edge.symbol.is_none() && seen.insert(edge.to) {
-                    queue.push_back(edge.to);
-                }
-            }
-        }
-        let mut out: Vec<usize> = seen.into_iter().collect();
-        out.sort_unstable();
-        out
-    }
 
-    /// One symbol from `state`, epsilon closed on both sides.
-    fn step(&self, state: usize, symbol: usize) -> Vec<usize> {
-        let mut landed = Vec::new();
-        for from in self.closure(&[state]) {
-            for edge in &self.edges[from] {
-                if edge.symbol == Some(symbol) {
-                    landed.push(edge.to);
-                }
-            }
-        }
-        self.closure(&landed)
-    }
 }
 
 /// Compile, returning the fragment's entry and exit.
@@ -533,11 +547,22 @@ fn compile(
             let state = nfa.state();
             Ok((state, state))
         }
+        Node::Start | Node::End => {
+            let entry = nfa.state();
+            let exit = nfa.state();
+            let kind = if matches!(node, Node::Start) {
+                Step::AtStart
+            } else {
+                Step::AtEnd
+            };
+            nfa.link(entry, kind, exit);
+            Ok((entry, exit))
+        }
         Node::Class(ranges) => {
             let entry = nfa.state();
             let exit = nfa.state();
             for symbol in symbols_of(ranges, alphabet) {
-                nfa.link(entry, Some(symbol), exit);
+                nfa.link(entry, Step::Symbol(symbol), exit);
             }
             Ok((entry, exit))
         }
@@ -546,7 +571,7 @@ fn compile(
             let mut at = entry;
             for part in parts {
                 let (start, end) = compile(nfa, part, alphabet)?;
-                nfa.link(at, None, start);
+                nfa.link(at, Step::Epsilon, start);
                 at = end;
             }
             Ok((entry, at))
@@ -556,8 +581,8 @@ fn compile(
             let exit = nfa.state();
             for branch in branches {
                 let (start, end) = compile(nfa, branch, alphabet)?;
-                nfa.link(entry, None, start);
-                nfa.link(end, None, exit);
+                nfa.link(entry, Step::Epsilon, start);
+                nfa.link(end, Step::Epsilon, exit);
             }
             Ok((entry, exit))
         }
@@ -583,7 +608,7 @@ fn compile_repeat(
     let required = min.min(MAX_UNROLL);
     for _ in 0..required {
         let (start, end) = compile(nfa, node, alphabet)?;
-        nfa.link(at, None, start);
+        nfa.link(at, Step::Epsilon, start);
         at = end;
     }
     match max {
@@ -591,20 +616,20 @@ fn compile_repeat(
             // A star over the body: back edge, and skippable.
             let (start, end) = compile(nfa, node, alphabet)?;
             let exit = nfa.state();
-            nfa.link(at, None, start);
-            nfa.link(end, None, start);
-            nfa.link(end, None, exit);
-            nfa.link(at, None, exit);
+            nfa.link(at, Step::Epsilon, start);
+            nfa.link(end, Step::Epsilon, start);
+            nfa.link(end, Step::Epsilon, exit);
+            nfa.link(at, Step::Epsilon, exit);
             Ok((entry, exit))
         }
         Some(max) => {
             let optional = max.saturating_sub(min).min(MAX_UNROLL);
             let exit = nfa.state();
-            nfa.link(at, None, exit);
+            nfa.link(at, Step::Epsilon, exit);
             for _ in 0..optional {
                 let (start, end) = compile(nfa, node, alphabet)?;
-                nfa.link(at, None, start);
-                nfa.link(end, None, exit);
+                nfa.link(at, Step::Epsilon, start);
+                nfa.link(end, Step::Epsilon, exit);
                 at = end;
             }
             Ok((entry, exit))
@@ -714,7 +739,7 @@ fn candidates(node: &Node, alphabet: &[(u32, u32)]) -> Vec<(String, String)> {
 /// Whether any class in the pattern admits this character.
 fn accepts(node: &Node, ch: char) -> bool {
     match node {
-        Node::Empty => false,
+        Node::Empty | Node::Start | Node::End => false,
         Node::Class(ranges) => ranges
             .iter()
             .any(|&(low, high)| (low..=high).contains(&(ch as u32))),
@@ -731,24 +756,34 @@ fn accepts(node: &Node, ch: char) -> bool {
 /// signal that the pattern lost.
 fn steps(nfa: &Nfa, entry: usize, exit: usize, input: &str) -> u64 {
     let chars: Vec<char> = input.chars().collect();
-    let mut stack: Vec<(usize, usize)> = vec![(entry, 0)];
     let mut spent: u64 = 0;
-    while let Some((state, at)) = stack.pop() {
-        spent += 1;
-        if spent >= STEP_BUDGET {
-            return STEP_BUDGET;
-        }
-        if state == exit && at == chars.len() {
-            return spent;
-        }
-        for edge in nfa.edges[state].iter().rev() {
-            match edge.symbol {
-                None => stack.push((edge.to, at)),
-                Some(symbol) => {
-                    if let Some(&ch) = chars.get(at) {
-                        let (low, high) = nfa.alphabet[symbol];
-                        if (low..=high).contains(&(ch as u32)) {
-                            stack.push((edge.to, at + 1));
+    // **A search, not a full match.** An engine tries every start
+    // position and stops at the first success, so an unanchored loop that
+    // matches empty at position 0 returns at once — `(a{1,3})*` is not a
+    // hazard for that reason, though it looks like one. Requiring the
+    // whole input to be consumed reported it as exponential.
+    for start in 0..=chars.len() {
+        let mut stack: Vec<(usize, usize)> = vec![(entry, start)];
+        while let Some((state, at)) = stack.pop() {
+            spent += 1;
+            if spent >= STEP_BUDGET {
+                return STEP_BUDGET;
+            }
+            if state == exit {
+                return spent;
+            }
+            for edge in nfa.edges[state].iter().rev() {
+                match edge.kind {
+                    Step::Epsilon => stack.push((edge.to, at)),
+                    Step::AtStart if at == 0 => stack.push((edge.to, at)),
+                    Step::AtEnd if at == chars.len() => stack.push((edge.to, at)),
+                    Step::AtStart | Step::AtEnd => {}
+                    Step::Symbol(symbol) => {
+                        if let Some(&ch) = chars.get(at) {
+                            let (low, high) = nfa.alphabet[symbol];
+                            if (low..=high).contains(&(ch as u32)) {
+                                stack.push((edge.to, at + 1));
+                            }
                         }
                     }
                 }

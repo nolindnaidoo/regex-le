@@ -47,11 +47,6 @@ pub(crate) struct ReDoSResult {
     pub(crate) witness: Option<String>,
 }
 
-struct Group {
-    body: String,
-    quantifier: Option<String>,
-}
-
 pub(crate) fn detect_redos(pattern: &str, flags: &str) -> ReDoSResult {
     // An invalid pattern is a syntax error, not a ReDoS finding. Saying
     // otherwise would put a security verdict on a typo. The judge is
@@ -114,383 +109,49 @@ pub(crate) fn detect_redos(pattern: &str, flags: &str) -> ReDoSResult {
     }
 }
 
-
-fn rendered(group: &Group) -> String {
-    format!(
-        "({}){}",
-        group.body,
-        group.quantifier.as_deref().unwrap_or_default()
-    )
-}
-
-/// Every parenthesised group with its trailing quantifier, skipping
-/// escapes and character classes — so `[(]+` is a class, not a group,
-/// and `\(a+\)+` is escaped literal parentheses. Nested groups are each
-/// reported with their full body.
-fn scan_groups(pattern: &str) -> Vec<Group> {
-    let characters: Vec<char> = pattern.chars().collect();
-    let mut groups = Vec::new();
-    let mut stack: Vec<usize> = Vec::new();
-    let mut in_class = false;
-
-    let mut index = 0;
-    while index < characters.len() {
-        let character = characters[index];
-        if character == '\\' {
-            index += 2;
-            continue;
-        }
-        if in_class {
-            if character == ']' {
-                in_class = false;
-            }
-            index += 1;
-            continue;
-        }
-        match character {
-            '[' => in_class = true,
-            '(' => stack.push(index),
-            ')' => {
-                if let Some(start) = stack.pop() {
-                    let body: String = characters[start + 1..index].iter().collect();
-                    groups.push(Group {
-                        body: strip_group_prefix(&body),
-                        quantifier: read_quantifier(&characters, index + 1),
-                    });
-                }
-            }
-            _ => {}
-        }
-        index += 1;
-    }
-    groups
-}
-
-fn read_quantifier(characters: &[char], offset: usize) -> Option<String> {
-    match characters.get(offset)? {
-        c @ ('*' | '+' | '?') => Some(c.to_string()),
-        '{' => {
-            // `{n}` or `{n,}` or `{n,m}` — anything else is a literal
-            // brace and not a quantifier.
-            //
-            // Read off the slice rather than a copy of it: collecting
-            // the rest of the pattern here made this quadratic in the
-            // pattern length, and a generated validator carrying
-            // thousands of bounded quantifiers is exactly the shape that
-            // reaches it.
-            let rest = &characters[offset..];
-            let mut end = 1;
-            if !rest.get(1)?.is_ascii_digit() {
-                return None;
-            }
-            while rest.get(end).is_some_and(char::is_ascii_digit) {
-                end += 1;
-            }
-            if rest.get(end) == Some(&',') {
-                end += 1;
-                while rest.get(end).is_some_and(char::is_ascii_digit) {
-                    end += 1;
-                }
-            }
-            (rest.get(end) == Some(&'}')).then(|| rest[..=end].iter().collect())
-        }
-        _ => None,
-    }
-}
-
-fn is_unbounded(quantifier: &str) -> bool {
-    if quantifier == "*" || quantifier == "+" {
-        return true;
-    }
-    // `{n,}` — an open upper bound.
-    quantifier.starts_with('{')
-        && quantifier.ends_with(",}")
-        && quantifier[1..quantifier.len() - 2]
-            .chars()
-            .all(|c| c.is_ascii_digit())
-        && quantifier.len() > 3
-}
-
-/// Drop a group's non-capturing or lookaround prefix so the body is the
-/// pattern rather than the syntax announcing it.
-fn strip_group_prefix(body: &str) -> String {
-    for prefix in ["?:", "?=", "?!", "?<=", "?<!"] {
-        if let Some(rest) = body.strip_prefix(prefix) {
-            return rest.to_string();
-        }
-    }
-    // A named group: `?<name>`, but not `?<=` or `?<!`, which are above.
-    if let Some(rest) = body.strip_prefix("?<")
-        && !rest.starts_with('=')
-        && !rest.starts_with('!')
-        && let Some(end) = rest.find('>')
-    {
-        return rest[end + 1..].to_string();
-    }
-    body.to_string()
-}
-
-fn contains_unbounded_quantifier(body: &str) -> bool {
-    let characters: Vec<char> = body.chars().collect();
-    let mut in_class = false;
-    let mut index = 0;
-    while index < characters.len() {
-        let character = characters[index];
-        if character == '\\' {
-            index += 2;
-            continue;
-        }
-        if in_class {
-            if character == ']' {
-                in_class = false;
-            }
-            index += 1;
-            continue;
-        }
-        match character {
-            '[' => in_class = true,
-            '*' | '+' => return true,
-            // Read off the slice rather than a copy of it. Collecting
-            // the rest of the body here made this quadratic in the
-            // pattern length: fifty thousand braces cost three seconds,
-            // and a scanner for catastrophic backtracking that can be
-            // made to hang on its own input is the joke that writes
-            // itself.
-            '{' if open_ended_brace(&characters[index..]) => return true,
-            _ => {}
-        }
-        index += 1;
-    }
-    false
-}
-
-/// `{n,}` — a comma with **no upper bound after it**.
-///
-/// The `}` has to follow the comma immediately. Accepting any comma
-/// makes `{1,3}` look unbounded, which reported `(a{1,3})*` as an
-/// exponential shape — a false high-severity finding on a perfectly
-/// bounded pattern.
-fn open_ended_brace(rest: &[char]) -> bool {
-    let mut at = 1;
-    while rest.get(at).is_some_and(char::is_ascii_digit) {
-        at += 1;
-    }
-    at > 1 && rest.get(at) == Some(&',') && rest.get(at + 1) == Some(&'}')
-}
-
-fn has_overlapping_alternation(body: &str) -> bool {
-    let branches = split_top_level_alternation(body);
-    if branches.len() < 2 {
-        return false;
-    }
-    let first: Vec<char> = branches
-        .iter()
-        .filter_map(|branch| first_literal_char(branch))
-        .collect();
-    let mut seen: Vec<char> = Vec::new();
-    for character in &first {
-        if seen.contains(character) {
-            return true;
-        }
-        seen.push(*character);
-    }
-    false
-}
-
-fn split_top_level_alternation(body: &str) -> Vec<String> {
-    let characters: Vec<char> = body.chars().collect();
-    let mut branches = Vec::new();
-    let mut current = String::new();
-    let mut depth: usize = 0;
-    let mut in_class = false;
-
-    let mut index = 0;
-    while index < characters.len() {
-        let character = characters[index];
-        if character == '\\' {
-            current.push(character);
-            if let Some(next) = characters.get(index + 1) {
-                current.push(*next);
-            }
-            index += 2;
-            continue;
-        }
-        if in_class {
-            if character == ']' {
-                in_class = false;
-            }
-            current.push(character);
-            index += 1;
-            continue;
-        }
-        match character {
-            '[' => in_class = true,
-            '(' => depth += 1,
-            ')' => depth = depth.saturating_sub(1),
-            '|' if depth == 0 => {
-                branches.push(std::mem::take(&mut current));
-                index += 1;
-                continue;
-            }
-            _ => {}
-        }
-        current.push(character);
-        index += 1;
-    }
-    branches.push(current);
-    branches
-}
-
-/// A branch's first character, when it is one an overlap can be judged
-/// from. A branch starting with a metacharacter is not compared.
-///
-/// The test is `/[\w\s]/` on the extension side, and **neither half of
-/// that class means in JavaScript what the Rust spelling means**. `\w`
-/// there is ASCII, so `char::is_alphanumeric` made `(é|é)*` an
-/// overlapping alternation here and an ordinary pattern there; `\s`
-/// there is JavaScript's set, which holds U+FEFF and not U+0085, and
-/// `char::is_whitespace` has it exactly backwards. Same rule as
-/// `is_word_character` in `heuristics`: spell out what the extension
-/// means rather than borrowing what this language happens to give you.
-fn first_literal_char(branch: &str) -> Option<char> {
-    let character = branch.chars().next()?;
-    (character.is_ascii_alphanumeric() || character == '_' || js::is_js_whitespace(character))
-        .then_some(character)
-}
-
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use super::{Severity, detect_redos};
 
-    fn verdict(pattern: &str) -> (bool, Severity) {
-        let result = detect_redos(pattern, "");
-        (result.detected, result.severity)
+    /// **A finding is a demonstration.** The shape rule this replaces
+    /// scored 6 of 20 against measured behaviour; these two patterns are
+    /// the ones it and an automaton both got wrong, in opposite
+    /// directions.
+    #[test]
+    fn a_finding_is_demonstrated_and_a_safe_pattern_is_not_flagged() {
+        let bad = detect_redos(r"(.*a){20}", "");
+        assert!(bad.detected, "{bad:?}");
+        assert_eq!(bad.severity, Severity::High);
+        assert!(bad.witness.is_some(), "a finding carries its input");
+
+        let safe = detect_redos(r"^\w+(?:\.\w+)*$", "");
+        assert!(!safe.detected, "{safe:?}");
+        assert!(safe.witness.is_none());
     }
 
+    /// **Undecidable is not clean.** A backreference is not a regular
+    /// language, so nothing here can answer for it either way, and
+    /// reporting no finding would read as a clearance.
     #[test]
-    fn nested_unbounded_quantifiers_are_high() {
-        for pattern in [
-            "(a+)+",
-            "([a-z]+)*",
-            r"(\w*)+",
-            "((a)*)*",
-            "(?:a+)+",
-            "(a+)+b",
-        ] {
-            assert_eq!(verdict(pattern), (true, Severity::High), "{pattern}");
-        }
+    fn what_cannot_be_decided_says_so() {
+        let result = detect_redos(r"(a)\1+", "");
+        assert!(!result.detected);
+        assert!(result.reason.starts_with("not decided:"), "{result:?}");
     }
 
+    /// An invalid pattern is a syntax error, not a security verdict.
     #[test]
-    fn overlapping_quantified_alternation_is_medium() {
-        for pattern in ["(a|a)*", "(a|ab)+"] {
-            assert_eq!(verdict(pattern), (true, Severity::Medium), "{pattern}");
-        }
+    fn an_invalid_pattern_is_not_a_finding() {
+        let result = detect_redos("(", "");
+        assert!(!result.detected);
+        assert_eq!(result.reason, "Pattern is invalid");
     }
 
-    /// A detector that only ever fires is as broken as one that never
-    /// does, so the shapes it must *not* flag are pinned too.
+    /// The reason carries the numbers behind the verdict, so a reader
+    /// can weigh it without rerunning anything.
     #[test]
-    fn ordinary_patterns_are_low() {
-        for pattern in [r"^\d{4}-\d{2}-\d{2}$", "[a-z]+", "(abc)+", "(a+)", "(a|b)*"] {
-            assert_eq!(verdict(pattern), (false, Severity::Low), "{pattern}");
-        }
-    }
-
-    /// The group scanner must respect character classes and escapes —
-    /// neither of these is a quantified group.
-    #[test]
-    fn a_class_and_an_escape_are_not_groups() {
-        assert_eq!(verdict("[(]+"), (false, Severity::Low));
-        assert_eq!(verdict(r"\(a+\)+"), (false, Severity::Low));
-    }
-
-    #[test]
-    fn an_invalid_pattern_is_a_syntax_error_not_a_vulnerability() {
-        for pattern in ["(", "a{2,1}", "[z-a]"] {
-            let result = detect_redos(pattern, "");
-            assert!(!result.detected, "{pattern}");
-            assert_eq!(result.reason, "Pattern is invalid", "{pattern}");
-        }
-        assert_eq!(detect_redos("x", "zz").reason, "Pattern is invalid");
-    }
-
-    /// `{1,3}` is bounded and `{1,}` is not — the distinction is the
-    /// `}` immediately after the comma, and getting it wrong reported a
-    /// bounded pattern as exponential.
-    #[test]
-    fn a_bounded_quantifier_is_not_unbounded() {
-        assert!(is_unbounded("*"));
-        assert!(is_unbounded("+"));
-        assert!(is_unbounded("{2,}"));
-        assert!(!is_unbounded("?"));
-        assert!(!is_unbounded("{2}"));
-        assert!(!is_unbounded("{2,4}"));
-        assert_eq!(verdict("(a{1,3})*"), (false, Severity::Low));
-        assert_eq!(verdict("(a{1,})*"), (true, Severity::High));
-        let chars = |value: &str| value.chars().collect::<Vec<char>>();
-        assert!(open_ended_brace(&chars("{2,}")));
-        assert!(!open_ended_brace(&chars("{2,4}")));
-        assert!(!open_ended_brace(&chars("{2}")));
-        assert!(
-            !open_ended_brace(&chars("{,}")),
-            "no digits is not a quantifier"
-        );
-    }
-
-    #[test]
-    fn a_group_prefix_is_stripped_from_the_body() {
-        assert_eq!(strip_group_prefix("?:abc"), "abc");
-        assert_eq!(strip_group_prefix("?=abc"), "abc");
-        assert_eq!(strip_group_prefix("?<!abc"), "abc");
-        assert_eq!(strip_group_prefix("?<name>abc"), "abc");
-        assert_eq!(strip_group_prefix("abc"), "abc");
-    }
-
-    #[test]
-    fn a_named_group_is_still_scanned() {
-        assert_eq!(verdict("(?<name>a+)+"), (true, Severity::High));
-    }
-
-    #[test]
-    fn the_vulnerable_group_is_named_in_the_result() {
-        let result = detect_redos("(a+)+", "");
-        assert_eq!(
-            result.vulnerable_groups.as_deref(),
-            Some(["(a+)+".to_string()].as_slice())
-        );
-    }
-
-    #[test]
-    fn a_clean_result_names_no_groups() {
-        assert_eq!(detect_redos("[a-z]+", "").vulnerable_groups, None);
-    }
-
-    /// JavaScript's `\w` is ASCII and its `\s` is not Unicode's
-    /// `White_Space`. Borrowing Rust's spelling of either made this
-    /// crate disagree with the extension about whether an alternation
-    /// overlaps — a different severity for the same pattern.
-    #[test]
-    fn the_overlap_test_uses_javascripts_character_classes() {
-        assert_eq!(first_literal_char("abc"), Some('a'));
-        assert_eq!(first_literal_char("_x"), Some('_'));
-        assert_eq!(first_literal_char(" x"), Some(' '));
-        assert_eq!(
-            first_literal_char("\u{feff}x"),
-            Some('\u{feff}'),
-            "JS \\s holds it"
-        );
-        assert_eq!(first_literal_char("\u{85}x"), None, "JS \\s does not");
-        assert_eq!(first_literal_char("éx"), None, "JS \\w is ASCII");
-        assert_eq!(verdict("(é|é)*"), (false, Severity::Low));
-        assert_eq!(verdict("(a|a)*"), (true, Severity::Medium));
-    }
-
-    #[test]
-    fn alternation_is_split_at_the_top_level_only() {
-        assert_eq!(split_top_level_alternation("a|b"), ["a", "b"]);
-        assert_eq!(split_top_level_alternation("(a|b)|c"), ["(a|b)", "c"]);
-        assert_eq!(split_top_level_alternation("[a|b]"), ["[a|b]"]);
-        assert_eq!(split_top_level_alternation(r"a\|b"), [r"a\|b"]);
+    fn the_reason_states_the_cost() {
+        let result = detect_redos(r"(a+)+b", "");
+        assert!(result.reason.contains("steps"), "{}", result.reason);
     }
 }

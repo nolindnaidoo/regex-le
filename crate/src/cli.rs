@@ -25,7 +25,10 @@ It flags shapes; it cannot prove a pattern safe. A pattern it does not
 recognise may still backtrack badly on adversarial input.
 
 Options:
-  --severity <level>   fail at this verdict or worse: high or medium
+  --severity <level>   high or medium, both accepted and now equivalent:
+                       a pattern either has a demonstrated witness or it
+                       has none, so there is no middle tier to select.
+                       Kept so existing pipelines keep running
                        (default medium)
   --all                report every pattern, not only the vulnerable ones
   --strict             exit 2 if any text file could not be read, rather

@@ -267,16 +267,22 @@ mod tests {
         );
     }
 
+    /// **The threshold no longer narrows anything, and that is the
+    /// point.** It used to separate `medium` — a shape that "may
+    /// backtrack heavily" — from `high`. A verdict is now a
+    /// demonstration: an input was found that drives the pattern
+    /// exponential, or none was. There is no middle tier to select, so
+    /// both settings answer the same, and `--severity` stays accepted
+    /// only so existing pipelines keep running.
     #[test]
-    fn the_threshold_narrows_what_counts() {
+    fn the_threshold_no_longer_narrows_because_there_is_one_tier() {
         let content = "const re = /(a|a)*/;";
-        let medium = scan_content(
+        let default = scan_content(
             content,
             "a.js".into(),
             Some(Language::JavaScript),
             ScanOptions::default(),
         );
-        assert_eq!(medium.summary.findings, 1);
         let high = scan_content(
             content,
             "a.js".into(),
@@ -286,7 +292,8 @@ mod tests {
                 ..ScanOptions::default()
             },
         );
-        assert_eq!(high.summary.findings, 0);
+        assert_eq!(default.summary.findings, 1, "the pattern is demonstrated");
+        assert_eq!(high.summary.findings, default.summary.findings);
     }
 
     /// Changed deliberately: a PNG was never a text candidate, so it is
