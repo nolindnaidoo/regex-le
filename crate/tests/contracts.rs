@@ -260,7 +260,7 @@ fn version_and_help_exit_clear() {
     assert_eq!(help.code, 0);
     assert!(help.stdout.contains("usage: regex-le"));
     assert!(
-        help.stdout.contains("cannot prove"),
+        help.stdout.contains("not a clearance") && help.stdout.contains("undecided"),
         "the scope of the answer is stated"
     );
 }

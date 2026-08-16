@@ -22,7 +22,7 @@ an exit code a CI step can fail on.
 
 The extension does two things. This ports one.
 
-**Ported — the lint.** Find the patterns, judge their shape.
+**Ported — the lint.** Find the patterns, decide which backtrack.
 `extractPatterns`, `redos`, `heuristics`, `position`.
 
 **Not ported — the tester.** `regexTest`, `guardedExec` and `performance`
@@ -177,20 +177,41 @@ regex ten times reports one finding rather than ten.
 
 ### The ReDoS verdict
 
-Three outcomes, in the extension's precedence order:
+**A verdict is a demonstration, not a classification.** The pattern is
+compiled to an automaton, that automaton is walked the way a backtracking
+engine walks one, and an attack string is pumped through it at two
+lengths while the steps are counted. A pattern is `high` only when a
+concrete input drove the count past its budget — and that input is
+reported as `witness`, so the finding can be checked rather than trusted.
 
-| severity | shape | reason |
+| severity | when | reason |
 |---|---|---|
-| `high` | a quantified group whose body also contains an unbounded quantifier — `(a+)+`, `([a-z]+)*`, `(\w*)+` | exponential backtracking |
-| `medium` | a quantified group whose body is an alternation with overlapping branches — `(a\|a)*`, `(a\|ab)+` | heavy backtracking |
-| `low` | everything else | no obvious vulnerability |
+| `high` | an input was found that drives the pattern into exponential backtracking | `exponential backtracking: {n} steps on {a} characters, against {m} on {b}` |
+| `low` | no such input was found, or the pattern could not be decided | `no input was found that drives this into backtracking`, or `not decided: {why}` |
 
-**This is a scanner, not an automaton analysis, and the distinction is
-in the output.** It cannot prove a pattern safe — only flag the common
-dangerous shapes. A pattern it does not recognise may still backtrack
-badly on adversarial input. That honest scope is the extension's wording
-and it ports with the code; a tool that implied more would be worse than
-one that found less.
+There is no `medium`. The old detector had one because it ranked shapes;
+a demonstration either exists or does not.
+
+**Shape is not the property, and the difference is not academic.**
+Measured against twenty patterns timed on a real engine, the shape rules
+this replaces scored 6 of 20 — nine false alarms and five misses. They
+called `(?:-[a-z]+)*` dangerous, because star height cannot see that
+every iteration must eat a `-` the inner class cannot produce. They
+missed `(.*a){20}`, which is exponential and has no nesting to see. And
+they flagged a bare `(a+)+`, which **is not exploitable**: it succeeds on
+any input containing an `a`, so nothing ever forces it to backtrack. The
+hazard needs a continuation that fails — `(a+)+b`. This scores 20 of 20;
+`fixtures/redos-truth.json` holds the measurements and
+`tests/contracts.rs` holds the score.
+
+**Silence is still not a clearance, but it is now specific.** What cannot
+be demonstrated is *named* rather than passed off as safe: a
+backreference is not a regular language, lookaround is an intersection
+this construction does not model, syntax the parser cannot read is said
+to be unread, and a pattern too large to decide says so. Each is reported
+as `not decided: {reason}` at `low` severity. A tool that implied more
+would be worse than one that found less; a tool that hid *which* it was
+would be worse than both.
 
 **An invalid pattern is a syntax error, not a vulnerability**, and the
 two stages treat it differently. Extraction **drops** it: a `/(/ ` or a
@@ -258,8 +279,8 @@ line per file.
       "redos": {
         "detected": true,
         "severity": "high",
-        "reason": "Nested unbounded quantifiers can cause exponential backtracking",
-        "vulnerableGroups": ["(\\w+)+"]
+        "reason": "exponential backtracking: 2000000 steps on 41 characters, against 229328 on 20",
+        "witness": "0000000000000000000000000000000000000000\u0000"
       }
     }
   ],
@@ -283,11 +304,14 @@ POSIX filename and rewriting it there would rename the file.
 - **2** — the question was malformed: an unknown flag, an unreadable
   input, a path that does not exist.
 
-**`--severity` sets the threshold**, defaulting to `medium`: `high` fails
-only on the exponential shapes, `medium` adds the overlapping
-alternations, and `low` would fail on everything and is therefore not
-offered as a threshold — a check that always fires is a check nobody
-reads.
+**`--severity` currently selects nothing.** It set a threshold when
+verdicts were ranked shapes; a demonstrated verdict is `high` or `low`
+and never in between, so `high` and `medium` pick the same set. The flag
+is still accepted, because removing it would break a pipeline that passes
+it, and a contract test pins the equivalence — the day a verdict lands
+between the two, that test is what says so. `low` is refused rather than
+silently accepted: a check that always fires is a check nobody reads, and
+the refusal names `--all` as the thing actually wanted.
 
 ## The CLI surface
 
@@ -297,13 +321,35 @@ usage: regex-le [options] <file|dir>...
        regex-le mcp
        regex-le --version | --help
 
+Finds every regular expression in a tree and reports which of them can be
+driven into catastrophic backtracking. A pattern is reported only when an
+input was found that demonstrably drives it there, and that input is
+reported with it as the witness — a finding you can check yourself.
+
+Your pattern is never run. The demonstration walks an automaton built
+from the pattern text, under a step budget, and counts.
+
+Silence is not a clearance. A pattern this cannot read — a backreference,
+lookaround, syntax it does not parse — is reported as undecided, never as
+safe.
+
 Options:
-  --severity <level>   fail at this verdict or worse: high or medium
+  --severity <level>   high or medium, both accepted and now equivalent:
+                       a pattern either has a demonstrated witness or it
+                       has none, so there is no middle tier to select.
+                       Kept so existing pipelines keep running
                        (default medium)
   --all                report every pattern, not only the vulnerable ones
+  --strict             exit 2 if any text file could not be read, rather
+                       than reporting it and carrying on. Binary files
+                       are counted, never reported, and never counted
+                       here
   --stdin              read one document from stdin
   --hidden             walk hidden files and directories too
   --no-ignore          walk files that .gitignore excludes
+
+Exit codes: 0 nothing vulnerable · 1 at least one finding · 2 the
+question was malformed.
 ```
 
 ## The MCP surface
@@ -324,9 +370,13 @@ Options:
 ## Non-goals
 
 - **It does not run your patterns.** No matching, no timing, no capture
-  groups — see "Half the extension, on purpose".
-- **It does not prove safety.** It flags shapes; silence is not a
-  clearance, and the report says so rather than implying otherwise.
+  groups — see "Half the extension, on purpose". The demonstration walks
+  an automaton built from the pattern text; your pattern is never handed
+  to a regex engine.
+- **It does not prove safety.** A pattern with no witness is one no
+  witness was *found* for, under a bounded search. Silence is not a
+  clearance, and what could not be decided is named rather than counted
+  as clean.
 - **It does not rewrite patterns.** Suggesting an atomic group or a
   possessive quantifier is a rewrite of code this tool cannot test.
 - **No network, ever.**
@@ -335,8 +385,6 @@ Options:
 
 - **The tester half** — matching with JavaScript semantics, which needs
   the engine this deliberately avoids.
-- **Automaton-based analysis**, which would let it prove safety rather
-  than flag shapes, and is a different tool.
 - **A baseline file** for accepting known findings.
 
 ## Files that cannot be read

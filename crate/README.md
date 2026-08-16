@@ -6,7 +6,7 @@
 
 <p align="center">
   <b>Find every regex in a codebase and report which can be driven into catastrophic backtracking</b><br/>
-  <i>nothing is executed — the verdict comes from the shape of the pattern</i>
+  <i>a finding ships with the input that proves it — your pattern is never run</i>
 </p>
 
 <p align="center">
@@ -69,8 +69,8 @@ regex-le . || echo 'fix these before merging'
 ```
 
 ```
-./src/validate.js:1:15  /(\w+)+@/g  [high] Nested unbounded quantifiers can cause exponential backtracking
-./src/parse.ts:1:13  /(a|a)*/  [medium] Alternation with overlapping branches inside a quantifier
+./src/validate.js:1:15  /(\w+)+@/g  [high] exponential backtracking: 2000000 steps on 41 characters, against 229328 on 20
+./src/parse.ts:1:13  /(a|a)*b/  [high] exponential backtracking: 2000000 steps on 41 characters, against 458640 on 20
 2 findings in 3 files
 ```
 
@@ -86,24 +86,35 @@ question was malformed. `--severity` sets where the line falls.
 
 No runtime, no network, nothing written.
 
-## It flags shapes; it cannot prove a pattern safe
+## Every finding comes with the input that proves it
 
-This is a scanner, not an automaton analysis. It recognises the two
-shapes that cause almost all real ReDoS reports and says nothing about
-the rest. **A pattern it does not flag may still backtrack badly on
-adversarial input.**
+A pattern is reported only when a concrete input was found that drives it
+into exponential backtracking, and that input ships with the finding as
+`witness`. So a finding is not a claim you have to take: run the witness
+and watch.
 
-That limit is worth stating plainly because the alternative reads the
-same and isn't: a tool that implied clearance would be worse than one
-that found less. Proving safety means building the automaton and
-checking it for ambiguity — a different tool, and one that costs
-seconds per pattern rather than microseconds.
+The pattern is compiled to an automaton, that automaton is walked the way
+a backtracking engine walks one, and an attack string is pumped through
+it at two lengths while the steps are counted. **Your pattern is never
+handed to a regex engine.**
 
-| severity | shape | why |
+| severity | when | why |
 |---|---|---|
-| `high` | a quantified group whose body holds another unbounded quantifier — `(a+)+`, `([a-z]+)*`, `(\w*)+` | exponential backtracking |
-| `medium` | a quantified group whose body is an alternation with overlapping branches — `(a\|a)*`, `(a\|ab)+` | heavy backtracking |
-| `low` | everything else, **including patterns that do not compile** | no obvious vulnerability, or a syntax error |
+| `high` | an input was found that drives the pattern into exponential backtracking | the step count blew its budget, and the witness says on what |
+| `low` | no such input was found — or the pattern could not be decided, which is said rather than smoothed over | no demonstration, **including patterns that do not compile** |
+
+**Silence is not a clearance.** No witness means none was *found*, under
+a bounded search. What cannot be decided at all — a backreference,
+lookaround, syntax the parser does not read — is named as undecided
+rather than counted as clean, because a tool that implied clearance would
+be worse than one that found less.
+
+**Shape is not the property.** Against twenty patterns timed on a real
+engine, the star-height rules this replaces scored 6 of 20: they called
+`(?:-[a-z]+)*` dangerous, missed `(.*a){20}` entirely, and flagged a bare
+`(a+)+` — which is not exploitable, because it matches any input holding
+an `a` and is never forced to backtrack. The hazard needs a continuation
+that fails, like `(a+)+b`. This scores 20 of 20.
 
 `low` is not offered as a `--severity` threshold: every pattern has a
 verdict, so it would fail on any file holding a regex at all, and a
@@ -114,8 +125,8 @@ them.
 
 The extension does two things. This ports one.
 
-**Ported — the lint.** Find the patterns, judge their shape, over a tree
-instead of a buffer.
+**Ported — the lint.** Find the patterns, decide which of them backtrack,
+over a tree instead of a buffer.
 
 **Not ported — the tester.** Running *your* pattern against *your* text
 and showing the matches with capture-group positions is an interactive

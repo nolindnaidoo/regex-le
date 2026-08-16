@@ -18,11 +18,16 @@ const USAGE: &str = "usage: regex-le [options] <file|dir>...
        regex-le --version | --help
 
 Finds every regular expression in a tree and reports which of them can be
-driven into catastrophic backtracking. Nothing is executed: the verdict
-comes from the shape of the pattern text, never from running it.
+driven into catastrophic backtracking. A pattern is reported only when an
+input was found that demonstrably drives it there, and that input is
+reported with it as the witness — a finding you can check yourself.
 
-It flags shapes; it cannot prove a pattern safe. A pattern it does not
-recognise may still backtrack badly on adversarial input.
+Your pattern is never run. The demonstration walks an automaton built
+from the pattern text, under a step budget, and counts.
+
+Silence is not a clearance. A pattern this cannot read — a backreference,
+lookaround, syntax it does not parse — is reported as undecided, never as
+safe.
 
 Options:
   --severity <level>   high or medium, both accepted and now equivalent:
@@ -330,7 +335,13 @@ mod tests {
 
     #[test]
     fn the_usage_text_states_it_proves_nothing_safe() {
-        assert!(USAGE.contains("cannot prove"), "the scope is unstated");
+        // Both halves of the honest claim: a finding is demonstrated and
+        // checkable, and silence is not the opposite of a finding.
+        assert!(USAGE.contains("witness"), "the finding is unexplained");
+        assert!(
+            USAGE.contains("not a clearance") && USAGE.contains("undecided"),
+            "the scope is unstated"
+        );
         for code in ["0", "1", "2"] {
             assert!(USAGE.contains(code), "exit code {code} is undocumented");
         }

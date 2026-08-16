@@ -7,6 +7,57 @@ this repository release on their own cadence.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2026-08-16
+
+### Changed
+
+- **A ReDoS verdict is now demonstrated rather than classified, and ships
+  the input that proves it.** The detector reported from a pattern's
+  shape — star height, nested quantifiers, overlapping alternation.
+  Measured against twenty patterns timed on a real engine, that scored
+  **6 of 20**: nine false alarms and five misses, including `(.*a){20}`,
+  which is exponential and has no nesting to see. It now compiles the
+  pattern to an automaton, walks that automaton the way a backtracking
+  engine walks one, and pumps an attack string through it at two lengths
+  while counting steps. A pattern is reported only when a concrete input
+  drove the count past its budget, and that input is reported with it as
+  `redos.witness`. The replacement scores **20 of 20**;
+  `fixtures/redos-truth.json` holds the measurements and
+  `tests/contracts.rs` holds the score. Your pattern is still never
+  handed to a regex engine.
+- **A bare `(a+)+` is no longer reported, because it is not
+  exploitable.** It matches any input containing an `a`, so nothing ever
+  forces it to backtrack. The hazard needs a continuation that fails —
+  `(a+)+b`, or an anchor. Every shape-based detector says otherwise, and
+  this crate did too.
+- **`say "([a-z]+)*"` is now reported, and patterns like it.** A loop
+  behind a literal is only reached by an attack string that satisfies the
+  literal first, so the pumped input carries a prefix that reaches the
+  loop. Without it the pattern measured flat and read as clean.
+- **What cannot be decided is named, not called safe.** A backreference,
+  lookaround, syntax the parser does not read, and a pattern too large to
+  decide are each reported as `not decided: {reason}` at `low` severity.
+- **`--severity` currently selects nothing.** A demonstrated verdict is
+  `high` or `low` and never in between, so `high` and `medium` pick the
+  same set. The flag stays — removing it would break a pipeline that
+  passes it — and a contract test pins the equivalence, so the day a
+  verdict lands between the two, that test says so. `low` is still
+  refused, still pointing at `--all`.
+
+### Removed
+
+- **`redos.vulnerableGroups`.** It named the sub-expression a shape rule
+  matched on, and there is no such rule any more. `redos.witness` is what
+  replaces it, and it carries more: not which part looked wrong, but
+  which input makes it go wrong.
+
+### Fixed
+
+- **`(?P<name>…)` parses instead of refusing.** Python's named-group
+  spelling reached the decider as unreadable syntax, so every Python
+  pattern using one was undecided rather than answered. `(?P=name)` is
+  still refused, correctly — it is a backreference.
+
 ## [0.2.2] - 2026-08-15
 
 ### Added
