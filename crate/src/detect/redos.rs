@@ -20,7 +20,7 @@
 
 use serde::{Deserialize, Serialize};
 
-use super::heuristics;
+use super::{ambiguity, heuristics};
 use super::js;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -38,6 +38,13 @@ pub(crate) struct ReDoSResult {
     pub(crate) reason: String,
     #[serde(rename = "vulnerableGroups", skip_serializing_if = "Option::is_none")]
     pub(crate) vulnerable_groups: Option<Vec<String>>,
+    /// The input that demonstrates the blow-up.
+    ///
+    /// **This is the finding.** A severity is an opinion; a string that
+    /// takes the pattern from forty steps to two million is a receipt,
+    /// and it is what makes the report checkable by whoever reads it.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) witness: Option<String>,
 }
 
 struct Group {
@@ -58,53 +65,55 @@ pub(crate) fn detect_redos(pattern: &str, flags: &str) -> ReDoSResult {
             severity: Severity::Low,
             reason: "Pattern is invalid".to_string(),
             vulnerable_groups: None,
+            witness: None,
         };
     }
 
-    let groups = scan_groups(pattern);
-
-    let nested: Vec<String> = groups
-        .iter()
-        .filter(|group| {
-            group.quantifier.as_deref().is_some_and(is_unbounded)
-                && contains_unbounded_quantifier(&group.body)
-        })
-        .map(rendered)
-        .collect();
-    if !nested.is_empty() {
-        return ReDoSResult {
+    // **Demonstrated, not inferred.** A shape rule scored 6 of 20 against
+    // patterns whose behaviour was measured rather than assumed, and an
+    // automaton scored 10: both flag `^[a-z0-9]+(?:-[a-z0-9]+)*$`, which
+    // is safe because every iteration must eat a `-` the inner class
+    // cannot produce, and both missed `(.*a){20}`, which is not. A
+    // separator forcing the split is a fact about strings, so no test on
+    // syntax settles it.
+    //
+    // `ambiguity::decide` asks the question that does settle it — is
+    // there an input that makes this blow up — and answers with that
+    // input. Nothing is reported that was not shown.
+    match ambiguity::decide(pattern) {
+        Ok(Some(blowup)) => ReDoSResult {
             detected: true,
             severity: Severity::High,
-            reason: "Nested unbounded quantifiers can cause exponential backtracking".to_string(),
-            vulnerable_groups: Some(nested),
-        };
-    }
-
-    let overlapping: Vec<String> = groups
-        .iter()
-        .filter(|group| {
-            group.quantifier.as_deref().is_some_and(is_unbounded)
-                && has_overlapping_alternation(&group.body)
-        })
-        .map(rendered)
-        .collect();
-    if !overlapping.is_empty() {
-        return ReDoSResult {
-            detected: true,
-            severity: Severity::Medium,
-            reason: "Quantified alternation with overlapping branches may backtrack heavily"
-                .to_string(),
-            vulnerable_groups: Some(overlapping),
-        };
-    }
-
-    ReDoSResult {
-        detected: false,
-        severity: Severity::Low,
-        reason: "No obvious ReDoS vulnerabilities detected".to_string(),
-        vulnerable_groups: None,
+            reason: format!(
+                "exponential backtracking: {} steps on {} characters, against {} on {}",
+                blowup.high,
+                blowup.witness.chars().count(),
+                blowup.low,
+                blowup.witness.chars().count() / 2,
+            ),
+            vulnerable_groups: None,
+            witness: Some(blowup.witness),
+        },
+        Ok(None) => ReDoSResult {
+            detected: false,
+            severity: Severity::Low,
+            reason: "no input was found that drives this into backtracking".to_string(),
+            vulnerable_groups: None,
+            witness: None,
+        },
+        // **A refusal, not a clearance.** A backreference or a lookaround
+        // is not a regular language, so this construction cannot answer
+        // for it either way, and saying "no finding" would read as safe.
+        Err(undecidable) => ReDoSResult {
+            detected: false,
+            severity: Severity::Low,
+            reason: format!("not decided: {}", undecidable.reason()),
+            vulnerable_groups: None,
+            witness: None,
+        },
     }
 }
+
 
 fn rendered(group: &Group) -> String {
     format!(
