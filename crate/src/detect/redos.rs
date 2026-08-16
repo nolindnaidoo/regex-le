@@ -21,7 +21,6 @@
 use serde::{Deserialize, Serialize};
 
 use super::{ambiguity, heuristics};
-use super::js;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]

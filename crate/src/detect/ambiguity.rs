@@ -8,18 +8,40 @@
 //! so the split is forced. Star height is identical in both, which is why
 //! a shape test reported the second `high` and missed `(.*a){20}`.
 //!
-//! The decision procedure is the standard one for *infinite degree of
-//! ambiguity*: build an NFA, then look for a state `q` and a non-empty
-//! string `w` with **two distinct paths** `q →w q`. Such a `q` pumps, and
-//! each pump doubles the search space. It is checked on the product of
-//! the automaton with itself: walk pairs `(p, q)` from `(q, q)`,
-//! remembering whether the two components have ever differed, and look
-//! for a return to `(q, q)` after they have. Two components in different
-//! states over the same input *is* two distinct paths.
+//! **The verdict is a demonstration, not a classification.** The pattern
+//! is compiled to an NFA and that NFA is walked the way a backtracking
+//! engine walks one — depth-first, every edge in order, a dead end
+//! unwound rather than remembered — while the steps are counted. An
+//! attack string is built, pumped, and measured at two lengths. A pattern
+//! is reported only when a concrete input drove the count past its
+//! budget, and that input is reported with it as `witness`.
 //!
-//! Nothing here executes the pattern.
-
-use std::collections::{HashSet, VecDeque};
+//! So a finding here is falsifiable: run the witness and watch. Nothing
+//! is reported on the strength of how a pattern is shaped, which is what
+//! the star-height rule this replaces did — it called `(?:-[a-z]+)*`
+//! dangerous, missed `(.*a){20}` entirely, and scored 6 of 20 against
+//! measured truth. This scores 20 of 20; `tests/contracts.rs` holds it
+//! there against `fixtures/redos-truth.json`, whose `measured` column
+//! comes from timing a real engine, not from this code.
+//!
+//! Three things decide the outcome, and each is a way to be wrong:
+//!
+//! - **The attack string needs a prefix that reaches the loop.** A loop
+//!   behind a literal — `say "([a-z]+)*"` — is never entered by a string
+//!   of nothing but the pumped core, and the pattern measures flat.
+//! - **The tail must fail.** A blow-up only shows on a failing match:
+//!   `(a+)+` succeeds on any input holding an `a` and never backtracks,
+//!   while `(a+)+b` has to try every split before giving up.
+//! - **Anchors are not nothing.** Dropping `^` and `$` models every
+//!   anchored pattern as unanchored, and an unanchored loop usually
+//!   matches empty at position 0 and returns at once.
+//!
+//! What cannot be demonstrated is named rather than guessed at — see
+//! [`Undecidable`]. A pattern this cannot read is reported as undecided,
+//! never as safe.
+//!
+//! The pattern itself is never handed to a regex engine; only this
+//! automaton is walked, under a step budget it cannot exceed.
 
 /// A set of code points, as sorted disjoint inclusive ranges.
 type Ranges = Vec<(u32, u32)>;
@@ -37,7 +59,7 @@ pub(crate) enum Undecidable {
     /// Syntax this parser does not read. Named rather than guessed at: a
     /// pattern read wrongly is a verdict invented.
     Unsupported,
-    /// The product outgrew its ceiling.
+    /// The automaton outgrew its ceiling.
     TooLarge,
 }
 
@@ -183,13 +205,11 @@ impl<'a> Parser<'a> {
             if self.peek() == Some(b'}') {
                 None
             } else {
-                match self.number() {
-                    Some(value) => Some(value),
-                    None => {
-                        self.at = start;
-                        return None;
-                    }
-                }
+                let Some(value) = self.number() else {
+                    self.at = start;
+                    return None;
+                };
+                Some(value)
             }
         } else {
             Some(min)
@@ -532,8 +552,6 @@ impl Nfa {
     fn len(&self) -> usize {
         self.edges.len()
     }
-
-
 }
 
 /// Compile, returning the fragment's entry and exit.
@@ -684,11 +702,11 @@ pub(crate) fn decide(pattern: &str) -> Result<Option<Blowup>, Undecidable> {
     if nfa.len() > 4_000 {
         return Err(Undecidable::TooLarge);
     }
-    nfa.alphabet = alphabet.clone();
+    nfa.alphabet.clone_from(&alphabet);
 
-    for (core, tail) in candidates(&node, &alphabet) {
-        let low_input = core.repeat(PUMP_LOW) + &tail;
-        let high_input = core.repeat(PUMP_HIGH) + &tail;
+    for (prefix, core, tail) in candidates(&node, &alphabet) {
+        let low_input = prefix.clone() + &core.repeat(PUMP_LOW) + &tail;
+        let high_input = prefix + &core.repeat(PUMP_HIGH) + &tail;
         let low = steps(&nfa, entry, exit, &low_input);
         let high = steps(&nfa, entry, exit, &high_input);
         if high == STEP_BUDGET || high / low.max(1) >= BLOWUP_RATIO {
@@ -702,19 +720,53 @@ pub(crate) fn decide(pattern: &str) -> Result<Option<Blowup>, Undecidable> {
     Ok(None)
 }
 
-/// Attack strings to try: a repeatable core, and a tail that fails.
+/// Attack strings to try: a prefix that reaches a loop, a repeatable
+/// core, and a tail that fails.
 ///
-/// The core comes from the pattern's own alphabet, because a character
-/// no class accepts cannot drive a loop. The tail must be rejected, which
-/// is what forces the engine to exhaust every split before giving up — a
-/// blow-up only shows on a failing match.
-fn candidates(node: &Node, alphabet: &[(u32, u32)]) -> Vec<(String, String)> {
+/// The core comes from the alphabet of the loop being attacked, because a
+/// character that loop does not accept cannot drive it. The tail must be
+/// rejected, which is what forces the engine to exhaust every split
+/// before giving up — a blow-up only shows on a failing match.
+///
+/// **The prefix is why `say "([a-z]+)*"` is caught.** Its loop sits
+/// behind a literal, so an attack string of nothing but the core dies at
+/// the `s` from every start position and the pattern measured flat.
+/// Every loop is tried with a concrete string that reaches it.
+fn candidates(node: &Node, alphabet: &[(u32, u32)]) -> Vec<(String, String, String)> {
+    let rejected = ['\u{0}', '!', '#', '~']
+        .into_iter()
+        .find(|&ch| !accepts(node, ch))
+        .unwrap_or('\u{0}')
+        .to_string();
+
+    let mut reachable = Vec::new();
+    loops(node, String::new(), &mut reachable);
+    // The whole pattern with no prefix stays in the list: a bounded but
+    // deeply nested repeat has no unbounded loop to find, and used to be
+    // measured this way.
+    reachable.push((String::new(), node));
+
+    let mut out: Vec<(String, String, String)> = Vec::new();
+    for (prefix, target) in reachable {
+        for core in cores(target, alphabet) {
+            let candidate = (prefix.clone(), core, rejected.clone());
+            if !out.contains(&candidate) {
+                out.push(candidate);
+            }
+        }
+    }
+    out
+}
+
+/// The strings worth pumping through one loop.
+fn cores(target: &Node, alphabet: &[(u32, u32)]) -> Vec<String> {
     let mut accepted: Vec<char> = Vec::new();
     for &(low, _) in alphabet {
-        if let Some(ch) = char::from_u32(low) {
-            if ch.is_ascii_graphic() && accepts(node, ch) {
-                accepted.push(ch);
-            }
+        if let Some(ch) = char::from_u32(low)
+            && ch.is_ascii_graphic()
+            && accepts(target, ch)
+        {
+            accepted.push(ch);
         }
     }
     let mut cores: Vec<String> = accepted.iter().take(6).map(char::to_string).collect();
@@ -726,14 +778,72 @@ fn candidates(node: &Node, alphabet: &[(u32, u32)]) -> Vec<(String, String)> {
     if cores.is_empty() {
         cores.push("a".to_string());
     }
-    let rejected = ['\u{0}', '!', '#', '~']
-        .into_iter()
-        .find(|&ch| !accepts(node, ch))
-        .unwrap_or('\u{0}');
     cores
-        .into_iter()
-        .map(|core| (core, rejected.to_string()))
-        .collect()
+}
+
+/// Every unbounded repeat, each paired with a concrete string that
+/// reaches it from the start of the pattern.
+fn loops<'a>(node: &'a Node, prefix: String, out: &mut Vec<(String, &'a Node)>) {
+    match node {
+        Node::Repeat {
+            node: body, max, ..
+        } => {
+            if max.is_none() {
+                out.push((prefix.clone(), body.as_ref()));
+            }
+            // A loop nested inside this one is reached by the same
+            // prefix — the outer loop can be entered zero times.
+            loops(body, prefix, out);
+        }
+        Node::Concat(parts) => {
+            let mut here = prefix;
+            for part in parts {
+                loops(part, here.clone(), out);
+                // Once a part has no concrete match, nothing after it can
+                // be reached by a string this builds.
+                let Some(text) = shortest(part) else { return };
+                here.push_str(&text);
+            }
+        }
+        Node::Alt(parts) => {
+            for part in parts {
+                loops(part, prefix.clone(), out);
+            }
+        }
+        Node::Empty | Node::Start | Node::End | Node::Class(_) => {}
+    }
+}
+
+/// A shortest concrete string this node matches.
+///
+/// Used only to build a prefix, so an anchor contributes nothing rather
+/// than failing — `^say (a+)+` is reached by `say ` at position 0.
+fn shortest(node: &Node) -> Option<String> {
+    match node {
+        Node::Empty | Node::Start | Node::End => Some(String::new()),
+        Node::Class(ranges) => ranges
+            .iter()
+            .find_map(|&(low, high)| {
+                (low..=high)
+                    .filter_map(char::from_u32)
+                    .find(char::is_ascii_graphic)
+            })
+            .or_else(|| ranges.iter().find_map(|&(low, _)| char::from_u32(low)))
+            .map(|ch| ch.to_string()),
+        Node::Concat(parts) => parts
+            .iter()
+            .map(shortest)
+            .collect::<Option<Vec<_>>>()
+            .map(|parts| parts.concat()),
+        Node::Alt(parts) => parts.iter().filter_map(shortest).min_by_key(String::len),
+        Node::Repeat { node, min, .. } => {
+            if *min == 0 {
+                Some(String::new())
+            } else {
+                shortest(node).map(|text| text.repeat(*min as usize))
+            }
+        }
+    }
 }
 
 /// Whether any class in the pattern admits this character.
@@ -795,6 +905,8 @@ fn steps(nfa: &Nfa, entry: usize, exit: usize, input: &str) -> u64 {
 
 #[cfg(test)]
 mod tests {
+    use std::fmt::Write as _;
+
     use super::decide;
 
     #[test]
@@ -811,11 +923,11 @@ mod tests {
                 (true, true) | (false, false) => ok += 1,
                 (true, false) => {
                     miss += 1;
-                    detail.push_str(&format!("  MISS  {pattern}\n"));
+                    let _ = writeln!(detail, "  MISS  {pattern}");
                 }
                 (false, true) => {
                     alarm += 1;
-                    detail.push_str(&format!("  ALARM {pattern}\n"));
+                    let _ = writeln!(detail, "  ALARM {pattern}");
                 }
             }
         }

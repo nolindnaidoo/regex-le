@@ -244,51 +244,51 @@
 			"file": "patterns.py",
 			"expected": [
 				{
-					"pattern": "(a+)+",
+					"column": 10,
 					"flags": "",
 					"line": 4,
-					"column": 10,
 					"match": "re.compile(r\"(a+)+\"",
+					"pattern": "(a+)+",
 					"redos": {
 						"detected": false,
-						"severity": "low",
-						"reason": "no input was found that drives this into backtracking"
+						"reason": "no input was found that drives this into backtracking",
+						"severity": "low"
 					}
 				},
 				{
-					"pattern": "\\d{3}-\\d{4}",
+					"column": 11,
 					"flags": "",
 					"line": 7,
-					"column": 11,
 					"match": "re.compile(\"\\\\d{3}-\\\\d{4}\"",
+					"pattern": "\\d{3}-\\d{4}",
 					"redos": {
 						"detected": false,
-						"severity": "low",
-						"reason": "no input was found that drives this into backtracking"
+						"reason": "no input was found that drives this into backtracking",
+						"severity": "low"
 					}
 				},
 				{
-					"pattern": "^[a-z]+$",
+					"column": 10,
 					"flags": "",
 					"line": 10,
-					"column": 10,
 					"match": "re.match(r'^[a-z]+$'",
+					"pattern": "^[a-z]+$",
 					"redos": {
 						"detected": false,
-						"severity": "low",
-						"reason": "no input was found that drives this into backtracking"
+						"reason": "no input was found that drives this into backtracking",
+						"severity": "low"
 					}
 				},
 				{
-					"pattern": "(a|ab)+",
+					"column": 10,
 					"flags": "",
 					"line": 11,
-					"column": 10,
 					"match": "re.search(\"\"\"(a|ab)+\"\"\"",
+					"pattern": "(a|ab)+",
 					"redos": {
 						"detected": false,
-						"severity": "low",
-						"reason": "no input was found that drives this into backtracking"
+						"reason": "no input was found that drives this into backtracking",
+						"severity": "low"
 					}
 				}
 			]
@@ -298,51 +298,52 @@
 			"file": "patterns.rs",
 			"expected": [
 				{
-					"pattern": "(a+)+",
+					"column": 18,
 					"flags": "",
 					"line": 5,
-					"column": 18,
 					"match": "Regex::new(r\"(a+)+\"",
+					"pattern": "(a+)+",
 					"redos": {
 						"detected": false,
-						"severity": "low",
-						"reason": "no input was found that drives this into backtracking"
+						"reason": "no input was found that drives this into backtracking",
+						"severity": "low"
 					}
 				},
 				{
-					"pattern": "say \"([a-z]+)*\"",
+					"column": 18,
 					"flags": "",
 					"line": 7,
-					"column": 18,
 					"match": "Regex::new(r#\"say \"([a-z]+)*\"\"#",
+					"pattern": "say \"([a-z]+)*\"",
 					"redos": {
-						"detected": false,
-						"severity": "low",
-						"reason": "no input was found that drives this into backtracking"
+						"detected": true,
+						"reason": "exponential backtracking: 2000000 steps on 46 characters, against 114737 on 23",
+						"severity": "high",
+						"witness": "say \"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\u0000"
 					}
 				},
 				{
-					"pattern": "\\d{4}",
+					"column": 19,
 					"flags": "",
 					"line": 9,
-					"column": 19,
 					"match": "RegexBuilder::new(\"\\\\d{4}\"",
+					"pattern": "\\d{4}",
 					"redos": {
 						"detected": false,
-						"severity": "low",
-						"reason": "no input was found that drives this into backtracking"
+						"reason": "no input was found that drives this into backtracking",
+						"severity": "low"
 					}
 				},
 				{
-					"pattern": "^\\w+$",
+					"column": 28,
 					"flags": "",
 					"line": 11,
-					"column": 28,
 					"match": "Regex::new(r\"^\\w+$\"",
+					"pattern": "^\\w+$",
 					"redos": {
 						"detected": false,
-						"severity": "low",
-						"reason": "no input was found that drives this into backtracking"
+						"reason": "no input was found that drives this into backtracking",
+						"severity": "low"
 					}
 				}
 			]
@@ -490,51 +491,51 @@
 			"file": "patterns.php",
 			"expected": [
 				{
-					"pattern": "(a+)+",
+					"column": 1,
 					"flags": "",
 					"line": 3,
-					"column": 1,
 					"match": "preg_match('/(a+)+/'",
+					"pattern": "(a+)+",
 					"redos": {
 						"detected": false,
-						"severity": "low",
-						"reason": "no input was found that drives this into backtracking"
+						"reason": "no input was found that drives this into backtracking",
+						"severity": "low"
 					}
 				},
 				{
-					"pattern": "([a-z]+)*",
+					"column": 1,
 					"flags": "",
 					"line": 5,
-					"column": 1,
 					"match": "preg_replace('#([a-z]+)*#i'",
+					"pattern": "([a-z]+)*",
 					"redos": {
 						"detected": false,
-						"severity": "low",
-						"reason": "no input was found that drives this into backtracking"
+						"reason": "no input was found that drives this into backtracking",
+						"severity": "low"
 					}
 				},
 				{
-					"pattern": "\\d{2,}",
+					"column": 1,
 					"flags": "",
 					"line": 7,
-					"column": 1,
 					"match": "preg_split('~\\d{2,}~'",
+					"pattern": "\\d{2,}",
 					"redos": {
 						"detected": false,
-						"severity": "low",
-						"reason": "no input was found that drives this into backtracking"
+						"reason": "no input was found that drives this into backtracking",
+						"severity": "low"
 					}
 				},
 				{
-					"pattern": "^[A-Z]+$",
+					"column": 1,
 					"flags": "",
 					"line": 8,
-					"column": 1,
 					"match": "preg_match_all('{^[A-Z]+$}'",
+					"pattern": "^[A-Z]+$",
 					"redos": {
 						"detected": false,
-						"severity": "low",
-						"reason": "no input was found that drives this into backtracking"
+						"reason": "no input was found that drives this into backtracking",
+						"severity": "low"
 					}
 				}
 			]

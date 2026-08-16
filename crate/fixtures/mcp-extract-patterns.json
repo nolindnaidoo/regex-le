@@ -118,113 +118,113 @@
 		"file": "patterns.ts",
 		"arguments": {},
 		"expected": {
-			"ok": true,
 			"data": {
 				"patterns": [
 					{
-						"pattern": "(?<year>\\d{4})-(?<month>\\d{2})",
-						"flags": "u",
-						"match": "/(?<year>\\d{4})-(?<month>\\d{2})/u",
-						"line": 2,
 						"column": 15,
+						"flags": "u",
+						"line": 2,
+						"match": "/(?<year>\\d{4})-(?<month>\\d{2})/u",
+						"pattern": "(?<year>\\d{4})-(?<month>\\d{2})",
 						"redos": {
 							"detected": false,
-							"severity": "low",
-							"reason": "no input was found that drives this into backtracking"
+							"reason": "no input was found that drives this into backtracking",
+							"severity": "low"
 						}
 					},
 					{
-						"pattern": "abc",
+						"column": 16,
 						"flags": "y",
-						"match": "/abc/y",
 						"line": 3,
-						"column": 16,
+						"match": "/abc/y",
+						"pattern": "abc",
 						"redos": {
 							"detected": false,
-							"severity": "low",
-							"reason": "no input was found that drives this into backtracking"
+							"reason": "no input was found that drives this into backtracking",
+							"severity": "low"
 						}
 					},
 					{
-						"pattern": "a.b",
+						"column": 16,
 						"flags": "s",
-						"match": "/a.b/s",
 						"line": 4,
-						"column": 16,
+						"match": "/a.b/s",
+						"pattern": "a.b",
 						"redos": {
 							"detected": false,
-							"severity": "low",
-							"reason": "no input was found that drives this into backtracking"
+							"reason": "no input was found that drives this into backtracking",
+							"severity": "low"
 						}
 					},
 					{
-						"pattern": "foo(?=bar)",
+						"column": 19,
 						"flags": "",
-						"match": "/foo(?=bar)/",
 						"line": 7,
-						"column": 19,
+						"match": "/foo(?=bar)/",
+						"pattern": "foo(?=bar)",
 						"redos": {
 							"detected": false,
-							"severity": "low",
-							"reason": "no input was found that drives this into backtracking"
+							"reason": "not decided: lookaround is not modelled by this construction",
+							"severity": "low"
 						}
 					},
 					{
-						"pattern": "(?<=\\$)\\d+",
-						"flags": "",
-						"match": "/(?<=\\$)\\d+/",
-						"line": 8,
 						"column": 20,
-						"redos": {
-							"detected": false,
-							"severity": "low",
-							"reason": "no input was found that drives this into backtracking"
-						}
-					},
-					{
-						"pattern": "^[A-Z][a-z]+$",
 						"flags": "",
-						"match": "new RegExp('^[A-Z][a-z]+$')",
-						"line": 11,
+						"line": 8,
+						"match": "/(?<=\\$)\\d+/",
+						"pattern": "(?<=\\$)\\d+",
+						"redos": {
+							"detected": false,
+							"reason": "not decided: lookaround is not modelled by this construction",
+							"severity": "low"
+						}
+					},
+					{
 						"column": 14,
+						"flags": "",
+						"line": 11,
+						"match": "new RegExp('^[A-Z][a-z]+$')",
+						"pattern": "^[A-Z][a-z]+$",
 						"redos": {
 							"detected": false,
-							"severity": "low",
-							"reason": "no input was found that drives this into backtracking"
+							"reason": "no input was found that drives this into backtracking",
+							"severity": "low"
 						}
 					},
 					{
-						"pattern": "a|b|c",
-						"flags": "gi",
-						"match": "new RegExp('a|b|c', 'gi')",
-						"line": 12,
 						"column": 19,
+						"flags": "gi",
+						"line": 12,
+						"match": "new RegExp('a|b|c', 'gi')",
+						"pattern": "a|b|c",
 						"redos": {
 							"detected": false,
-							"severity": "low",
-							"reason": "no input was found that drives this into backtracking"
+							"reason": "no input was found that drives this into backtracking",
+							"severity": "low"
 						}
 					},
 					{
-						"pattern": "it's",
-						"flags": "g",
-						"match": "new RegExp('it\\'s', 'g')",
-						"line": 15,
 						"column": 16,
+						"flags": "g",
+						"line": 15,
+						"match": "new RegExp('it\\'s', 'g')",
+						"pattern": "it's",
 						"redos": {
 							"detected": false,
-							"severity": "low",
-							"reason": "no input was found that drives this into backtracking"
+							"reason": "no input was found that drives this into backtracking",
+							"severity": "low"
 						}
 					}
 				]
 			},
 			"diagnostics": [],
 			"meta": {
-				"tool": "extract_patterns",
 				"count": 8,
+				"tool": "extract_patterns",
 				"truncated": false
-			}
+			},
+			"ok": true
 		}
 	},
 	{
@@ -367,71 +367,65 @@
 			"filename": "patterns.py"
 		},
 		"expected": {
-			"ok": true,
 			"data": {
 				"patterns": [
 					{
-						"pattern": "(a+)+",
+						"column": 10,
 						"flags": "",
-						"match": "re.compile(r\"(a+)+\"",
 						"line": 4,
-						"column": 10,
+						"match": "re.compile(r\"(a+)+\"",
+						"pattern": "(a+)+",
 						"redos": {
-							"detected": true,
-							"severity": "high",
-							"reason": "Nested unbounded quantifiers can cause exponential backtracking",
-							"vulnerableGroups": [
-								"(a+)+"
-							]
+							"detected": false,
+							"reason": "no input was found that drives this into backtracking",
+							"severity": "low"
 						}
 					},
 					{
-						"pattern": "\\d{3}-\\d{4}",
-						"flags": "",
-						"match": "re.compile(\"\\\\d{3}-\\\\d{4}\"",
-						"line": 7,
 						"column": 11,
+						"flags": "",
+						"line": 7,
+						"match": "re.compile(\"\\\\d{3}-\\\\d{4}\"",
+						"pattern": "\\d{3}-\\d{4}",
 						"redos": {
 							"detected": false,
-							"severity": "low",
-							"reason": "no input was found that drives this into backtracking"
+							"reason": "no input was found that drives this into backtracking",
+							"severity": "low"
 						}
 					},
 					{
-						"pattern": "^[a-z]+$",
+						"column": 10,
 						"flags": "",
-						"match": "re.match(r'^[a-z]+$'",
 						"line": 10,
-						"column": 10,
+						"match": "re.match(r'^[a-z]+$'",
+						"pattern": "^[a-z]+$",
 						"redos": {
 							"detected": false,
-							"severity": "low",
-							"reason": "no input was found that drives this into backtracking"
+							"reason": "no input was found that drives this into backtracking",
+							"severity": "low"
 						}
 					},
 					{
-						"pattern": "(a|ab)+",
-						"flags": "",
-						"match": "re.search(\"\"\"(a|ab)+\"\"\"",
-						"line": 11,
 						"column": 10,
+						"flags": "",
+						"line": 11,
+						"match": "re.search(\"\"\"(a|ab)+\"\"\"",
+						"pattern": "(a|ab)+",
 						"redos": {
-							"detected": true,
-							"severity": "medium",
-							"reason": "Quantified alternation with overlapping branches may backtrack heavily",
-							"vulnerableGroups": [
-								"(a|ab)+"
-							]
+							"detected": false,
+							"reason": "no input was found that drives this into backtracking",
+							"severity": "low"
 						}
 					}
 				]
 			},
 			"diagnostics": [],
 			"meta": {
-				"tool": "extract_patterns",
 				"count": 4,
+				"tool": "extract_patterns",
 				"truncated": false
-			}
+			},
+			"ok": true
 		}
 	},
 	{
@@ -441,71 +435,66 @@
 			"filename": "patterns.rs"
 		},
 		"expected": {
-			"ok": true,
 			"data": {
 				"patterns": [
 					{
-						"pattern": "(a+)+",
+						"column": 18,
 						"flags": "",
-						"match": "Regex::new(r\"(a+)+\"",
 						"line": 5,
-						"column": 18,
+						"match": "Regex::new(r\"(a+)+\"",
+						"pattern": "(a+)+",
 						"redos": {
-							"detected": true,
-							"severity": "high",
-							"reason": "Nested unbounded quantifiers can cause exponential backtracking",
-							"vulnerableGroups": [
-								"(a+)+"
-							]
+							"detected": false,
+							"reason": "no input was found that drives this into backtracking",
+							"severity": "low"
 						}
 					},
 					{
-						"pattern": "say \"([a-z]+)*\"",
+						"column": 18,
 						"flags": "",
-						"match": "Regex::new(r#\"say \"([a-z]+)*\"\"#",
 						"line": 7,
-						"column": 18,
+						"match": "Regex::new(r#\"say \"([a-z]+)*\"\"#",
+						"pattern": "say \"([a-z]+)*\"",
 						"redos": {
 							"detected": true,
+							"reason": "exponential backtracking: 2000000 steps on 46 characters, against 114737 on 23",
 							"severity": "high",
-							"reason": "Nested unbounded quantifiers can cause exponential backtracking",
-							"vulnerableGroups": [
-								"([a-z]+)*"
-							]
+							"witness": "say \"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\u0000"
 						}
 					},
 					{
-						"pattern": "\\d{4}",
-						"flags": "",
-						"match": "RegexBuilder::new(\"\\\\d{4}\"",
-						"line": 9,
 						"column": 19,
+						"flags": "",
+						"line": 9,
+						"match": "RegexBuilder::new(\"\\\\d{4}\"",
+						"pattern": "\\d{4}",
 						"redos": {
 							"detected": false,
-							"severity": "low",
-							"reason": "no input was found that drives this into backtracking"
+							"reason": "no input was found that drives this into backtracking",
+							"severity": "low"
 						}
 					},
 					{
-						"pattern": "^\\w+$",
-						"flags": "",
-						"match": "Regex::new(r\"^\\w+$\"",
-						"line": 11,
 						"column": 28,
+						"flags": "",
+						"line": 11,
+						"match": "Regex::new(r\"^\\w+$\"",
+						"pattern": "^\\w+$",
 						"redos": {
 							"detected": false,
-							"severity": "low",
-							"reason": "no input was found that drives this into backtracking"
+							"reason": "no input was found that drives this into backtracking",
+							"severity": "low"
 						}
 					}
 				]
 			},
 			"diagnostics": [],
 			"meta": {
-				"tool": "extract_patterns",
 				"count": 4,
+				"tool": "extract_patterns",
 				"truncated": false
-			}
+			},
+			"ok": true
 		}
 	},
 	{
@@ -515,56 +504,53 @@
 			"filename": "patterns.go"
 		},
 		"expected": {
-			"ok": true,
 			"data": {
 				"patterns": [
 					{
-						"pattern": "(a+)+",
+						"column": 11,
 						"flags": "",
-						"match": "regexp.MustCompile(`(a+)+`",
 						"line": 7,
-						"column": 11,
+						"match": "regexp.MustCompile(`(a+)+`",
+						"pattern": "(a+)+",
 						"redos": {
-							"detected": true,
-							"severity": "high",
-							"reason": "Nested unbounded quantifiers can cause exponential backtracking",
-							"vulnerableGroups": [
-								"(a+)+"
-							]
+							"detected": false,
+							"reason": "no input was found that drives this into backtracking",
+							"severity": "low"
 						}
 					},
 					{
-						"pattern": "\\d{2}:\\d{2}",
-						"flags": "",
-						"match": "regexp.Compile(\"\\\\d{2}:\\\\d{2}\"",
-						"line": 9,
 						"column": 12,
+						"flags": "",
+						"line": 9,
+						"match": "regexp.Compile(\"\\\\d{2}:\\\\d{2}\"",
+						"pattern": "\\d{2}:\\d{2}",
 						"redos": {
 							"detected": false,
-							"severity": "low",
-							"reason": "no input was found that drives this into backtracking"
+							"reason": "no input was found that drives this into backtracking",
+							"severity": "low"
 						}
 					},
 					{
-						"pattern": "(?i)^[a-z]+$",
-						"flags": "",
-						"match": "regexp.MustCompile(`(?i)^[a-z]+$`",
-						"line": 11,
 						"column": 11,
+						"flags": "",
+						"line": 11,
+						"match": "regexp.MustCompile(`(?i)^[a-z]+$`",
+						"pattern": "(?i)^[a-z]+$",
 						"redos": {
 							"detected": false,
-							"severity": "low",
-							"reason": "no input was found that drives this into backtracking"
+							"reason": "not decided: the pattern uses syntax this cannot read",
+							"severity": "low"
 						}
 					}
 				]
 			},
 			"diagnostics": [],
 			"meta": {
-				"tool": "extract_patterns",
 				"count": 3,
+				"tool": "extract_patterns",
 				"truncated": false
-			}
+			},
+			"ok": true
 		}
 	},
 	{
@@ -574,71 +560,65 @@
 			"filename": "patterns.java"
 		},
 		"expected": {
-			"ok": true,
 			"data": {
 				"patterns": [
 					{
-						"pattern": "(a+)+",
-						"flags": "",
-						"match": "Pattern.compile(\"(a+)+\"",
-						"line": 4,
 						"column": 32,
+						"flags": "",
+						"line": 4,
+						"match": "Pattern.compile(\"(a+)+\"",
+						"pattern": "(a+)+",
 						"redos": {
-							"detected": true,
-							"severity": "high",
-							"reason": "Nested unbounded quantifiers can cause exponential backtracking",
-							"vulnerableGroups": [
-								"(a+)+"
-							]
+							"detected": false,
+							"reason": "no input was found that drives this into backtracking",
+							"severity": "low"
 						}
 					},
 					{
-						"pattern": "\\d{4}-\\d{2}",
-						"flags": "",
-						"match": "Pattern.compile(\"\\\\d{4}-\\\\d{2}\"",
-						"line": 5,
 						"column": 33,
+						"flags": "",
+						"line": 5,
+						"match": "Pattern.compile(\"\\\\d{4}-\\\\d{2}\"",
+						"pattern": "\\d{4}-\\d{2}",
 						"redos": {
 							"detected": false,
-							"severity": "low",
-							"reason": "no input was found that drives this into backtracking"
+							"reason": "no input was found that drives this into backtracking",
+							"severity": "low"
 						}
 					},
 					{
-						"pattern": "^[A-Z][a-z]+$",
-						"flags": "",
-						"match": "Pattern.compile(\"^[A-Z][a-z]+$\"",
-						"line": 6,
 						"column": 51,
+						"flags": "",
+						"line": 6,
+						"match": "Pattern.compile(\"^[A-Z][a-z]+$\"",
+						"pattern": "^[A-Z][a-z]+$",
 						"redos": {
 							"detected": false,
-							"severity": "low",
-							"reason": "no input was found that drives this into backtracking"
+							"reason": "no input was found that drives this into backtracking",
+							"severity": "low"
 						}
 					},
 					{
-						"pattern": "(a|ab)+",
-						"flags": "",
-						"match": "Pattern.matches(\"(a|ab)+\"",
-						"line": 8,
 						"column": 10,
+						"flags": "",
+						"line": 8,
+						"match": "Pattern.matches(\"(a|ab)+\"",
+						"pattern": "(a|ab)+",
 						"redos": {
-							"detected": true,
-							"severity": "medium",
-							"reason": "Quantified alternation with overlapping branches may backtrack heavily",
-							"vulnerableGroups": [
-								"(a|ab)+"
-							]
+							"detected": false,
+							"reason": "no input was found that drives this into backtracking",
+							"severity": "low"
 						}
 					}
 				]
 			},
 			"diagnostics": [],
 			"meta": {
-				"tool": "extract_patterns",
 				"count": 4,
+				"tool": "extract_patterns",
 				"truncated": false
-			}
+			},
+			"ok": true
 		}
 	},
 	{
@@ -648,59 +628,53 @@
 			"filename": "patterns.rb"
 		},
 		"expected": {
-			"ok": true,
 			"data": {
 				"patterns": [
 					{
-						"pattern": "(a+)+",
-						"flags": "",
-						"match": "/(a+)+/",
-						"line": 2,
 						"column": 10,
-						"redos": {
-							"detected": true,
-							"severity": "high",
-							"reason": "Nested unbounded quantifiers can cause exponential backtracking",
-							"vulnerableGroups": [
-								"(a+)+"
-							]
-						}
-					},
-					{
-						"pattern": "^[a-z]+$",
-						"flags": "i",
-						"match": "/^[a-z]+$/i",
-						"line": 3,
-						"column": 12,
+						"flags": "",
+						"line": 2,
+						"match": "/(a+)+/",
+						"pattern": "(a+)+",
 						"redos": {
 							"detected": false,
-							"severity": "low",
-							"reason": "no input was found that drives this into backtracking"
+							"reason": "no input was found that drives this into backtracking",
+							"severity": "low"
 						}
 					},
 					{
-						"pattern": "(a|ab)+",
-						"flags": "",
-						"match": "Regexp.new('(a|ab)+'",
-						"line": 6,
-						"column": 9,
+						"column": 12,
+						"flags": "i",
+						"line": 3,
+						"match": "/^[a-z]+$/i",
+						"pattern": "^[a-z]+$",
 						"redos": {
-							"detected": true,
-							"severity": "medium",
-							"reason": "Quantified alternation with overlapping branches may backtrack heavily",
-							"vulnerableGroups": [
-								"(a|ab)+"
-							]
+							"detected": false,
+							"reason": "no input was found that drives this into backtracking",
+							"severity": "low"
+						}
+					},
+					{
+						"column": 9,
+						"flags": "",
+						"line": 6,
+						"match": "Regexp.new('(a|ab)+'",
+						"pattern": "(a|ab)+",
+						"redos": {
+							"detected": false,
+							"reason": "no input was found that drives this into backtracking",
+							"severity": "low"
 						}
 					}
 				]
 			},
 			"diagnostics": [],
 			"meta": {
-				"tool": "extract_patterns",
 				"count": 3,
+				"tool": "extract_patterns",
 				"truncated": false
-			}
+			},
+			"ok": true
 		}
 	},
 	{
@@ -710,71 +684,65 @@
 			"filename": "patterns.php"
 		},
 		"expected": {
-			"ok": true,
 			"data": {
 				"patterns": [
 					{
-						"pattern": "(a+)+",
+						"column": 1,
 						"flags": "",
-						"match": "preg_match('/(a+)+/'",
 						"line": 3,
-						"column": 1,
+						"match": "preg_match('/(a+)+/'",
+						"pattern": "(a+)+",
 						"redos": {
-							"detected": true,
-							"severity": "high",
-							"reason": "Nested unbounded quantifiers can cause exponential backtracking",
-							"vulnerableGroups": [
-								"(a+)+"
-							]
+							"detected": false,
+							"reason": "no input was found that drives this into backtracking",
+							"severity": "low"
 						}
 					},
 					{
-						"pattern": "([a-z]+)*",
+						"column": 1,
 						"flags": "",
-						"match": "preg_replace('#([a-z]+)*#i'",
 						"line": 5,
-						"column": 1,
+						"match": "preg_replace('#([a-z]+)*#i'",
+						"pattern": "([a-z]+)*",
 						"redos": {
-							"detected": true,
-							"severity": "high",
-							"reason": "Nested unbounded quantifiers can cause exponential backtracking",
-							"vulnerableGroups": [
-								"([a-z]+)*"
-							]
+							"detected": false,
+							"reason": "no input was found that drives this into backtracking",
+							"severity": "low"
 						}
 					},
 					{
-						"pattern": "\\d{2,}",
+						"column": 1,
 						"flags": "",
-						"match": "preg_split('~\\d{2,}~'",
 						"line": 7,
-						"column": 1,
+						"match": "preg_split('~\\d{2,}~'",
+						"pattern": "\\d{2,}",
 						"redos": {
 							"detected": false,
-							"severity": "low",
-							"reason": "no input was found that drives this into backtracking"
+							"reason": "no input was found that drives this into backtracking",
+							"severity": "low"
 						}
 					},
 					{
-						"pattern": "^[A-Z]+$",
-						"flags": "",
-						"match": "preg_match_all('{^[A-Z]+$}'",
-						"line": 8,
 						"column": 1,
+						"flags": "",
+						"line": 8,
+						"match": "preg_match_all('{^[A-Z]+$}'",
+						"pattern": "^[A-Z]+$",
 						"redos": {
 							"detected": false,
-							"severity": "low",
-							"reason": "no input was found that drives this into backtracking"
+							"reason": "no input was found that drives this into backtracking",
+							"severity": "low"
 						}
 					}
 				]
 			},
 			"diagnostics": [],
 			"meta": {
-				"tool": "extract_patterns",
 				"count": 4,
+				"tool": "extract_patterns",
 				"truncated": false
-			}
+			},
+			"ok": true
 		}
 	},
 	{
@@ -784,71 +752,65 @@
 			"filename": "patterns.cs"
 		},
 		"expected": {
-			"ok": true,
 			"data": {
 				"patterns": [
 					{
-						"pattern": "(a+)+",
+						"column": 33,
 						"flags": "",
-						"match": "new Regex(@\"(a+)+\"",
 						"line": 5,
-						"column": 33,
+						"match": "new Regex(@\"(a+)+\"",
+						"pattern": "(a+)+",
 						"redos": {
-							"detected": true,
-							"severity": "high",
-							"reason": "Nested unbounded quantifiers can cause exponential backtracking",
-							"vulnerableGroups": [
-								"(a+)+"
-							]
+							"detected": false,
+							"reason": "no input was found that drives this into backtracking",
+							"severity": "low"
 						}
 					},
 					{
-						"pattern": "\\d{4}",
-						"flags": "",
-						"match": "new Regex(\"\\\\d{4}\"",
-						"line": 7,
 						"column": 34,
+						"flags": "",
+						"line": 7,
+						"match": "new Regex(\"\\\\d{4}\"",
+						"pattern": "\\d{4}",
 						"redos": {
 							"detected": false,
-							"severity": "low",
-							"reason": "no input was found that drives this into backtracking"
+							"reason": "no input was found that drives this into backtracking",
+							"severity": "low"
 						}
 					},
 					{
-						"pattern": "(a|ab)+",
-						"flags": "",
-						"match": "Regex.IsMatch(s, @\"(a|ab)+\"",
-						"line": 9,
 						"column": 33,
+						"flags": "",
+						"line": 9,
+						"match": "Regex.IsMatch(s, @\"(a|ab)+\"",
+						"pattern": "(a|ab)+",
 						"redos": {
-							"detected": true,
-							"severity": "medium",
-							"reason": "Quantified alternation with overlapping branches may backtrack heavily",
-							"vulnerableGroups": [
-								"(a|ab)+"
-							]
+							"detected": false,
+							"reason": "no input was found that drives this into backtracking",
+							"severity": "low"
 						}
 					},
 					{
-						"pattern": "\\s+",
-						"flags": "",
-						"match": "Regex.Replace(s, \"\\\\s+\"",
-						"line": 10,
 						"column": 35,
+						"flags": "",
+						"line": 10,
+						"match": "Regex.Replace(s, \"\\\\s+\"",
+						"pattern": "\\s+",
 						"redos": {
 							"detected": false,
-							"severity": "low",
-							"reason": "no input was found that drives this into backtracking"
+							"reason": "no input was found that drives this into backtracking",
+							"severity": "low"
 						}
 					}
 				]
 			},
 			"diagnostics": [],
 			"meta": {
-				"tool": "extract_patterns",
 				"count": 4,
+				"tool": "extract_patterns",
 				"truncated": false
-			}
+			},
+			"ok": true
 		}
 	},
 	{
@@ -877,56 +839,54 @@
 			"filename": "pcre.py"
 		},
 		"expected": {
-			"ok": true,
 			"data": {
 				"patterns": [
 					{
-						"pattern": "(?P<year>\\d{4})-(?P<month>\\d{2})",
-						"flags": "",
-						"match": "re.compile(r\"(?P<year>\\d{4})-(?P<month>\\d{2})\"",
-						"line": 4,
 						"column": 9,
+						"flags": "",
+						"line": 4,
+						"match": "re.compile(r\"(?P<year>\\d{4})-(?P<month>\\d{2})\"",
+						"pattern": "(?P<year>\\d{4})-(?P<month>\\d{2})",
 						"redos": {
 							"detected": false,
-							"severity": "low",
-							"reason": "no input was found that drives this into backtracking"
+							"reason": "no input was found that drives this into backtracking",
+							"severity": "low"
 						}
 					},
 					{
-						"pattern": "(?P<word>\\w+)+@",
-						"flags": "",
-						"match": "re.compile(r\"(?P<word>\\w+)+@\"",
-						"line": 8,
 						"column": 10,
+						"flags": "",
+						"line": 8,
+						"match": "re.compile(r\"(?P<word>\\w+)+@\"",
+						"pattern": "(?P<word>\\w+)+@",
 						"redos": {
 							"detected": true,
+							"reason": "exponential backtracking: 2000000 steps on 41 characters, against 229328 on 20",
 							"severity": "high",
-							"reason": "Nested unbounded quantifiers can cause exponential backtracking",
-							"vulnerableGroups": [
-								"(?P<word>\\w+)+"
-							]
+							"witness": "0000000000000000000000000000000000000000\u0000"
 						}
 					},
 					{
-						"pattern": "(?i)(?>[a-z]+)",
-						"flags": "",
-						"match": "re.compile(r\"(?i)(?>[a-z]+)\"",
-						"line": 11,
 						"column": 10,
+						"flags": "",
+						"line": 11,
+						"match": "re.compile(r\"(?i)(?>[a-z]+)\"",
+						"pattern": "(?i)(?>[a-z]+)",
 						"redos": {
 							"detected": false,
-							"severity": "low",
-							"reason": "no input was found that drives this into backtracking"
+							"reason": "not decided: the pattern uses syntax this cannot read",
+							"severity": "low"
 						}
 					}
 				]
 			},
 			"diagnostics": [],
 			"meta": {
-				"tool": "extract_patterns",
 				"count": 3,
+				"tool": "extract_patterns",
 				"truncated": false
-			}
+			},
+			"ok": true
 		}
 	},
 	{
@@ -936,38 +896,35 @@
 			"format": "kotlin"
 		},
 		"expected": {
-			"ok": true,
 			"data": {
 				"patterns": [
 					{
-						"pattern": "(a+)+",
-						"flags": "",
-						"match": "/(a+)+/",
-						"line": 1,
 						"column": 12,
+						"flags": "",
+						"line": 1,
+						"match": "/(a+)+/",
+						"pattern": "(a+)+",
 						"redos": {
-							"detected": true,
-							"severity": "high",
-							"reason": "Nested unbounded quantifiers can cause exponential backtracking",
-							"vulnerableGroups": [
-								"(a+)+"
-							]
+							"detected": false,
+							"reason": "no input was found that drives this into backtracking",
+							"severity": "low"
 						}
 					}
 				]
 			},
 			"diagnostics": [
 				{
-					"severity": "warning",
 					"code": "unknown-format",
-					"message": "no regex spellings are known for kotlin, so every spelling was looked for"
+					"message": "no regex spellings are known for kotlin, so every spelling was looked for",
+					"severity": "warning"
 				}
 			],
 			"meta": {
-				"tool": "extract_patterns",
 				"count": 1,
+				"tool": "extract_patterns",
 				"truncated": false
-			}
+			},
+			"ok": true
 		}
 	}
 ]
