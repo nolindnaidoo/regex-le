@@ -18,6 +18,9 @@
 //! No engine is involved below the validity check: everything here is a
 //! walk over the pattern text with a stack.
 
+use std::collections::HashMap;
+use std::sync::{LazyLock, Mutex};
+
 use serde::{Deserialize, Serialize};
 
 use super::{ambiguity, heuristics};
@@ -46,7 +49,40 @@ pub(crate) struct ReDoSResult {
     pub(crate) witness: Option<String>,
 }
 
+/// Decisions already reached, keyed by the pattern and its flags.
+///
+/// **A repeated pattern is the common case, not an optimisation for a
+/// benchmark.** One validation regex appears in a dozen files of a real
+/// repository, and deciding it is now a simulation rather than a shape
+/// match — 500 files of repeats took twice the scan budget without this.
+/// `decide` is a pure function of the pattern text, so remembering its
+/// answer cannot change one.
+///
+/// Bounded, because a generated bundle can hold thousands of distinct
+/// patterns and a cache that grows with the input is a leak with a
+/// friendlier name. Past the ceiling it simply stops learning.
+static DECIDED: LazyLock<Mutex<HashMap<(String, String), ReDoSResult>>> =
+    LazyLock::new(|| Mutex::new(HashMap::new()));
+
+const CACHE_CEILING: usize = 4_096;
+
 pub(crate) fn detect_redos(pattern: &str, flags: &str) -> ReDoSResult {
+    let key = (pattern.to_string(), flags.to_string());
+    if let Ok(cache) = DECIDED.lock()
+        && let Some(hit) = cache.get(&key)
+    {
+        return hit.clone();
+    }
+    let answer = decide_uncached(pattern, flags);
+    if let Ok(mut cache) = DECIDED.lock()
+        && cache.len() < CACHE_CEILING
+    {
+        cache.insert(key, answer.clone());
+    }
+    answer
+}
+
+fn decide_uncached(pattern: &str, flags: &str) -> ReDoSResult {
     // An invalid pattern is a syntax error, not a ReDoS finding. Saying
     // otherwise would put a security verdict on a typo. The judge is
     // `is_well_formed` rather than `compiles` because this scan reads

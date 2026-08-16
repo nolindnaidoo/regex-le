@@ -24,6 +24,13 @@ export default defineConfig({
 		globals: true,
 		pool: 'threads',
 		env: { TZ: 'UTC' },
+		// **The ReDoS decider is a simulation, not a shape match.** Deciding
+		// twenty patterns runs millions of automaton steps, and CI runs the
+		// suite under v8 coverage instrumentation on a shared runner — the
+		// same file finishes in ~2s locally and blew the 5s default on
+		// macOS. The work is real, so the budget says so rather than the
+		// test being trimmed to fit.
+		testTimeout: 30_000,
 		include: ['src/**/*.test.ts'],
 		exclude: ['node_modules/**', 'dist/**', 'out-test/**'],
 		coverage: {
