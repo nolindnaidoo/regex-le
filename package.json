@@ -3,7 +3,7 @@
 	"publisher": "nolindnaidoo",
 	"displayName": "Regex-LE",
 	"description": "Find every regex in a codebase, and report which can be driven into catastrophic backtracking",
-	"version": "2.3.0",
+	"version": "2.4.0",
 	"license": "MIT",
 	"author": {
 		"name": "nolindnaidoo",

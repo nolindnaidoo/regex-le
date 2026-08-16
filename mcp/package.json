@@ -1,6 +1,6 @@
 {
 	"name": "regex-le-mcp",
-	"version": "2.3.0",
+	"version": "2.4.0",
 	"mcpName": "io.github.nolindnaidoo/regex-le",
 	"description": "Extract regular expressions from code, each with a ReDoS safety verdict.",
 	"keywords": [

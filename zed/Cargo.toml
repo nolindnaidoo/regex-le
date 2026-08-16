@@ -1,6 +1,6 @@
 [package]
 name = "zed_regex_le"
-version = "2.3.0"
+version = "2.4.0"
 edition = "2021"
 publish = false
 license = "MIT"
