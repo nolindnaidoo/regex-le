@@ -34,7 +34,7 @@ function buildHelpContent(): string {
 	const commands =
 		'**Test**: Test a regex pattern against the active editor content\n**Extract**: Extract all regex patterns from the active editor\n**Validate**: Validate a regex pattern and check for ReDoS vulnerabilities\n**Settings**: Configure extension options';
 	const troubleshooting =
-		'**No matches found?** Check your pattern syntax and flags\n**ReDoS warnings?** Review the pattern for nested quantifiers or exponential backtracking\n**Need help?** Check Output panel for details';
+		'**No matches found?** Check your pattern syntax and flags\n**ReDoS warnings?** The report carries the witness — the input that drives the pattern into backtracking. Run it yourself, then change the pattern so that input fails fast\n**Need help?** Check Output panel for details';
 	const settings =
 		'Access via Command Palette: "Regex-LE: Open Settings"\nKey settings: ReDoS detection, match limits, safety thresholds, notification level';
 	const support =

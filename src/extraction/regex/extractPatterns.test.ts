@@ -8,23 +8,28 @@ const patterns = (text: string, languageId?: string): readonly string[] =>
 describe('per-language regex literals', () => {
 	// The seven regressions this whole language pass exists for: a
 	// textbook catastrophic-backtracking pattern in each grammar, found
-	// and flagged high.
+	// and flagged high. The trailing `b` is what makes it one — `(a+)+`
+	// alone succeeds on any input holding an `a` and never backtracks.
 	const NESTED: ReadonlyArray<readonly [string, string]> = [
-		['python', 'BAD = re.compile(r"(a+)+")'],
-		['rust', 'let bad = Regex::new(r"(a+)+");'],
-		['go', 'var bad = regexp.MustCompile(`(a+)+`)'],
-		['java', 'Pattern.compile("(a+)+");'],
-		['ruby', 'BAD = /(a+)+/'],
-		['php', "preg_match('/(a+)+/', $s);"],
-		['csharp', 'var bad = new Regex(@"(a+)+");'],
+		['python', 'BAD = re.compile(r"(a+)+b")'],
+		['rust', 'let bad = Regex::new(r"(a+)+b");'],
+		['go', 'var bad = regexp.MustCompile(`(a+)+b`)'],
+		['java', 'Pattern.compile("(a+)+b");'],
+		['ruby', 'BAD = /(a+)+b/'],
+		['php', "preg_match('/(a+)+b/', $s);"],
+		['csharp', 'var bad = new Regex(@"(a+)+b");'],
 	];
 
 	for (const [languageId, text] of NESTED) {
-		it(`finds and flags (a+)+ in ${languageId}`, () => {
+		it(`finds and flags (a+)+b in ${languageId}`, () => {
 			const found = extractRegexPatterns(text, languageId);
 			expect(found).toHaveLength(1);
-			expect(found[0]?.pattern).toBe('(a+)+');
-			expect(detectReDoS('(a+)+', '').severity).toBe('high');
+			expect(found[0]?.pattern).toBe('(a+)+b');
+
+			const verdict = detectReDoS('(a+)+b', '');
+			expect(verdict.severity).toBe('high');
+			// A finding that cannot be checked is an opinion.
+			expect(verdict.witness).toBeTruthy();
 		});
 	}
 

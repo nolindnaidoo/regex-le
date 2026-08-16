@@ -7,17 +7,16 @@ import {
 	calculatePerformanceScore,
 	estimatePatternComplexity,
 } from './performance';
-import { detectReDoS } from './redos';
+import { detectReDoS, type ReDoSResult } from './redos';
 import { testRegexPattern } from './regexTest';
 
 /**
  * Characterization tests: pin the CURRENT output of the regex domain,
  * including known bugs (multiline constructors missed, global dedup
  * dropping repeat locations, division/date false positives, nested-depth
- * calculation stuck on the first paren, group positions via indexOf,
- * ReDoS source-string comparison that near-never fires). Behavior changes
- * must update these snapshots in the same commit, so every output diff
- * is explicit.
+ * calculation stuck on the first paren, group positions via indexOf).
+ * Behavior changes must update these snapshots in the same commit, so
+ * every output diff is explicit.
  */
 
 const FIXTURES = [
@@ -40,20 +39,40 @@ describe('extraction characterization', () => {
 });
 
 describe('redos characterization', () => {
+	// All four shapes a verdict can take are pinned here: a demonstrated
+	// blow-up with its witness and step counts, a pattern no input drove
+	// into backtracking, one this construction refuses to answer for, and
+	// a syntax error — which is not a security verdict.
 	const PATTERNS: ReadonlyArray<readonly [string, string]> = [
 		['\\d+', 'g'],
 		['(a+)+', ''],
+		['(a+)+b', ''],
+		['(.*a){20}', ''],
 		['(.*)+', ''],
 		['(\\w+)*', ''],
 		['(a|a)*', ''],
 		['([a-z]+)*@example', 'i'],
 		['(foo(bar+)+)+', ''],
+		['(a)\\1', ''],
+		['foo(?=bar)', ''],
 		['[unclosed', ''],
 	];
 
+	/**
+	 * The verdict with its witness quoted.
+	 *
+	 * A rejecting tail is usually NUL, and one raw NUL byte is enough for
+	 * git to treat the whole snapshot file as binary — which costs exactly
+	 * the reviewable diff these goldens exist to produce.
+	 */
+	const pinnable = (verdict: ReDoSResult): Record<string, unknown> =>
+		verdict.witness === undefined
+			? { ...verdict }
+			: { ...verdict, witness: JSON.stringify(verdict.witness) };
+
 	for (const [pattern, flags] of PATTERNS) {
 		it(`detectReDoS(/${pattern}/${flags})`, () => {
-			expect(detectReDoS(pattern, flags)).toMatchSnapshot();
+			expect(pinnable(detectReDoS(pattern, flags))).toMatchSnapshot();
 		});
 	}
 });

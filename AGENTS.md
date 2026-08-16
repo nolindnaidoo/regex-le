@@ -6,7 +6,7 @@ This repo hosts **two products**: the extension at the root (this document's sco
 
 ## What this is
 
-A VS Code extension that finds regex patterns in the active document (literals, `new RegExp(...)`, `RegExp(...)`), tests them against the file content, and screens them for ReDoS-prone shapes. No network access, no filesystem writes.
+A VS Code extension that finds regex patterns in the active document (literals, `new RegExp(...)`, `RegExp(...)`), tests them against the file content, and screens them for catastrophic backtracking by demonstration. No network access, no filesystem writes.
 
 ## Architecture
 
@@ -20,7 +20,10 @@ extraction/regex/
   position.ts            offset -> {line, column} via newline index (1-based)
   extractPatterns.ts     whole-content extraction, both forms route through heuristics
   regexTest.ts           executes with the 'd' flag; group positions from match.indices
-  redos.ts               structural ReDoS scanner (nested quantifiers, overlap)
+  patternSyntax.ts       the pattern text as a tree; refuses what it cannot read
+  ambiguity.ts           the ReDoS decider: NFA + backtracking walk under a
+                         step budget, reporting only a demonstrated blow-up
+  redos.ts               maps that decision to the reported verdict
   performance.ts         heuristic complexity/perf scoring for reports
 ui/                      notifier (window messages, gated by notificationsLevel:
                          all -> everything, important -> warn+error, silent -> error only),
@@ -194,7 +197,8 @@ most valuable line in the file, and it is what keeps the next person from
 - **The bundle must be self-contained.** The VSIX ships `dist/extension.js` only; `scripts/check-bundle.js` (run in `vscode:prepublish` and CI) does a static require scan AND loads the bundle with `vscode` stubbed.
 - **`CONFIG_DEFAULTS` must equal package.json defaults.** `config.test.ts` asserts parity over every declared setting; add new settings to both plus the KEY_MAP in the test.
 - **Every declared setting must have a consumer.** v1 shipped 4 no-op settings; don't add a setting without wiring it.
-- **Extractor/ReDoS behavior is pinned by golden snapshots** (`extraction/regex/characterization.test.ts` + `__fixtures__/`). Any output change must update goldens in the same commit and be listed in the CHANGELOG.
+- **Extractor/ReDoS behavior is pinned by golden snapshots** (`extraction/regex/characterization.test.ts` + `__fixtures__/`). Any output change must update goldens in the same commit and be listed in the CHANGELOG. The witness is quoted into those goldens rather than written raw: one NUL byte — which is the usual rejecting tail — makes git treat the whole `.snap` as binary and stop diffing it.
+- **The ReDoS decider is scored, never asserted.** `extraction/regex/ambiguity.test.ts` runs it over `crate/fixtures/redos-truth.json`, whose `measured` column comes from timing a real engine (`scripts/measure-redos.py`), and requires 20 of 20 with no miss and no false alarm. A rule that grades its own homework can be wrong in both places at once, which is how the shape rule this replaced held a green suite while scoring 6 of 20.
 - **Regex-vs-division context lives in one place** (`extraction/regex/heuristics.ts`). Never re-implement it inside an extractor form.
 - **The two nls catalogues stay in key parity** with each other and with exactly the `%key%` set the manifest uses.
 
@@ -311,5 +315,5 @@ Order matters beyond this repo: npm must be published *before* any Zed registry 
 - Extraction is lexing by heuristic, not a JS parser: a slash inside a string or comment can false-positive when its context looks expression-like (`https://…` and division chains are specifically rejected).
 - Constructor extraction only sees literal string arguments — variables and template literals are invisible.
 - Duplicate pattern+flags pairs are reported once (the location shown is the first occurrence of that form).
-- The ReDoS scanner flags shapes, it does not prove safety; unrecognized patterns can still backtrack badly.
+- The ReDoS decider searches for a witness; finding none is not a proof that none exists. What it cannot read — a backreference, lookaround, unparsed syntax, an automaton over its size ceiling — is reported as undecided rather than clean.
 - Performance scores are throughput heuristics; memory is not measured (always reported as unmeasured).

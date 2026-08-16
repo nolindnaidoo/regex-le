@@ -87,7 +87,7 @@ function extract(args: Record<string, unknown>): Promise<unknown> {
 					detected: redos.detected,
 					severity: redos.severity,
 					reason: redos.reason,
-					vulnerableGroups: redos.vulnerableGroups,
+					witness: redos.witness,
 				},
 			};
 		} catch (error) {
