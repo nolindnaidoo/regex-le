@@ -18,7 +18,7 @@
 					"redos": {
 						"detected": false,
 						"severity": "low",
-						"reason": "No obvious ReDoS vulnerabilities detected"
+						"reason": "no input was found that drives this into backtracking"
 					}
 				},
 				{
@@ -30,7 +30,7 @@
 					"redos": {
 						"detected": false,
 						"severity": "low",
-						"reason": "No obvious ReDoS vulnerabilities detected"
+						"reason": "no input was found that drives this into backtracking"
 					}
 				}
 			]
@@ -48,7 +48,7 @@
 					"redos": {
 						"detected": false,
 						"severity": "low",
-						"reason": "No obvious ReDoS vulnerabilities detected"
+						"reason": "no input was found that drives this into backtracking"
 					}
 				},
 				{
@@ -60,7 +60,7 @@
 					"redos": {
 						"detected": false,
 						"severity": "low",
-						"reason": "No obvious ReDoS vulnerabilities detected"
+						"reason": "no input was found that drives this into backtracking"
 					}
 				},
 				{
@@ -72,7 +72,7 @@
 					"redos": {
 						"detected": false,
 						"severity": "low",
-						"reason": "No obvious ReDoS vulnerabilities detected"
+						"reason": "no input was found that drives this into backtracking"
 					}
 				},
 				{
@@ -84,7 +84,7 @@
 					"redos": {
 						"detected": false,
 						"severity": "low",
-						"reason": "No obvious ReDoS vulnerabilities detected"
+						"reason": "no input was found that drives this into backtracking"
 					}
 				},
 				{
@@ -96,7 +96,7 @@
 					"redos": {
 						"detected": false,
 						"severity": "low",
-						"reason": "No obvious ReDoS vulnerabilities detected"
+						"reason": "no input was found that drives this into backtracking"
 					}
 				},
 				{
@@ -108,7 +108,7 @@
 					"redos": {
 						"detected": false,
 						"severity": "low",
-						"reason": "No obvious ReDoS vulnerabilities detected"
+						"reason": "no input was found that drives this into backtracking"
 					}
 				},
 				{
@@ -120,7 +120,7 @@
 					"redos": {
 						"detected": false,
 						"severity": "low",
-						"reason": "No obvious ReDoS vulnerabilities detected"
+						"reason": "no input was found that drives this into backtracking"
 					}
 				},
 				{
@@ -132,7 +132,7 @@
 					"redos": {
 						"detected": false,
 						"severity": "low",
-						"reason": "No obvious ReDoS vulnerabilities detected"
+						"reason": "no input was found that drives this into backtracking"
 					}
 				}
 			]
@@ -150,7 +150,7 @@
 					"redos": {
 						"detected": false,
 						"severity": "low",
-						"reason": "No obvious ReDoS vulnerabilities detected"
+						"reason": "no input was found that drives this into backtracking"
 					}
 				},
 				{
@@ -162,7 +162,7 @@
 					"redos": {
 						"detected": false,
 						"severity": "low",
-						"reason": "No obvious ReDoS vulnerabilities detected"
+						"reason": "no input was found that drives this into backtracking"
 					}
 				},
 				{
@@ -174,7 +174,7 @@
 					"redos": {
 						"detected": false,
 						"severity": "low",
-						"reason": "No obvious ReDoS vulnerabilities detected"
+						"reason": "no input was found that drives this into backtracking"
 					}
 				},
 				{
@@ -186,7 +186,7 @@
 					"redos": {
 						"detected": false,
 						"severity": "low",
-						"reason": "No obvious ReDoS vulnerabilities detected"
+						"reason": "not decided: lookaround is not modelled by this construction"
 					}
 				},
 				{
@@ -198,7 +198,7 @@
 					"redos": {
 						"detected": false,
 						"severity": "low",
-						"reason": "No obvious ReDoS vulnerabilities detected"
+						"reason": "not decided: lookaround is not modelled by this construction"
 					}
 				},
 				{
@@ -210,7 +210,7 @@
 					"redos": {
 						"detected": false,
 						"severity": "low",
-						"reason": "No obvious ReDoS vulnerabilities detected"
+						"reason": "no input was found that drives this into backtracking"
 					}
 				},
 				{
@@ -222,7 +222,7 @@
 					"redos": {
 						"detected": false,
 						"severity": "low",
-						"reason": "No obvious ReDoS vulnerabilities detected"
+						"reason": "no input was found that drives this into backtracking"
 					}
 				},
 				{
@@ -234,7 +234,7 @@
 					"redos": {
 						"detected": false,
 						"severity": "low",
-						"reason": "No obvious ReDoS vulnerabilities detected"
+						"reason": "no input was found that drives this into backtracking"
 					}
 				}
 			]
@@ -250,12 +250,9 @@
 					"column": 10,
 					"match": "re.compile(r\"(a+)+\"",
 					"redos": {
-						"detected": true,
-						"severity": "high",
-						"reason": "Nested unbounded quantifiers can cause exponential backtracking",
-						"vulnerableGroups": [
-							"(a+)+"
-						]
+						"detected": false,
+						"severity": "low",
+						"reason": "no input was found that drives this into backtracking"
 					}
 				},
 				{
@@ -267,7 +264,7 @@
 					"redos": {
 						"detected": false,
 						"severity": "low",
-						"reason": "No obvious ReDoS vulnerabilities detected"
+						"reason": "no input was found that drives this into backtracking"
 					}
 				},
 				{
@@ -279,7 +276,7 @@
 					"redos": {
 						"detected": false,
 						"severity": "low",
-						"reason": "No obvious ReDoS vulnerabilities detected"
+						"reason": "no input was found that drives this into backtracking"
 					}
 				},
 				{
@@ -289,12 +286,9 @@
 					"column": 10,
 					"match": "re.search(\"\"\"(a|ab)+\"\"\"",
 					"redos": {
-						"detected": true,
-						"severity": "medium",
-						"reason": "Quantified alternation with overlapping branches may backtrack heavily",
-						"vulnerableGroups": [
-							"(a|ab)+"
-						]
+						"detected": false,
+						"severity": "low",
+						"reason": "no input was found that drives this into backtracking"
 					}
 				}
 			]
@@ -310,12 +304,9 @@
 					"column": 18,
 					"match": "Regex::new(r\"(a+)+\"",
 					"redos": {
-						"detected": true,
-						"severity": "high",
-						"reason": "Nested unbounded quantifiers can cause exponential backtracking",
-						"vulnerableGroups": [
-							"(a+)+"
-						]
+						"detected": false,
+						"severity": "low",
+						"reason": "no input was found that drives this into backtracking"
 					}
 				},
 				{
@@ -325,12 +316,9 @@
 					"column": 18,
 					"match": "Regex::new(r#\"say \"([a-z]+)*\"\"#",
 					"redos": {
-						"detected": true,
-						"severity": "high",
-						"reason": "Nested unbounded quantifiers can cause exponential backtracking",
-						"vulnerableGroups": [
-							"([a-z]+)*"
-						]
+						"detected": false,
+						"severity": "low",
+						"reason": "no input was found that drives this into backtracking"
 					}
 				},
 				{
@@ -342,7 +330,7 @@
 					"redos": {
 						"detected": false,
 						"severity": "low",
-						"reason": "No obvious ReDoS vulnerabilities detected"
+						"reason": "no input was found that drives this into backtracking"
 					}
 				},
 				{
@@ -354,7 +342,7 @@
 					"redos": {
 						"detected": false,
 						"severity": "low",
-						"reason": "No obvious ReDoS vulnerabilities detected"
+						"reason": "no input was found that drives this into backtracking"
 					}
 				}
 			]
@@ -370,12 +358,9 @@
 					"column": 11,
 					"match": "regexp.MustCompile(`(a+)+`",
 					"redos": {
-						"detected": true,
-						"severity": "high",
-						"reason": "Nested unbounded quantifiers can cause exponential backtracking",
-						"vulnerableGroups": [
-							"(a+)+"
-						]
+						"detected": false,
+						"severity": "low",
+						"reason": "no input was found that drives this into backtracking"
 					}
 				},
 				{
@@ -387,7 +372,7 @@
 					"redos": {
 						"detected": false,
 						"severity": "low",
-						"reason": "No obvious ReDoS vulnerabilities detected"
+						"reason": "no input was found that drives this into backtracking"
 					}
 				},
 				{
@@ -399,7 +384,7 @@
 					"redos": {
 						"detected": false,
 						"severity": "low",
-						"reason": "No obvious ReDoS vulnerabilities detected"
+						"reason": "not decided: the pattern uses syntax this cannot read"
 					}
 				}
 			]
@@ -415,12 +400,9 @@
 					"column": 32,
 					"match": "Pattern.compile(\"(a+)+\"",
 					"redos": {
-						"detected": true,
-						"severity": "high",
-						"reason": "Nested unbounded quantifiers can cause exponential backtracking",
-						"vulnerableGroups": [
-							"(a+)+"
-						]
+						"detected": false,
+						"severity": "low",
+						"reason": "no input was found that drives this into backtracking"
 					}
 				},
 				{
@@ -432,7 +414,7 @@
 					"redos": {
 						"detected": false,
 						"severity": "low",
-						"reason": "No obvious ReDoS vulnerabilities detected"
+						"reason": "no input was found that drives this into backtracking"
 					}
 				},
 				{
@@ -444,7 +426,7 @@
 					"redos": {
 						"detected": false,
 						"severity": "low",
-						"reason": "No obvious ReDoS vulnerabilities detected"
+						"reason": "no input was found that drives this into backtracking"
 					}
 				},
 				{
@@ -454,12 +436,9 @@
 					"column": 10,
 					"match": "Pattern.matches(\"(a|ab)+\"",
 					"redos": {
-						"detected": true,
-						"severity": "medium",
-						"reason": "Quantified alternation with overlapping branches may backtrack heavily",
-						"vulnerableGroups": [
-							"(a|ab)+"
-						]
+						"detected": false,
+						"severity": "low",
+						"reason": "no input was found that drives this into backtracking"
 					}
 				}
 			]
@@ -475,12 +454,9 @@
 					"column": 10,
 					"match": "/(a+)+/",
 					"redos": {
-						"detected": true,
-						"severity": "high",
-						"reason": "Nested unbounded quantifiers can cause exponential backtracking",
-						"vulnerableGroups": [
-							"(a+)+"
-						]
+						"detected": false,
+						"severity": "low",
+						"reason": "no input was found that drives this into backtracking"
 					}
 				},
 				{
@@ -492,7 +468,7 @@
 					"redos": {
 						"detected": false,
 						"severity": "low",
-						"reason": "No obvious ReDoS vulnerabilities detected"
+						"reason": "no input was found that drives this into backtracking"
 					}
 				},
 				{
@@ -502,12 +478,9 @@
 					"column": 9,
 					"match": "Regexp.new('(a|ab)+'",
 					"redos": {
-						"detected": true,
-						"severity": "medium",
-						"reason": "Quantified alternation with overlapping branches may backtrack heavily",
-						"vulnerableGroups": [
-							"(a|ab)+"
-						]
+						"detected": false,
+						"severity": "low",
+						"reason": "no input was found that drives this into backtracking"
 					}
 				}
 			]
@@ -523,12 +496,9 @@
 					"column": 1,
 					"match": "preg_match('/(a+)+/'",
 					"redos": {
-						"detected": true,
-						"severity": "high",
-						"reason": "Nested unbounded quantifiers can cause exponential backtracking",
-						"vulnerableGroups": [
-							"(a+)+"
-						]
+						"detected": false,
+						"severity": "low",
+						"reason": "no input was found that drives this into backtracking"
 					}
 				},
 				{
@@ -538,12 +508,9 @@
 					"column": 1,
 					"match": "preg_replace('#([a-z]+)*#i'",
 					"redos": {
-						"detected": true,
-						"severity": "high",
-						"reason": "Nested unbounded quantifiers can cause exponential backtracking",
-						"vulnerableGroups": [
-							"([a-z]+)*"
-						]
+						"detected": false,
+						"severity": "low",
+						"reason": "no input was found that drives this into backtracking"
 					}
 				},
 				{
@@ -555,7 +522,7 @@
 					"redos": {
 						"detected": false,
 						"severity": "low",
-						"reason": "No obvious ReDoS vulnerabilities detected"
+						"reason": "no input was found that drives this into backtracking"
 					}
 				},
 				{
@@ -567,7 +534,7 @@
 					"redos": {
 						"detected": false,
 						"severity": "low",
-						"reason": "No obvious ReDoS vulnerabilities detected"
+						"reason": "no input was found that drives this into backtracking"
 					}
 				}
 			]
@@ -583,12 +550,9 @@
 					"column": 33,
 					"match": "new Regex(@\"(a+)+\"",
 					"redos": {
-						"detected": true,
-						"severity": "high",
-						"reason": "Nested unbounded quantifiers can cause exponential backtracking",
-						"vulnerableGroups": [
-							"(a+)+"
-						]
+						"detected": false,
+						"severity": "low",
+						"reason": "no input was found that drives this into backtracking"
 					}
 				},
 				{
@@ -600,7 +564,7 @@
 					"redos": {
 						"detected": false,
 						"severity": "low",
-						"reason": "No obvious ReDoS vulnerabilities detected"
+						"reason": "no input was found that drives this into backtracking"
 					}
 				},
 				{
@@ -610,12 +574,9 @@
 					"column": 33,
 					"match": "Regex.IsMatch(s, @\"(a|ab)+\"",
 					"redos": {
-						"detected": true,
-						"severity": "medium",
-						"reason": "Quantified alternation with overlapping branches may backtrack heavily",
-						"vulnerableGroups": [
-							"(a|ab)+"
-						]
+						"detected": false,
+						"severity": "low",
+						"reason": "no input was found that drives this into backtracking"
 					}
 				},
 				{
@@ -627,7 +588,7 @@
 					"redos": {
 						"detected": false,
 						"severity": "low",
-						"reason": "No obvious ReDoS vulnerabilities detected"
+						"reason": "no input was found that drives this into backtracking"
 					}
 				}
 			]
@@ -650,7 +611,7 @@
 					"redos": {
 						"detected": false,
 						"severity": "low",
-						"reason": "No obvious ReDoS vulnerabilities detected"
+						"reason": "no input was found that drives this into backtracking"
 					}
 				},
 				{
@@ -662,10 +623,8 @@
 					"redos": {
 						"detected": true,
 						"severity": "high",
-						"reason": "Nested unbounded quantifiers can cause exponential backtracking",
-						"vulnerableGroups": [
-							"(?P<word>\\w+)+"
-						]
+						"reason": "exponential backtracking: 2000000 steps on 41 characters, against 229328 on 20",
+						"witness": "0000000000000000000000000000000000000000\u0000"
 					}
 				},
 				{
@@ -677,7 +636,7 @@
 					"redos": {
 						"detected": false,
 						"severity": "low",
-						"reason": "No obvious ReDoS vulnerabilities detected"
+						"reason": "not decided: the pattern uses syntax this cannot read"
 					}
 				}
 			]
@@ -873,7 +832,7 @@
 			"expected": {
 				"detected": false,
 				"severity": "low",
-				"reason": "no input was found that drives this into backtracking"
+				"reason": "Pattern is invalid"
 			}
 		}
 	],

@@ -577,7 +577,7 @@ mod tests {
 
     #[test]
     fn the_verdict_travels_with_the_pattern() {
-        let found = extract_patterns("const re = /(a+)+/;", None).expect("the patterns hold");
+        let found = extract_patterns("const re = /(a+)+b/;", None).expect("the patterns hold");
         assert!(found[0].redos.detected);
         assert_eq!(found[0].redos.severity, super::redos::Severity::High);
     }
@@ -594,22 +594,27 @@ mod tests {
     }
 
     /// The seven regressions this whole language pass exists for: a
-    /// textbook catastrophic-backtracking pattern in each grammar,
-    /// found and flagged high.
+    /// catastrophic pattern in each grammar, found and flagged high.
+    ///
+    /// `(a+)+b`, not the bare `(a+)+` this used to carry. The loop alone
+    /// succeeds on any input holding an `a`, so nothing makes it
+    /// backtrack — measured, not assumed. The `b` is what forces the
+    /// failure the loop then pays for, which is why the literature
+    /// always writes it that way.
     #[test]
     fn the_exponential_shape_is_found_in_every_language() {
         for (language, text) in [
-            (Language::Python, r#"BAD = re.compile(r"(a+)+")"#),
-            (Language::Rust, r#"let bad = Regex::new(r"(a+)+");"#),
-            (Language::Go, "var bad = regexp.MustCompile(`(a+)+`)"),
-            (Language::Java, r#"Pattern.compile("(a+)+");"#),
-            (Language::Ruby, "BAD = /(a+)+/"),
-            (Language::Php, "preg_match('/(a+)+/', $s);"),
-            (Language::CSharp, r#"var bad = new Regex(@"(a+)+");"#),
+            (Language::Python, r#"BAD = re.compile(r"(a+)+b")"#),
+            (Language::Rust, r#"let bad = Regex::new(r"(a+)+b");"#),
+            (Language::Go, "var bad = regexp.MustCompile(`(a+)+b`)"),
+            (Language::Java, r#"Pattern.compile("(a+)+b");"#),
+            (Language::Ruby, "BAD = /(a+)+b/"),
+            (Language::Php, "preg_match('/(a+)+b/', $s);"),
+            (Language::CSharp, r#"var bad = new Regex(@"(a+)+b");"#),
         ] {
             let found = extract_patterns(text, Some(language)).expect("the patterns hold");
             assert_eq!(found.len(), 1, "{language:?}");
-            assert_eq!(found[0].pattern, "(a+)+", "{language:?}");
+            assert_eq!(found[0].pattern, "(a+)+b", "{language:?}");
             assert_eq!(
                 found[0].redos.severity,
                 super::redos::Severity::High,
