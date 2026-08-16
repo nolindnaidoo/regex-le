@@ -118,7 +118,7 @@ describe('validate command', () => {
 		_setConfig('regex-le.redos.detectionEnabled', true);
 		_setActiveEditor(_createDocument({ content: DOC }));
 		_respondToQuickPick((items) => items[items.length - 1]);
-		// The classic exponential shape.
+		// Anchored, so the tail has to fail: that is what makes it one.
 		_respondToInputBox(() => '(a+)+$');
 		await runCommand('regex-le.validate');
 		expect(_shownMessages().length + 1).toBeGreaterThan(0);

@@ -21,6 +21,7 @@ use serde::Serialize;
 use super::format::Language;
 use super::heuristics::{self, VALID_FLAGS};
 use super::js;
+use super::mask;
 use super::position::PositionIndex;
 use super::redos::{self, ReDoSResult};
 
@@ -285,18 +286,23 @@ pub(crate) fn extract_patterns(
         });
     };
 
+    // A regex written inside a comment or a string is an example, not
+    // code — see `mask`. The test is on where a candidate *starts*, so a
+    // real call keeps its quoted argument.
+    let prose = mask::prose_spans(text, language);
+
     // JavaScript, TypeScript and Ruby are the grammars with a bare
     // `/…/`, and the only ones the slash-versus-division walk runs for.
     if language.is_none_or(Language::has_slash_literals) {
-        scan_literals(text, &mut push)?;
+        scan_literals(text, &prose, &mut push)?;
     }
     if language
         .is_none_or(|language| matches!(language, Language::JavaScript | Language::TypeScript))
     {
-        scan_constructors(text, &mut push)?;
+        scan_constructors(text, &prose, &mut push)?;
     }
     for form in call_forms(language) {
-        scan_call_form(form, text, &mut push)?;
+        scan_call_form(form, text, &prose, &mut push)?;
     }
 
     patterns.sort_by(|a, b| a.line.cmp(&b.line).then(a.column.cmp(&b.column)));
@@ -307,14 +313,16 @@ pub(crate) fn extract_patterns(
 /// flags, where it starts, and the text it was written as.
 type Push<'a> = dyn FnMut(String, String, usize, String) + 'a;
 
-fn scan_literals(text: &str, push: &mut Push<'_>) -> Result<(), String> {
+fn scan_literals(text: &str, prose: &[(usize, usize)], push: &mut Push<'_>) -> Result<(), String> {
     for found in LITERAL.find_iter(text) {
         let found = found.map_err(|error| format!("the literal pattern gave up: {error}"))?;
         let full = found.as_str();
         let last = full.rfind('/').expect("a literal has a closing slash");
         let body = &full[1..last];
         let flags = &full[last + 1..];
-        if !heuristics::is_regex_context(text, found.start()) {
+        if mask::is_prose(prose, found.start())
+            || !heuristics::is_regex_context(text, found.start())
+        {
             continue;
         }
         // A bare `/…/` is a guess about a slash, not a declared pattern,
@@ -351,10 +359,18 @@ fn too_complex(form: &str) -> String {
     )
 }
 
-fn scan_constructors(text: &str, push: &mut Push<'_>) -> Result<(), String> {
+fn scan_constructors(
+    text: &str,
+    prose: &[(usize, usize)],
+    push: &mut Push<'_>,
+) -> Result<(), String> {
     for captures in CONSTRUCTOR.captures_iter(text) {
         let captures =
             captures.map_err(|error| format!("the constructor pattern gave up: {error}"))?;
+        let whole = captures.get(0).expect("a match has group zero");
+        if mask::is_prose(prose, whole.start()) {
+            continue;
+        }
         let body = captures
             .name("sq")
             .or_else(|| captures.name("dq"))
@@ -377,7 +393,6 @@ fn scan_constructors(text: &str, push: &mut Push<'_>) -> Result<(), String> {
         if !heuristics::compiles(&pattern, flags) {
             continue;
         }
-        let whole = captures.get(0).expect("a match has group zero");
         push(
             pattern,
             flags.to_string(),
@@ -388,10 +403,21 @@ fn scan_constructors(text: &str, push: &mut Push<'_>) -> Result<(), String> {
     Ok(())
 }
 
-fn scan_call_form(form: CallForm, text: &str, push: &mut Push<'_>) -> Result<(), String> {
+fn scan_call_form(
+    form: CallForm,
+    text: &str,
+    prose: &[(usize, usize)],
+    push: &mut Push<'_>,
+) -> Result<(), String> {
     for captures in form.matcher.captures_iter(text) {
         let captures =
             captures.map_err(|error| format!("the {} pattern gave up: {error}", form.name))?;
+        let whole = captures.get(0).expect("a match has group zero");
+        // The *call* must start in code. Its argument is a string by
+        // definition, which is why this is not a blanket string rule.
+        if mask::is_prose(prose, whole.start()) {
+            continue;
+        }
         let Some(body) = call_body(&captures) else {
             continue;
         };
@@ -414,7 +440,6 @@ fn scan_call_form(form: CallForm, text: &str, push: &mut Push<'_>) -> Result<(),
         if pattern.is_empty() || !heuristics::is_well_formed(&pattern, "") {
             continue;
         }
-        let whole = captures.get(0).expect("a match has group zero");
         push(
             pattern,
             String::new(),
@@ -577,7 +602,7 @@ mod tests {
 
     #[test]
     fn the_verdict_travels_with_the_pattern() {
-        let found = extract_patterns("const re = /(a+)+/;", None).expect("the patterns hold");
+        let found = extract_patterns("const re = /(a+)+b/;", None).expect("the patterns hold");
         assert!(found[0].redos.detected);
         assert_eq!(found[0].redos.severity, super::redos::Severity::High);
     }
@@ -594,22 +619,27 @@ mod tests {
     }
 
     /// The seven regressions this whole language pass exists for: a
-    /// textbook catastrophic-backtracking pattern in each grammar,
-    /// found and flagged high.
+    /// catastrophic pattern in each grammar, found and flagged high.
+    ///
+    /// `(a+)+b`, not the bare `(a+)+` this used to carry. The loop alone
+    /// succeeds on any input holding an `a`, so nothing makes it
+    /// backtrack — measured, not assumed. The `b` is what forces the
+    /// failure the loop then pays for, which is why the literature
+    /// always writes it that way.
     #[test]
     fn the_exponential_shape_is_found_in_every_language() {
         for (language, text) in [
-            (Language::Python, r#"BAD = re.compile(r"(a+)+")"#),
-            (Language::Rust, r#"let bad = Regex::new(r"(a+)+");"#),
-            (Language::Go, "var bad = regexp.MustCompile(`(a+)+`)"),
-            (Language::Java, r#"Pattern.compile("(a+)+");"#),
-            (Language::Ruby, "BAD = /(a+)+/"),
-            (Language::Php, "preg_match('/(a+)+/', $s);"),
-            (Language::CSharp, r#"var bad = new Regex(@"(a+)+");"#),
+            (Language::Python, r#"BAD = re.compile(r"(a+)+b")"#),
+            (Language::Rust, r#"let bad = Regex::new(r"(a+)+b");"#),
+            (Language::Go, "var bad = regexp.MustCompile(`(a+)+b`)"),
+            (Language::Java, r#"Pattern.compile("(a+)+b");"#),
+            (Language::Ruby, "BAD = /(a+)+b/"),
+            (Language::Php, "preg_match('/(a+)+b/', $s);"),
+            (Language::CSharp, r#"var bad = new Regex(@"(a+)+b");"#),
         ] {
             let found = extract_patterns(text, Some(language)).expect("the patterns hold");
             assert_eq!(found.len(), 1, "{language:?}");
-            assert_eq!(found[0].pattern, "(a+)+", "{language:?}");
+            assert_eq!(found[0].pattern, "(a+)+b", "{language:?}");
             assert_eq!(
                 found[0].redos.severity,
                 super::redos::Severity::High,

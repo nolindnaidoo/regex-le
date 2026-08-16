@@ -229,7 +229,7 @@ mod tests {
     #[test]
     fn a_vulnerable_pattern_is_a_finding() {
         let report = scan_content(
-            "const re = /(a+)+/;",
+            "const re = /(a+)+b/;",
             "a.js".into(),
             Some(Language::JavaScript),
             ScanOptions::default(),
@@ -242,7 +242,7 @@ mod tests {
     /// reported — the clean ones are noise in a lint.
     #[test]
     fn only_findings_are_reported_unless_all_is_asked_for() {
-        let content = "const a = /[a-z]+/;\nconst b = /(a+)+/;\n";
+        let content = "const a = /[a-z]+/;\nconst b = /(a+)+b/;\n";
         let lint = scan_content(
             content,
             "a.js".into(),
@@ -267,16 +267,22 @@ mod tests {
         );
     }
 
+    /// **The threshold no longer narrows anything, and that is the
+    /// point.** It used to separate `medium` — a shape that "may
+    /// backtrack heavily" — from `high`. A verdict is now a
+    /// demonstration: an input was found that drives the pattern
+    /// exponential, or none was. There is no middle tier to select, so
+    /// both settings answer the same, and `--severity` stays accepted
+    /// only so existing pipelines keep running.
     #[test]
-    fn the_threshold_narrows_what_counts() {
-        let content = "const re = /(a|a)*/;";
-        let medium = scan_content(
+    fn the_threshold_no_longer_narrows_because_there_is_one_tier() {
+        let content = "const re = /(a|a)*b/;";
+        let default = scan_content(
             content,
             "a.js".into(),
             Some(Language::JavaScript),
             ScanOptions::default(),
         );
-        assert_eq!(medium.summary.findings, 1);
         let high = scan_content(
             content,
             "a.js".into(),
@@ -286,7 +292,8 @@ mod tests {
                 ..ScanOptions::default()
             },
         );
-        assert_eq!(high.summary.findings, 0);
+        assert_eq!(default.summary.findings, 1, "the pattern is demonstrated");
+        assert_eq!(high.summary.findings, default.summary.findings);
     }
 
     /// Changed deliberately: a PNG was never a text candidate, so it is
@@ -345,14 +352,14 @@ mod tests {
     #[test]
     fn the_human_line_carries_the_pattern_and_its_verdict() {
         let report = scan_content(
-            "const re = /(a+)+/g;",
+            "const re = /(a+)+b/g;",
             "a.js".into(),
             Some(Language::JavaScript),
             ScanOptions::default(),
         );
         let line = describe(&report, &report.patterns[0]);
         assert!(line.contains("a.js:1:12"), "{line}");
-        assert!(line.contains("/(a+)+/g"), "{line}");
+        assert!(line.contains("/(a+)+b/g"), "{line}");
         assert!(line.contains("[high]"), "{line}");
     }
 }

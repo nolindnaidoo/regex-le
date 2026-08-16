@@ -1,126 +1,126 @@
 {
-	"note": "Ground truth measured by running each pattern against adversarial input, not derived from the detector's rule. `measured` is exponential when doubling the input multiplied the time by more than 50x or blew a 2s budget. `reportedAt0_2_2` records what the detector said when this file was created, so a change to the rule is visible as a diff rather than a claim.",
-	"harness": "scripts/measure-redos.py",
+	"note": "Ground truth measured by running each pattern against adversarial input, not derived from the detector's rule. `measured` is exponential when doubling the input multiplied the time by more than 50x or blew a 2s budget. `reported` records what the detector says now, so a change to it is visible as a diff rather than a claim.",
+	"harness": "scripts/measure-redos.py, from the repository root (not crate/)",
 	"cases": [
 		{
 			"pattern": "(a+)+b",
 			"measured": "exponential",
 			"witness": "'a'*26+'!'",
-			"reportedAt0_2_2": "high"
+			"reported": "high"
 		},
 		{
 			"pattern": "(a|a)*b",
 			"measured": "exponential",
 			"witness": "'a'*26+'!'",
-			"reportedAt0_2_2": "medium"
+			"reported": "high"
 		},
 		{
 			"pattern": "^(\\s*\\w+\\s*,?)*$",
 			"measured": "exponential",
 			"witness": "'0'*26+'!'",
-			"reportedAt0_2_2": "high"
+			"reported": "high"
 		},
 		{
 			"pattern": "^([a-zA-Z0-9_.-]+)+@([a-zA-Z0-9_.-]+)+\\.[a-z]{2,}$",
 			"measured": "exponential",
 			"witness": "'-'*30+'!'",
-			"reportedAt0_2_2": "high"
+			"reported": "high"
 		},
 		{
 			"pattern": "(.*a){20}",
 			"measured": "exponential",
 			"witness": "'a'*30+'!'",
-			"reportedAt0_2_2": "low"
+			"reported": "high"
 		},
 		{
 			"pattern": "^([a-z]{1,10})+$",
 			"measured": "exponential",
 			"witness": "'a'*30+'!'",
-			"reportedAt0_2_2": "low"
+			"reported": "high"
 		},
 		{
 			"pattern": "^(a{2,4})+$",
 			"measured": "exponential",
 			"witness": "'a'*30+'!'",
-			"reportedAt0_2_2": "low"
+			"reported": "high"
 		},
 		{
 			"pattern": "^(a?){26}a{26}$",
 			"measured": "exponential",
 			"witness": "'a'*30+'!'",
-			"reportedAt0_2_2": "low"
+			"reported": "high"
 		},
 		{
 			"pattern": "(a+){20}",
 			"measured": "exponential",
 			"witness": "'a'*30+'!'",
-			"reportedAt0_2_2": "low"
+			"reported": "high"
 		},
 		{
 			"pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
 			"measured": "linear",
 			"witness": "",
-			"reportedAt0_2_2": "high"
+			"reported": "low"
 		},
 		{
 			"pattern": "^(?:[A-Za-z0-9]+\\.)*[A-Za-z0-9]+$",
 			"measured": "linear",
 			"witness": "",
-			"reportedAt0_2_2": "high"
+			"reported": "low"
 		},
 		{
 			"pattern": "^\\w+(?:\\.\\w+)*$",
 			"measured": "linear",
 			"witness": "",
-			"reportedAt0_2_2": "high"
+			"reported": "low"
 		},
 		{
 			"pattern": "^(?:\\w+=[^;]*; ?)*$",
 			"measured": "linear",
 			"witness": "",
-			"reportedAt0_2_2": "high"
+			"reported": "low"
 		},
 		{
 			"pattern": "^(-?\\d+)(,\\s*-?\\d+)*$",
 			"measured": "linear",
 			"witness": "",
-			"reportedAt0_2_2": "high"
+			"reported": "low"
 		},
 		{
 			"pattern": "^(?:[a-z]+,)*[a-z]+$",
 			"measured": "linear",
 			"witness": "",
-			"reportedAt0_2_2": "high"
+			"reported": "low"
 		},
 		{
 			"pattern": "^\\d{4}-\\d{2}-\\d{2}$",
 			"measured": "linear",
 			"witness": "",
-			"reportedAt0_2_2": "low"
+			"reported": "low"
 		},
 		{
 			"pattern": "^(?:GET|POST|PUT|DELETE)$",
 			"measured": "linear",
 			"witness": "",
-			"reportedAt0_2_2": "low"
+			"reported": "low"
 		},
 		{
 			"pattern": "^([A-Z][a-z\\d]*)+$",
 			"measured": "linear",
 			"witness": "",
-			"reportedAt0_2_2": "high"
+			"reported": "low"
 		},
 		{
 			"pattern": "^[-+]?[0-9_]+(?::[0-9_]+)+(?:\\.[0-9_]*)?$",
 			"measured": "linear",
 			"witness": "",
-			"reportedAt0_2_2": "high"
+			"reported": "low"
 		},
 		{
 			"pattern": "^\\s*([0-9.]+)\\s*(\\|\\|\\s*[0-9.]+\\s*)*$",
 			"measured": "linear",
 			"witness": "",
-			"reportedAt0_2_2": "high"
+			"reported": "low"
 		}
 	]
 }

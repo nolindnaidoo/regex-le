@@ -100,7 +100,7 @@ fn source_tree(name: &str) -> Tree {
     );
     tree.write(
         "src/parse.ts",
-        "const alt = /(a|a)*/;\nconst ok = /[a-z]+/;\n",
+        "const alt = /(a|a)*b/;\nconst ok = /[a-z]+/;\n",
     );
     tree.write("README.md", "See https://example.com/docs for more.\n");
     tree
@@ -178,22 +178,32 @@ fn an_unknown_flag_exits_two_and_names_itself() {
     assert!(run.stdout.is_empty(), "a refusal writes no report");
 }
 
-/// The threshold narrows what counts as a finding, and the exit code
-/// follows it — that is the whole point of having one.
+/// **`--severity` selects nothing today, and this pins that.**
+///
+/// A verdict is now reached by demonstration: either an input was found
+/// that drives the pattern into exponential backtracking, or none was.
+/// That answers `high` or `low` and never `medium`, so `high` and
+/// `medium` select the same set. The flag stays because removing it would
+/// break a shell that passes it, and `low` is still refused — see
+/// `a_low_threshold_is_refused_with_its_reason`.
+///
+/// If a future verdict lands between the two, this test is what tells
+/// you the flag has become load-bearing again.
 #[test]
-fn the_threshold_changes_the_exit_code() {
+fn the_threshold_is_accepted_and_currently_selects_the_same_set() {
     let tree = Tree::new("threshold");
-    tree.write("src/a.js", "const alt = /(a|a)*/;\n");
+    tree.write("src/a.js", "const alt = /(a|a)*b/;\n");
     let path = tree.path().to_string_lossy().to_string();
     assert_eq!(run(&[&path]).code, 1, "medium is the default");
-    assert_eq!(run(&["--severity", "high", &path]).code, 0);
+    assert_eq!(run(&["--severity", "high", &path]).code, 1);
+    assert_eq!(run(&["--severity", "medium", &path]).code, 1);
 }
 
 /// Reporting more patterns does not find more of them.
 #[test]
 fn all_widens_the_report_but_not_the_verdict() {
     let tree = Tree::new("all");
-    tree.write("src/a.js", "const a = /[a-z]+/;\nconst b = /(a+)+/;\n");
+    tree.write("src/a.js", "const a = /[a-z]+/;\nconst b = /(a+)+b/;\n");
     let path = tree.path().to_string_lossy().to_string();
 
     let lint = run(&[&path]);
@@ -250,7 +260,7 @@ fn version_and_help_exit_clear() {
     assert_eq!(help.code, 0);
     assert!(help.stdout.contains("usage: regex-le"));
     assert!(
-        help.stdout.contains("cannot prove"),
+        help.stdout.contains("not a clearance") && help.stdout.contains("undecided"),
         "the scope of the answer is stated"
     );
 }
@@ -277,14 +287,14 @@ fn a_document_on_stdin_is_scanned() {
         .stdin
         .as_mut()
         .expect("stdin")
-        .write_all(b"const re = /(a+)+/g;\n")
+        .write_all(b"const re = /(a+)+b/g;\n")
         .expect("written");
     let output = child.wait_with_output().expect("finishes");
     assert_eq!(output.status.code(), Some(1));
     let report: serde_json::Value =
         serde_json::from_slice(&output.stdout).expect("stdout carries JSON");
     assert_eq!(report["file"], "<stdin>");
-    assert_eq!(report["patterns"][0]["pattern"], "(a+)+");
+    assert_eq!(report["patterns"][0]["pattern"], "(a+)+b");
     assert_eq!(report["patterns"][0]["redos"]["severity"], "high");
 }
 
@@ -395,7 +405,7 @@ fn the_detector_is_measured_against_ground_truth() {
     let (mut agree, mut misses, mut alarms) = (0, 0, 0);
     for case in cases {
         let pattern = case["pattern"].as_str().expect("a pattern");
-        let recorded = case["reportedAt0_2_2"].as_str().expect("a verdict");
+        let recorded = case["reported"].as_str().expect("a verdict");
         let file = tree.write("probe.js", &format!("const r = /{pattern}/;\n"));
         let run = run(&["--all", &file.to_string_lossy()]);
         let reports = reports(&run);
@@ -417,7 +427,7 @@ fn the_detector_is_measured_against_ground_truth() {
     }
     assert_eq!(
         (agree, misses, alarms),
-        (6, 5, 9),
+        (20, 0, 0),
         "the detector's accuracy moved; update the corpus deliberately"
     );
 }

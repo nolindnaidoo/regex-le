@@ -8,25 +8,67 @@ const patterns = (text: string, languageId?: string): readonly string[] =>
 describe('per-language regex literals', () => {
 	// The seven regressions this whole language pass exists for: a
 	// textbook catastrophic-backtracking pattern in each grammar, found
-	// and flagged high.
+	// and flagged high. The trailing `b` is what makes it one — `(a+)+`
+	// alone succeeds on any input holding an `a` and never backtracks.
 	const NESTED: ReadonlyArray<readonly [string, string]> = [
-		['python', 'BAD = re.compile(r"(a+)+")'],
-		['rust', 'let bad = Regex::new(r"(a+)+");'],
-		['go', 'var bad = regexp.MustCompile(`(a+)+`)'],
-		['java', 'Pattern.compile("(a+)+");'],
-		['ruby', 'BAD = /(a+)+/'],
-		['php', "preg_match('/(a+)+/', $s);"],
-		['csharp', 'var bad = new Regex(@"(a+)+");'],
+		['python', 'BAD = re.compile(r"(a+)+b")'],
+		['rust', 'let bad = Regex::new(r"(a+)+b");'],
+		['go', 'var bad = regexp.MustCompile(`(a+)+b`)'],
+		['java', 'Pattern.compile("(a+)+b");'],
+		['ruby', 'BAD = /(a+)+b/'],
+		['php', "preg_match('/(a+)+b/', $s);"],
+		['csharp', 'var bad = new Regex(@"(a+)+b");'],
 	];
 
 	for (const [languageId, text] of NESTED) {
-		it(`finds and flags (a+)+ in ${languageId}`, () => {
+		it(`finds and flags (a+)+b in ${languageId}`, () => {
 			const found = extractRegexPatterns(text, languageId);
 			expect(found).toHaveLength(1);
-			expect(found[0]?.pattern).toBe('(a+)+');
-			expect(detectReDoS('(a+)+', '').severity).toBe('high');
+			expect(found[0]?.pattern).toBe('(a+)+b');
+
+			const verdict = detectReDoS('(a+)+b', '');
+			expect(verdict.severity).toBe('high');
+			// A finding that cannot be checked is an opinion.
+			expect(verdict.witness).toBeTruthy();
 		});
 	}
+
+	it('does not report a pattern documented in a block comment', () => {
+		// The bug: a JSDoc block explaining a hazard was extracted and
+		// judged, so documenting a dangerous pattern failed the build that
+		// documented it. The copy below the comment is the real one.
+		const found = extractRegexPatterns(
+			'/**\n * Never write /(a+)+b/ — it backtracks.\n */\nconst ok = /[a-z]+/;\n',
+			'javascript',
+		);
+		expect(found.map((p) => p.pattern)).toEqual(['[a-z]+']);
+		expect(found[0]?.line).toBe(4);
+	});
+
+	it('does not report a call site quoted inside a python docstring', () => {
+		const found = extractRegexPatterns(
+			'"""\nExample: re.compile(r"(a+)+b")\n"""\nGOOD = re.compile(r"[a-z]+")\n',
+			'python',
+		);
+		expect(found.map((p) => p.pattern)).toEqual(['[a-z]+']);
+	});
+
+	it('still reports a call site whose argument is a string', () => {
+		// The rule is about where the *candidate* starts. Masking every
+		// string would delete the extractor.
+		expect(patterns('P = re.compile(r"(a+)+b")\n', 'python')).toEqual([
+			'(a+)+b',
+		]);
+	});
+
+	it('masks nothing when the language is unknown', () => {
+		// A comment rule guessed from the wrong grammar would drop real
+		// patterns rather than phantom ones, so a document nobody named is
+		// scanned as written. Named as Python, the same line is a comment.
+		const doc = '# P = re.compile(r"(a+)+b")\n';
+		expect(patterns(doc)).toEqual(['(a+)+b']);
+		expect(patterns(doc, 'python')).toEqual([]);
+	});
 
 	it('reads a raw string verbatim and unescapes a quoted one', () => {
 		expect(patterns('re.compile(r"\\d+")', 'python')).toEqual(['\\d+']);

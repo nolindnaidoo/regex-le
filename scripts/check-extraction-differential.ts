@@ -140,31 +140,82 @@ const VALID_ELSEWHERE: ReadonlySet<string> = new Set([
 	"(?'name'a)",
 ]);
 
-/** How a pattern is written into a document once it has a call site. */
+/** How a grammar spells the prose a pattern can be buried in. */
+interface ProseSyntax {
+	readonly comment: string;
+	/** The block-comment pair, or the docstring one where that is what spans lines. */
+	readonly block: readonly [opener: string, closer: string];
+}
+
+/** A site cannot be embedded in prose it would terminate. */
+function embeddable(site: string, [opener, closer]: readonly [string, string]) {
+	return !site.includes(opener) && !site.includes(closer);
+}
+
+/**
+ * How a pattern is written into a document once it has a call site.
+ *
+ * **The block-comment wrappers are the ones that found a bug.** Comment
+ * state was never tracked across lines, so a JSDoc block explaining a
+ * hazard was extracted and judged, and a generator that could only emit
+ * single-line comments could never say so. A wrapper returns undefined
+ * when the site would terminate the prose it is being buried in.
+ */
 const WRAPPERS: ReadonlyArray<{
 	readonly name: string;
-	readonly wrap: (site: string, comment: string) => string;
+	readonly wrap: (site: string, prose: ProseSyntax) => string | undefined;
 }> = [
 	{ name: 'alone on a line', wrap: (site) => `${site}\n` },
 	{
 		name: 'after a comment',
-		wrap: (site, comment) => `${comment} what the next line does\n${site}\n`,
+		wrap: (site, prose) => `${prose.comment} what the next line does\n${site}\n`,
 	},
 	{
 		name: 'commented out',
-		wrap: (site, comment) => `${comment} ${site}\n`,
+		wrap: (site, prose) => `${prose.comment} ${site}\n`,
 	},
 	{ name: 'mid-line', wrap: (site) => `value = check(${site})\n` },
 	{ name: 'indented', wrap: (site) => `\t${site}\n\tmore()\n` },
 	{
 		name: 'at EOF without a newline',
-		wrap: (site, comment) => `${comment} header\n${site}`,
+		wrap: (site, prose) => `${prose.comment} header\n${site}`,
 	},
 	{ name: 'twice', wrap: (site) => `${site}\n${site}\n` },
 	{
 		name: 'beside a division and a URL',
-		wrap: (site, comment) =>
-			`${comment} see https://example.com/docs\nratio = total / count\n${site}\n`,
+		wrap: (site, prose) =>
+			`${prose.comment} see https://example.com/docs\nratio = total / count\n${site}\n`,
+	},
+	{
+		// The strongest of these: whichever side stops masking reports the
+		// commented copy, and its line number gives it away.
+		name: 'inside a block comment, and again in code',
+		wrap: (site, prose) =>
+			embeddable(site, prose.block)
+				? `${prose.block[0]}\n Example: ${site}\n${prose.block[1]}\n${site}\n`
+				: undefined,
+	},
+	{
+		name: 'inside a block comment only',
+		wrap: (site, prose) =>
+			embeddable(site, prose.block)
+				? `${prose.block[0]}\n ${site}\n ${site}\n${prose.block[1]}\nvalue = 1\n`
+				: undefined,
+	},
+	{
+		// The other direction: a closed block must not mask what follows it.
+		name: 'after a block comment closes',
+		wrap: (site, prose) =>
+			embeddable(site, prose.block)
+				? `${prose.block[0]} note ${prose.block[1]}\n${site}\n`
+				: undefined,
+	},
+	{
+		name: 'inside an unterminated block comment',
+		wrap: (site, prose) =>
+			embeddable(site, prose.block)
+				? `${prose.block[0]} opened and never closed\n${site}\n`
+				: undefined,
 	},
 ];
 
@@ -182,12 +233,11 @@ function escapeForQuotes(pattern: string, quote: string): string {
 		.replaceAll('\n', '');
 }
 
-interface LanguageSpec {
+interface LanguageSpec extends ProseSyntax {
 	readonly id: string;
 	/** Names an agent might send for this language. */
 	readonly hints: readonly string[];
 	readonly filenames: readonly string[];
-	readonly comment: string;
 	readonly sites: ReadonlyArray<(pattern: string) => string | undefined>;
 }
 
@@ -197,6 +247,7 @@ const LANGUAGES: readonly LanguageSpec[] = [
 		hints: ['javascript', 'js', '.js', 'mjs'],
 		filenames: ['validate.js', 'src/deep/index.mjs'],
 		comment: '//',
+		block: ['/*', '*/'],
 		sites: [
 			(p) => (p.includes('/') ? undefined : `const re = /${p}/g;`),
 			(p) => `const re = new RegExp('${escapeForQuotes(p, "'")}');`,
@@ -208,6 +259,7 @@ const LANGUAGES: readonly LanguageSpec[] = [
 		hints: ['typescript', 'ts', 'tsx'],
 		filenames: ['validate.ts', 'app/form.tsx'],
 		comment: '//',
+		block: ['/*', '*/'],
 		sites: [
 			(p) => (p.includes('/') ? undefined : `const re: RegExp = /${p}/;`),
 			(p) =>
@@ -219,6 +271,9 @@ const LANGUAGES: readonly LanguageSpec[] = [
 		hints: ['python', 'py', '.PY', 'pyi'],
 		filenames: ['validate.py', 'pkg/parse.pyw'],
 		comment: '#',
+		// A docstring is what spans lines in Python, and it hid a whole
+		// example block from the mask.
+		block: ['"""', '"""'],
 		sites: [
 			(p) => (usableRaw(p, '"') ? `P = re.compile(r"${p}")` : undefined),
 			(p) => (usableRaw(p, "'") ? `P = re.search(r'${p}', s)` : undefined),
@@ -231,6 +286,7 @@ const LANGUAGES: readonly LanguageSpec[] = [
 		hints: ['rust', 'rs'],
 		filenames: ['validate.rs', 'src/detect/scan.rs'],
 		comment: '//',
+		block: ['/*', '*/'],
 		sites: [
 			(p) => (usableRaw(p, '"') ? `let r = Regex::new(r"${p}");` : undefined),
 			(p) =>
@@ -245,6 +301,7 @@ const LANGUAGES: readonly LanguageSpec[] = [
 		hints: ['go', 'golang'],
 		filenames: ['validate.go'],
 		comment: '//',
+		block: ['/*', '*/'],
 		sites: [
 			(p) =>
 				usableRaw(p, '`') ? `var re = regexp.MustCompile(\`${p}\`)` : undefined,
@@ -260,6 +317,7 @@ const LANGUAGES: readonly LanguageSpec[] = [
 		hints: ['java'],
 		filenames: ['Validate.java'],
 		comment: '//',
+		block: ['/*', '*/'],
 		sites: [
 			(p) => `Pattern p = Pattern.compile("${escapeForQuotes(p, '"')}");`,
 			(p) => `boolean ok = Pattern.matches("${escapeForQuotes(p, '"')}", s);`,
@@ -270,6 +328,7 @@ const LANGUAGES: readonly LanguageSpec[] = [
 		hints: ['ruby', 'rb', 'rake', 'gemspec'],
 		filenames: ['validate.rb', 'Rakefile.rake'],
 		comment: '#',
+		block: ['=begin', '=end'],
 		sites: [
 			(p) => (p.includes('/') ? undefined : `RE = /${p}/`),
 			(p) => `RE = Regexp.new('${escapeForQuotes(p, "'")}')`,
@@ -281,6 +340,7 @@ const LANGUAGES: readonly LanguageSpec[] = [
 		hints: ['php', 'phtml'],
 		filenames: ['validate.php', 'view/page.phtml'],
 		comment: '//',
+		block: ['/*', '*/'],
 		sites: [
 			(p) => (p.includes('/') ? undefined : `preg_match('/${p}/i', $s);`),
 			(p) => (p.includes('#') ? undefined : `preg_replace('#${p}#', '', $s);`),
@@ -294,6 +354,7 @@ const LANGUAGES: readonly LanguageSpec[] = [
 		hints: ['csharp', 'cs', 'c#', 'csx', 'cake'],
 		filenames: ['Validate.cs', 'build.cake'],
 		comment: '//',
+		block: ['/*', '*/'],
 		sites: [
 			(p) => (usableRaw(p, '"') ? `var r = new Regex(@"${p}");` : undefined),
 			(p) =>
@@ -330,7 +391,8 @@ function generate(): Case[] {
 		const site = pick(language.sites)(pattern);
 		if (site === undefined) continue;
 		const wrapper = pick(WRAPPERS);
-		const content = wrapper.wrap(site, language.comment);
+		const content = wrapper.wrap(site, language);
+		if (content === undefined) continue;
 
 		// Every way an agent can name — or fail to name — a language.
 		// The optional arguments are part of the shared schema, so they

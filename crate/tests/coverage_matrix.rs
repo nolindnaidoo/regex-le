@@ -37,16 +37,21 @@ const UNKNOWN: [&str; 13] = [
 /// A call site per language, each holding one exponential shape so a
 /// finding proves the spelling was looked for rather than the file
 /// merely opened.
+// **The trailing `b` is the point, not decoration.** A finding is what
+// proves the language's spellings were looked for, and a bare `(a+)+`
+// matches any input containing an `a`, so nothing ever forces it to
+// backtrack and it is correctly clean. The failing continuation is what
+// makes each probe a real hazard.
 const SPELLINGS: [(&str, &str); 9] = [
-    ("javascript", "const bad = /(a+)+/g;\n"),
-    ("typescript", "const bad: RegExp = /(a+)+/;\n"),
-    ("python", "BAD = re.compile(r\"(a+)+\")\n"),
-    ("rust", "let bad = Regex::new(r\"(a+)+\");\n"),
-    ("go", "var bad = regexp.MustCompile(`(a+)+`)\n"),
-    ("java", "Pattern bad = Pattern.compile(\"(a+)+\");\n"),
-    ("ruby", "BAD = /(a+)+/\n"),
-    ("php", "preg_match('/(a+)+/', $s);\n"),
-    ("csharp", "var bad = new Regex(@\"(a+)+\");\n"),
+    ("javascript", "const bad = /(a+)+b/g;\n"),
+    ("typescript", "const bad: RegExp = /(a+)+b/;\n"),
+    ("python", "BAD = re.compile(r\"(a+)+b\")\n"),
+    ("rust", "let bad = Regex::new(r\"(a+)+b\");\n"),
+    ("go", "var bad = regexp.MustCompile(`(a+)+b`)\n"),
+    ("java", "Pattern bad = Pattern.compile(\"(a+)+b\");\n"),
+    ("ruby", "BAD = /(a+)+b/\n"),
+    ("php", "preg_match('/(a+)+b/', $s);\n"),
+    ("csharp", "var bad = new Regex(@\"(a+)+b\");\n"),
 ];
 
 struct Tree {
@@ -133,12 +138,12 @@ fn every_extension_in_the_table_is_opened_and_reported() {
     }
     for (index, extension) in UNKNOWN.iter().enumerate() {
         let name = format!("unknown{index:02}.{extension}");
-        tree.write(&name, "const bad = /(a+)+/g;\n");
+        tree.write(&name, "const bad = /(a+)+b/g;\n");
         expected.insert(name);
     }
     // No extension at all, which is neither known nor unknown but has to
     // be read all the same.
-    tree.write("Makefile", "PATTERN = /(a+)+/\n");
+    tree.write("Makefile", "PATTERN = /(a+)+b/\n");
     expected.insert("Makefile".to_string());
 
     let reported: BTreeSet<String> = scan(tree.path())

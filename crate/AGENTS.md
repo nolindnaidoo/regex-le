@@ -62,10 +62,16 @@ crate/src/
   matches for the same pattern. The lint needs no engine: the ReDoS scan
   reads the pattern *text*. Contract tests on both surfaces assert no
   flag and no tool schema offers text to match against.
-- **It flags shapes and cannot prove a pattern safe.** That scope is the
-  extension's wording and it ports with the code. Silence is not a
-  clearance, and the help text and README say so. A tool that implied
-  more would be worse than one that found less.
+- **A verdict is demonstrated, never classified.** A pattern is reported
+  only when an input was found that drives it into exponential
+  backtracking, and that input ships as `witness`. Do not reintroduce a
+  shape rule: the star-height version scored 6 of 20 against measured
+  truth, and `fixtures/redos-truth.json` plus `tests/contracts.rs` hold
+  the replacement at 20 of 20.
+- **Silence is still not a clearance.** No witness means none was found
+  under a bounded search. What cannot be decided is *named* —
+  backreference, lookaround, unreadable syntax, too large — and reported
+  as undecided, never as safe. The help text and README say so.
 - **Exit codes**: 0 nothing vulnerable, 1 at least one finding, 2 could
   not answer. `--severity` moves the line; `low` is refused because a
   check that fires on every pattern is a check nobody reads.

@@ -7,6 +7,86 @@ this repository release on their own cadence.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2026-08-16
+
+### Changed
+
+- **A ReDoS verdict is now demonstrated rather than classified, and ships
+  the input that proves it.** The detector reported from a pattern's
+  shape — star height, nested quantifiers, overlapping alternation.
+  Measured against twenty patterns timed on a real engine, that scored
+  **6 of 20**: nine false alarms and five misses, including `(.*a){20}`,
+  which is exponential and has no nesting to see. It now compiles the
+  pattern to an automaton, walks that automaton the way a backtracking
+  engine walks one, and pumps an attack string through it at two lengths
+  while counting steps. A pattern is reported only when a concrete input
+  drove the count past its budget, and that input is reported with it as
+  `redos.witness`. The replacement scores **20 of 20**;
+  `fixtures/redos-truth.json` holds the measurements and
+  `tests/contracts.rs` holds the score. Your pattern is still never
+  handed to a regex engine.
+- **A bare `(a+)+` is no longer reported, because it is not
+  exploitable.** It matches any input containing an `a`, so nothing ever
+  forces it to backtrack. The hazard needs a continuation that fails —
+  `(a+)+b`, or an anchor. Every shape-based detector says otherwise, and
+  this crate did too.
+- **`say "([a-z]+)*"` is now reported, and patterns like it.** A loop
+  behind a literal is only reached by an attack string that satisfies the
+  literal first, so the pumped input carries a prefix that reaches the
+  loop. Without it the pattern measured flat and read as clean.
+- **What cannot be decided is named, not called safe.** A backreference,
+  lookaround, syntax the parser does not read, and a pattern too large to
+  decide are each reported as `not decided: {reason}` at `low` severity.
+- **`--severity` currently selects nothing.** A demonstrated verdict is
+  `high` or `low` and never in between, so `high` and `medium` pick the
+  same set. The flag stays — removing it would break a pipeline that
+  passes it — and a contract test pins the equivalence, so the day a
+  verdict lands between the two, that test says so. `low` is still
+  refused, still pointing at `--all`.
+
+- **A regex inside a comment or a docstring is no longer scanned as
+  code.** A JSDoc block explaining a hazard, a commented-out line, a
+  Python docstring showing an example — each was extracted and judged,
+  so documenting a dangerous pattern failed the build that documented
+  it. Multi-line comments leaked because comment state was never tracked
+  across lines; a single-line `/* … */` only appeared to work, because
+  the phantom pattern it produced was invalid and got dropped.
+  Extraction now skips any candidate whose *start* falls inside a
+  comment or a string. The test is on the start deliberately:
+  `re.compile(r"(a+)+b")` has its argument in a string and is a real
+  call, while a docstring holding that same line has the call itself in
+  a string and is prose. No corpus document had a regex in a multi-line
+  comment, which is why nothing caught this.
+- **A loop whose body can match empty is no longer reported.** `(\w*)+`,
+  `((a)*)*` and `(.*)+` came back `high` with a witness that runs in
+  microseconds — a receipt that does not reproduce, which is the one
+  thing a demonstrated verdict must never emit. A real engine abandons a
+  loop iteration that consumed nothing; the walk now does the same,
+  pruning a state only while it is on the current path so the blow-up
+  being measured is still measured. `^(\w*)+$` and `(\w*)+@` stay
+  `high`, and are catastrophic in CPython at 28 characters. None of the
+  twenty measured cases is an empty-body loop, so the score could not
+  have caught this either.
+- **A counted minimum no longer builds a prefix to match it.**
+  `a{4000000000}(b+)+c` emitted a four-billion-character witness and 3.7
+  GB of JSON. The automaton already approximates a repeat past its
+  unroll ceiling, so a prefix that long could not be honest; the pattern
+  is now left undemonstrated instead.
+
+### Removed
+
+- **`redos.vulnerableGroups`.** It named the sub-expression a shape rule
+  matched on, and there is no such rule any more. `redos.witness` is what
+  replaces it, and it carries more: not which part looked wrong, but
+  which input makes it go wrong.
+
+### Fixed
+
+- **`(?P<name>…)` parses instead of refusing.** Python's named-group
+  spelling reached the decider as unreadable syntax, so every Python
+  pattern using one was undecided rather than answered. `(?P=name)` is
+  still refused, correctly — it is a backreference.
+
 ## [0.2.2] - 2026-08-15
 
 ### Added

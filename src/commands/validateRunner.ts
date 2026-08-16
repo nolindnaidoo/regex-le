@@ -9,6 +9,26 @@ import type { Notifier } from '../ui/notifier';
 import type { StatusBar } from '../ui/statusBar';
 
 /**
+ * The input that demonstrates the finding, as report lines.
+ *
+ * **This is what makes the verdict checkable.** The reason states what the
+ * blow-up cost; without the string that caused it a reader has to take
+ * that on trust. Quoted with `JSON.stringify` because the tail is usually
+ * a control character that would otherwise render as nothing at all.
+ */
+function witnessLines(witness: string | undefined): readonly string[] {
+	if (!witness) return [];
+	return [
+		'',
+		'**Witness** (the input that does it):',
+		'',
+		'```',
+		JSON.stringify(witness),
+		'```',
+	];
+}
+
+/**
  * The recommendation section, in priority order.
  *
  * Was a four-arm else-if chain whose conditions each repeated `isValid`;
@@ -28,7 +48,8 @@ function recommendation(
 	if (redosDetected) {
 		return [
 			'## ⚠️ Recommendation',
-			'This pattern is valid but may be vulnerable to ReDoS attacks. Consider refactoring.',
+			'This pattern is valid, and an input was found that drives it into ' +
+				'catastrophic backtracking. Refactor it so that input fails fast.',
 		];
 	}
 	if (performanceScore < 70) {
@@ -39,9 +60,10 @@ function recommendation(
 	}
 	return [
 		'## ✅ Recommendation',
-		'No known vulnerable shapes were detected and the pattern scores well ' +
-			'on complexity. This scanner recognises common catastrophic-backtracking ' +
-			'shapes; it cannot prove a pattern safe against adversarial input.',
+		'No input was found that drives this pattern into backtracking, and it ' +
+			'scores well on complexity. That is a search, not a proof: what this ' +
+			'cannot read — a backreference, lookaround — it reports as undecided ' +
+			'rather than safe.',
 	];
 }
 
@@ -107,14 +129,15 @@ export async function validateSinglePattern(
 		reportLines.push(`**Detected:** Yes`);
 		reportLines.push(`**Severity:** ${redosResult.severity}`);
 		reportLines.push(`**Reason:** ${redosResult.reason}`);
+		reportLines.push(...witnessLines(redosResult.witness));
 		reportLines.push('');
 	}
 	if (!redosResult.detected) {
 		reportLines.push('## ✅ ReDoS Detection');
-		// The detector is a structural scanner, not an automaton analysis — it
-		// recognises known catastrophic shapes and cannot prove their absence.
-		// Reporting "no vulnerabilities found" claimed more than it can support.
-		reportLines.push('**Detected:** No known vulnerable shapes');
+		// A search for an input that blows the budget, not a proof that none
+		// exists. Reporting "no vulnerabilities found" claimed more than it
+		// can support, and still would.
+		reportLines.push('**Detected:** No input drove this into backtracking');
 		reportLines.push('');
 	}
 

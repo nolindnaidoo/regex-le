@@ -38,7 +38,7 @@
 
 ## What it does
 
-Open any file and run one of three commands. **Extract** lists every regex pattern found in the document. **Test** (`Ctrl+Alt+R` / `Cmd+Alt+R`) runs a found — or manually entered — pattern against the file content and reports matches with real line/column positions and capture groups (named groups included). **Validate** checks every found pattern for syntax errors and screens it for ReDoS-prone shapes. Works in VS Code and VS Code–based editors like Cursor and VSCodium (installable from Open VSX).
+Open any file and run one of three commands. **Extract** lists every regex pattern found in the document. **Test** (`Ctrl+Alt+R` / `Cmd+Alt+R`) runs a found — or manually entered — pattern against the file content and reports matches with real line/column positions and capture groups (named groups included). **Validate** checks every found pattern for syntax errors and screens it for catastrophic backtracking, reporting the input that causes it. Works in VS Code and VS Code–based editors like Cursor and VSCodium (installable from Open VSX).
 
 ## Install
 
@@ -65,7 +65,7 @@ The same engine runs as an [MCP](https://modelcontextprotocol.io) server, so an 
 extract_patterns(content, format?, filename?, maxResults?)
 ```
 
-Returns every pattern with its flags, 1-based position and a **ReDoS verdict**, so "are any of the regexes in this file dangerous?" is one call rather than two.
+Returns every pattern with its flags, 1-based position and a **ReDoS verdict**, so "are any of the regexes in this file dangerous?" is one call rather than two. A verdict that reports a blow-up carries the `witness` that caused it, so an agent can check the finding instead of trusting it.
 
 The server takes content and returns data — it reads no files and makes no network requests of its own. Published as [`regex-le-mcp`](https://www.npmjs.com/package/regex-le-mcp) on npm and as `io.github.nolindnaidoo/regex-le` in the [MCP registry](https://registry.modelcontextprotocol.io).
 
@@ -136,17 +136,21 @@ What is deliberately **not** extracted:
 - Candidates that are not a well-formed regular expression in any of these languages, or with invalid/duplicate flags. Another language's spelling is not a syntax error: `re.compile(r'(?P<word>\w+)+@')` is reported as written, and still flagged.
 - Constructor calls whose pattern argument is a variable or template literal (only literal string arguments are visible to a text scanner).
 - Flags, on anything but a JavaScript literal or constructor: every other language sets them with constants, builder methods or an inline `(?i)` rather than a string argument.
+- **Anything written in a comment or a string.** A JSDoc block explaining a hazard, a commented-out line, a Python docstring with an example — none of them is code, and reporting one fails a build over a sentence. The rule is about where a candidate *starts*, so `re.compile(r"(a+)+b")` keeps its quoted argument while a docstring holding that whole line is prose. Only when the language is known: a document nothing recognises is scanned as written, because a comment rule guessed from the wrong grammar would drop real patterns instead of phantom ones.
 
-Duplicate pattern+flags pairs are listed once. This is lexing by heuristic, not a parser for nine languages: a slash inside a string or comment can still be picked up when its context looks expression-like.
+Duplicate pattern+flags pairs are listed once. This is lexing by heuristic, not a parser for nine languages: a slash inside a string can still be picked up when its context looks expression-like.
 
 ## ReDoS screening
 
-`Validate` (and `Test`, before running a risky pattern) screens for the common catastrophic-backtracking shapes:
+`Validate` (and `Test`, before running a risky pattern) reports a pattern **only when an input was found that demonstrably drives it into catastrophic backtracking** — and reports that input alongside it, as the `witness`.
 
-- **High severity** — nested unbounded quantifiers: `(a+)+`, `([a-z]+)*`
-- **Medium severity** — quantified alternation with overlapping branches: `(a|ab)+`
+Your pattern is never run. It is compiled to an automaton, and that automaton is walked the way a backtracking engine walks one — depth-first, every edge in order, a dead end unwound rather than remembered — while the steps are counted. An attack string is built, pumped at two lengths, and measured against a step budget. So a finding is falsifiable: run the witness and watch.
 
-This is a structural scanner, not an automaton analysis: it cannot prove a pattern safe, only flag the dangerous shapes it recognizes. The reports also include a rough performance score based on execution time relative to input size — treat it as a hint, not a benchmark (memory is not measured).
+Nothing is reported on the strength of how a pattern is *shaped*. Shape is a poor predictor in both directions: `^[a-z0-9]+(?:-[a-z0-9]+)*$` looks dangerous and is not, because every iteration must eat a `-` the inner class cannot produce, while `(.*a){20}` looks bounded and is not. A separator forcing the split is a fact about strings, so no test on syntax settles it.
+
+**Silence is not a clearance.** A pattern this cannot read — a backreference, lookaround, syntax it does not parse — comes back as `not decided: <reason>`, never as safe.
+
+The reports also include a rough performance score based on execution time relative to input size — treat it as a hint, not a benchmark (memory is not measured).
 
 ## The CLI
 
@@ -169,11 +173,12 @@ question was malformed — so `regex-le . || exit 1` is a CI gate.
 your text with JavaScript semantics needs a JavaScript engine, and
 getting it nearly right would mean the two frontends reporting different
 matches for the same pattern. Testing is an editor activity; keep it
-here. The lint needs no engine at all — the ReDoS verdict reads the
-pattern text — which is what makes it a cheap deterministic CI step.
+here. The lint needs no engine at all — the ReDoS verdict walks an
+automaton built from the pattern text, under a step budget — which is
+what makes it a cheap deterministic CI step.
 
-It flags shapes and **cannot prove a pattern safe**, exactly as the
-screening in this extension cannot.
+It reports what it can demonstrate and **refuses what it cannot read**,
+exactly as the screening in this extension does.
 
 ## Commands
 
@@ -252,12 +257,12 @@ a build only tells you how busy the runner was.
 <!-- coverage:start -->
 | Metric | Coverage |
 | --- | --- |
-| Statements | 91.27% |
-| Branches | 77.68% |
-| Functions | 97.74% |
-| Lines | 91.68% |
+| Statements | 92.32% |
+| Branches | 79.83% |
+| Functions | 97.94% |
+| Lines | 94.56% |
 
-205 test cases across 15 files, plus an integration suite that runs
+260 test cases across 17 files, plus an integration suite that runs
 in a real VS Code extension host and an end-to-end test that installs the
 built `.vsix` into a clean profile.
 

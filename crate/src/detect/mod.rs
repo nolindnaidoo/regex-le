@@ -7,10 +7,12 @@
 //! tester — running a pattern against text with JavaScript capture
 //! semantics — is deliberately absent; see SPEC.md.
 
+pub(crate) mod ambiguity;
 pub(crate) mod extract;
 pub(crate) mod format;
 pub(crate) mod heuristics;
 pub(crate) mod js;
+pub(crate) mod mask;
 pub(crate) mod redos;
 
 mod position;

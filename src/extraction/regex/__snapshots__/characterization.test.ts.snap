@@ -228,68 +228,76 @@ exports[`performance score characterization > zero memory reads as perfect memor
 
 exports[`redos characterization > detectReDoS(/(.*)+/) 1`] = `
 {
+  "detected": false,
+  "reason": "no input was found that drives this into backtracking",
+  "severity": "low",
+}
+`;
+
+exports[`redos characterization > detectReDoS(/(.*a){20}/) 1`] = `
+{
   "detected": true,
-  "reason": "Nested unbounded quantifiers can cause exponential backtracking",
+  "reason": "exponential backtracking: 2000000 steps on 41 characters, against 458684 on 20",
   "severity": "high",
-  "vulnerableGroups": [
-    "(.*)+",
-  ],
+  "witness": ""aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\\u0000"",
 }
 `;
 
 exports[`redos characterization > detectReDoS(/([a-z]+)*@example/i) 1`] = `
 {
   "detected": true,
-  "reason": "Nested unbounded quantifiers can cause exponential backtracking",
+  "reason": "exponential backtracking: 2000000 steps on 41 characters, against 229360 on 20",
   "severity": "high",
-  "vulnerableGroups": [
-    "([a-z]+)*",
-  ],
+  "witness": ""aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\\u0000"",
 }
 `;
 
 exports[`redos characterization > detectReDoS(/(\\w+)*/) 1`] = `
 {
-  "detected": true,
-  "reason": "Nested unbounded quantifiers can cause exponential backtracking",
-  "severity": "high",
-  "vulnerableGroups": [
-    "(\\w+)*",
-  ],
+  "detected": false,
+  "reason": "no input was found that drives this into backtracking",
+  "severity": "low",
+}
+`;
+
+exports[`redos characterization > detectReDoS(/(a)\\1/) 1`] = `
+{
+  "detected": false,
+  "reason": "not decided: a backreference is not a regular language",
+  "severity": "low",
 }
 `;
 
 exports[`redos characterization > detectReDoS(/(a+)+/) 1`] = `
 {
+  "detected": false,
+  "reason": "no input was found that drives this into backtracking",
+  "severity": "low",
+}
+`;
+
+exports[`redos characterization > detectReDoS(/(a+)+b/) 1`] = `
+{
   "detected": true,
-  "reason": "Nested unbounded quantifiers can cause exponential backtracking",
+  "reason": "exponential backtracking: 2000000 steps on 41 characters, against 229328 on 20",
   "severity": "high",
-  "vulnerableGroups": [
-    "(a+)+",
-  ],
+  "witness": ""aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\\u0000"",
 }
 `;
 
 exports[`redos characterization > detectReDoS(/(a|a)*/) 1`] = `
 {
-  "detected": true,
-  "reason": "Quantified alternation with overlapping branches may backtrack heavily",
-  "severity": "medium",
-  "vulnerableGroups": [
-    "(a|a)*",
-  ],
+  "detected": false,
+  "reason": "no input was found that drives this into backtracking",
+  "severity": "low",
 }
 `;
 
 exports[`redos characterization > detectReDoS(/(foo(bar+)+)+/) 1`] = `
 {
-  "detected": true,
-  "reason": "Nested unbounded quantifiers can cause exponential backtracking",
-  "severity": "high",
-  "vulnerableGroups": [
-    "(bar+)+",
-    "(foo(bar+)+)+",
-  ],
+  "detected": false,
+  "reason": "no input was found that drives this into backtracking",
+  "severity": "low",
 }
 `;
 
@@ -304,7 +312,15 @@ exports[`redos characterization > detectReDoS(/[unclosed/) 1`] = `
 exports[`redos characterization > detectReDoS(/\\d+/g) 1`] = `
 {
   "detected": false,
-  "reason": "No obvious ReDoS vulnerabilities detected",
+  "reason": "no input was found that drives this into backtracking",
+  "severity": "low",
+}
+`;
+
+exports[`redos characterization > detectReDoS(/foo(?=bar)/) 1`] = `
+{
+  "detected": false,
+  "reason": "not decided: lookaround is not modelled by this construction",
   "severity": "low",
 }
 `;

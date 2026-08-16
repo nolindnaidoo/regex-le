@@ -374,11 +374,11 @@ mod tests {
     fn the_shared_tool_is_offered_and_answers() {
         let response = call(
             "extract_patterns",
-            &json!({ "content": "const re = /(a+)+/g;" }),
+            &json!({ "content": "const re = /(a+)+b/g;" }),
         );
         let envelope = &response["result"]["structuredContent"];
         assert_eq!(envelope["meta"]["tool"], "extract_patterns");
-        assert_eq!(envelope["data"]["patterns"][0]["pattern"], "(a+)+");
+        assert_eq!(envelope["data"]["patterns"][0]["pattern"], "(a+)+b");
         assert_eq!(envelope["data"]["patterns"][0]["redos"]["severity"], "high");
         assert_eq!(envelope["ok"], true);
         assert_eq!(response["result"]["isError"], false);
@@ -391,7 +391,7 @@ mod tests {
     fn the_shared_tool_runs_no_pattern() {
         let response = call(
             "extract_patterns",
-            &json!({ "content": "const re = /(a+)+/;" }),
+            &json!({ "content": "const re = /(a+)+b/;" }),
         );
         let pattern = &response["result"]["structuredContent"]["data"]["patterns"][0];
         assert_eq!(pattern["redos"]["severity"], "high");
@@ -417,7 +417,7 @@ mod tests {
     #[test]
     fn the_lint_tool_reports_what_it_found() {
         let tree = TempTree::new("mcp-lint");
-        tree.write("src/a.js", "const re = /(a+)+/g;\n");
+        tree.write("src/a.js", "const re = /(a+)+b/g;\n");
         let response = call(
             "regex_le_lint",
             &json!({ "path": tree.path().to_string_lossy() }),
@@ -432,7 +432,7 @@ mod tests {
     #[test]
     fn asking_for_all_widens_the_report_not_the_verdict() {
         let tree = TempTree::new("mcp-all");
-        tree.write("src/a.js", "const a = /[a-z]+/;\nconst b = /(a+)+/;\n");
+        tree.write("src/a.js", "const a = /[a-z]+/;\nconst b = /(a+)+b/;\n");
         let path = tree.path().to_string_lossy().to_string();
 
         let lint = call("regex_le_lint", &json!({ "path": path }));
@@ -459,7 +459,7 @@ mod tests {
     #[test]
     fn a_low_threshold_is_refused_with_its_reason() {
         let tree = TempTree::new("mcp-low");
-        tree.write("src/a.js", "const re = /(a+)+/;\n");
+        tree.write("src/a.js", "const re = /(a+)+b/;\n");
         let response = call(
             "regex_le_lint",
             &json!({ "path": tree.path().to_string_lossy(), "severity": "low" }),
@@ -479,7 +479,7 @@ mod tests {
         assert!(!definitions.contains("--"), "{definitions}");
 
         let tree = TempTree::new("mcp-vocabulary");
-        tree.write("a.js", "const re = /(a+)+/;\n");
+        tree.write("a.js", "const re = /(a+)+b/;\n");
         for arguments in [
             json!({}),
             json!({ "paths": [] }),

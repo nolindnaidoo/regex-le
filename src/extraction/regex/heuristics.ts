@@ -93,9 +93,10 @@ const INLINE_FLAGS = 'imsxuUXAJn';
  * has an answer for a pattern written in another language; the pattern
  * text that is reported, and that the ReDoS scan reads, is always the
  * source exactly as written. That is why dropping a possessive `+` is
- * safe: `(a++)+` still reaches the scan as `(a++)+` and is still
- * flagged, which is the conservative answer a tool that cannot prove a
- * pattern safe should give.
+ * safe: `(a++)+b` still reaches the scan as `(a++)+b`, where the decider
+ * reads the possessive as an ordinary `+` and reports it. A possessive
+ * quantifier gives no characters back, so that errs toward reporting —
+ * the direction to err in.
  */
 export function javaScriptEquivalent(pattern: string): string {
 	const characters = Array.from(pattern);

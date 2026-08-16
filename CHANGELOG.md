@@ -9,6 +9,84 @@ This file covers the **VS Code extension**. The Rust CLI in `crate/` is a
 separate product on its own cadence and keeps its own
 [CHANGELOG](crate/CHANGELOG.md).
 
+## [Unreleased]
+
+### Changed
+
+- **ReDoS is now decided by demonstration rather than by shape, and a
+  finding carries the input that proves it.** The old screen flagged the
+  textbook dangerous *shapes* — nested unbounded quantifiers, quantified
+  alternation with overlapping branches. Shape turns out to be a poor
+  predictor in both directions: scored against twenty patterns whose
+  behaviour was **measured** by timing a real engine
+  (`crate/fixtures/redos-truth.json`, harness `scripts/measure-redos.py`),
+  it was right about 6. It called `^[a-z0-9]+(?:-[a-z0-9]+)*$` dangerous,
+  which it is not — every iteration must eat a `-` the inner class cannot
+  produce, so the split is forced — and it missed `(.*a){20}`, which is.
+
+  The pattern is now compiled to an automaton, and that automaton is
+  walked the way a backtracking engine walks one — depth-first, every
+  edge in order, a dead end unwound rather than remembered — while the
+  steps are counted. An attack string is built, pumped at two lengths,
+  and measured against a step budget. **A pattern is reported only when a
+  concrete input drove the count past that budget, and that input is
+  reported with it.** Your pattern is never executed, no clock is read,
+  and the answer is the same on every machine. This scores 20 of 20, no
+  misses and no false alarms, and `ambiguity.test.ts` holds it there.
+
+  **Verdicts you will see change.** `(a+)+`, `([a-z]+)*`, `(a|a)*` and
+  `(a|ab)+` are no longer reported: each succeeds on the first path it
+  tries and never backtracks, which is checkable in any engine — the
+  trailing failure is what makes one exploitable, so `(a+)+b` still is.
+  In the other direction `(.*a){20}` is now reported, and so is
+  `say "([a-z]+)*"`, whose loop sits behind a literal the attack string
+  has to reach first.
+
+  **A loop whose body can match empty is not one of them.** `(\w*)+`,
+  `((a)*)*`, `(.*)+` and `(a*)*` are reported clean: a real engine
+  abandons a loop iteration that consumed nothing, so all four run in
+  microseconds in CPython and V8 at every length. The walk now abandons
+  it too, blocking a state only *while it is on the current path* — a
+  block that never lifted would memoise the search and silence every
+  genuine blow-up instead. Behind an anchor or a failing tail the same
+  bodies are still catastrophic and still reported: `^(\w*)+$` and
+  `(\w*)+@` both exceed a five second budget at 28 characters.
+- **A regex written in a comment or a string is no longer reported.** A
+  JSDoc block explaining a dangerous pattern, a commented-out line, a
+  Python docstring holding an example — all three were extracted and
+  judged, so documenting a hazard failed the build that documented it.
+  Comment state was never tracked across lines, and a block comment that
+  opened and closed on one line only looked handled, because the phantom
+  pattern it produced was invalid and got dropped on the way out.
+  Comments and strings are now lexed per grammar and a candidate whose
+  *start* falls in one is skipped — which keeps `re.compile(r"(a+)+b")`,
+  whose argument is a string and whose call is not. **Only when the
+  language is known**: a document nothing recognises is scanned as
+  written, because a comment rule guessed from the wrong grammar would
+  drop real patterns rather than phantom ones.
+- **A counted minimum no longer builds a prefix to match it.**
+  `a{4000000000}(b+)+c` tried to construct a four-billion-character
+  attack string. The automaton already approximates a repeat past its
+  unroll ceiling, so a prefix that long could not have been honest; past
+  4096 characters the loop is left unreached and the pattern
+  undemonstrated, which is the answer this gives when it cannot show its
+  work.
+- **Silence is no longer ambiguous.** A pattern this cannot read — a
+  backreference or lookaround, which are not regular languages, syntax it
+  does not parse, or an automaton over its size ceiling — is reported as
+  `not decided: <reason>` rather than as no finding. A refusal is not a
+  clearance, and the old wording read as one.
+- `Validate`'s report prints the **witness** alongside the reason, so the
+  verdict can be checked rather than trusted.
+
+### Removed
+
+- **`redos.vulnerableGroups` is gone from `extract_patterns`**, replaced
+  by `witness`. It named the group a shape rule matched, and there is no
+  shape rule any more; the input that demonstrates the finding is both
+  more useful and checkable. The Rust server dropped it in the same
+  change, so the two answer identically as they must.
+
 ## [2.3.0] - 2026-08-14
 
 ### Added
