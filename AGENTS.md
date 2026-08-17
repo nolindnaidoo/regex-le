@@ -300,6 +300,25 @@ push are checked, so history predating the gate is left alone.
 
 ## Release
 
+**Five files carry the extension version, and CI fails unless all five agree.**
+`package.json`, `mcp/package.json`, `server.json` (**both** `.version` and
+`.packages[0].version`), `zed/extension.toml`, and `zed/Cargo.toml` — and
+regenerate `zed/Cargo.lock` with it, or `cargo test --locked` in `zed/` breaks.
+The same CI step pins registry identity: `server.json.name` must equal
+`mcp/package.json.mcpName`, `server.json.packages[0].identifier` must equal
+`mcp/package.json.name`, and `zed/src/lib.rs` must install that npm name.
+
+**This gate is not relaxable.** The MCP registry verifies ownership by reading
+`mcpName` out of the *published* npm package, so a mismatch is only discoverable
+after the version is spent — and a version can never be republished. That is why
+this is a gate rather than a convention. A release that bumps only
+`package.json`, `mcp/package.json` and `server.json` leaves both Zed manifests
+behind and reds the tree; that happened to four repos in one release round.
+
+The crate version is deliberately **outside** this gate — `crate/Cargo.toml`
+moves on its own cadence, and crates sitting at 0.x while the extension family
+sits at 2.x is intended.
+
 1. Bump `version` in package.json and write the CHANGELOG entry. The entry must describe what actually changed, including bug fixes — it ships inside the VSIX and renders on the listing page.
 2. Regenerate the README sections (`coverage:readme`, and `perf:readme` if behaviour changed) and commit them.
 3. CI green on all three OSes. That includes lint, typecheck, coverage, the bundle gate, packaging, integration tests, and the installed-VSIX e2e.
