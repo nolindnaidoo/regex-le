@@ -244,7 +244,7 @@
 		"prepare": "node scripts/install-hooks.js"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "^2.5.7",
+		"@biomejs/biome": "^2.5.8",
 		"@types/mocha": "^10.0.10",
 		"@types/node": "^26.2.0",
 		"@types/vscode": "1.101.0",
@@ -254,7 +254,7 @@
 		"@vscode/vsce": "^3.9.2",
 		"esbuild": "^0.28.2",
 		"mocha": "^11.8.0",
-		"ovsx": "^1.1.0",
+		"ovsx": "^1.1.1",
 		"typescript": "^7.0.2",
 		"vitest": "^4.1.10"
 	}
