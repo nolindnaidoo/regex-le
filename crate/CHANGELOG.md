@@ -9,6 +9,13 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Changed
+
+- A pattern nested more than 255 levels deep is now refused as beyond the
+  parser limit; the limit was 1,000. `regress` 0.12 rejects anything past
+  its own limit of 256, so a pattern between the two would otherwise have
+  been reported as invalid rather than refused by name.
+
 ### Fixed
 
 - Builds on Rust 1.88, the declared `rust-version`. 0.3.1 failed to compile

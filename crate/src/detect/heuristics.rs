@@ -66,11 +66,13 @@ struct Structure {
 const DEEP_GROUP_DEPTH: usize = 32;
 const DEEP_ALTERNATION_BRANCHES: usize = 256;
 
-/// Past this, nothing parses it on any stack. Deep enough that no
-/// hand-written pattern comes close and no generated one this crate has
-/// met does either; a pattern beyond it is refused by name rather than
-/// silently mis-judged.
-pub(crate) const MAX_GROUP_DEPTH: usize = 1_000;
+/// Past this, nothing parses it on any stack. `regress` 0.12 refuses
+/// nesting past 256 of its own levels, and the top-level expression is
+/// one of them, so 255 here is the deepest every mix of groups and
+/// classes still parses. A pattern beyond it is refused by name here
+/// rather than reported as invalid by the engine.
+/// `the_parser_limits_are_inclusive` fails if the engine's limit moves.
+pub(crate) const MAX_GROUP_DEPTH: usize = 255;
 pub(crate) const MAX_ALTERNATION_BRANCHES: usize = 5_000;
 
 /// The stack a deep parse is given: enough for the bounds above three
