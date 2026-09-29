@@ -61,3 +61,10 @@ updates:
       cargo-minor-patch:
         applies-to: version-updates
         update-types: ["minor", "patch"]
+
+  # A new Rust release arrives as a pull request against the pinned toolchain
+  # instead of reddening main through an unpinned stable.
+  - package-ecosystem: "rust-toolchain"
+    directories: ["/crate", "/zed"]
+    schedule:
+      interval: "weekly"

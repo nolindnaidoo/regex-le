@@ -200,18 +200,15 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      # Ubuntu runners ship a Rust toolchain; adding an action to install one
-      # would be a new dependency for a target this already has.
-      - name: Add the wasm target
-        run: rustup target add wasm32-wasip2
-
+      # zed/rust-toolchain.toml pins the toolchain with its wasm target and
+      # components; the runner's rustup installs them on first use.
       - name: Build
         working-directory: zed
         run: cargo build --release --target wasm32-wasip2 --locked
 
       - name: Clippy
         working-directory: zed
-        run: rustup component add clippy && cargo clippy --release --target wasm32-wasip2 --locked -- -D warnings
+        run: cargo clippy --release --target wasm32-wasip2 --locked -- -D warnings
 
       - name: Formatting
         working-directory: zed
