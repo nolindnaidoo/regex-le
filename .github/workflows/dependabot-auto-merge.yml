@@ -1,16 +1,11 @@
-# Auto-merge for Dependabot PRs. Identical in every *-le repo.
+# Merges a Dependabot pull request once every other check on its head commit
+# has passed. Majors wait for a person; everything else, runtime dependencies
+# included, is gated by CI rather than by a human. A merge publishes nothing:
+# extension and crate releases are manual, and a site deploy is the same push
+# a person's merge would make.
 #
-# main has no required status checks by design — direct pushes must stay
-# frictionless — so GitHub's native auto-merge would merge these the instant
-# they open, before CI has even started. This workflow does the gating itself:
-# it waits for the CI run on the PR head to conclude and merges only on success.
-#
-# Scope is deliberately narrow. Runtime dependencies are bundled into
-# dist/extension.js and ship to every install, so they are never merged
-# unreviewed. Majors are never merged unreviewed either.
-#
-# Workflow actions are in scope. They run in CI, never reach a user, and every
-# one is pinned to a commit SHA that Dependabot rewrites here.
+# The same file in every repository. letools-site's check-fleet holds the
+# sixteen tool repos to it byte for byte.
 name: Dependabot auto-merge
 
 on:
@@ -20,14 +15,21 @@ on:
 permissions:
   contents: write
   pull-requests: write
+  checks: read
+  statuses: read
+
+# A rebase pushes a new head; the run for the old one has nothing left to do.
+concurrency:
+  group: dependabot-auto-merge-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
 
 jobs:
   auto-merge:
-    if: github.actor == 'dependabot[bot]'
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
+    if: github.event.pull_request.user.login == 'dependabot[bot]'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
     steps:
-      - name: Fetch Dependabot metadata
+      - name: Read the update metadata
         id: meta
         uses: dependabot/fetch-metadata@25dd0e34f4fe68f24cc83900b1fe3fe149efef98 # v3.1.0
         with:
@@ -37,61 +39,62 @@ jobs:
         id: gate
         env:
           UPDATE_TYPE: ${{ steps.meta.outputs.update-type }}
-          DEP_TYPE: ${{ steps.meta.outputs.dependency-type }}
           ECOSYSTEM: ${{ steps.meta.outputs.package-ecosystem }}
         run: |
+          # Actions pinned to a commit SHA carry no semver, so Dependabot
+          # reports no update type for them. Refusing those skipped every
+          # action bump in every repository.
           eligible=false
-          small=false
-          if [ "$UPDATE_TYPE" = "version-update:semver-patch" ] || \
-             [ "$UPDATE_TYPE" = "version-update:semver-minor" ]; then
-            small=true
-          fi
-          # Every action reports as direct:production — the ecosystem has no
-          # dev/prod split — so the devDependency arm below can never admit one.
-          # That left every actions bump open forever while this run still
-          # exited green, which is why nothing looked broken.
-          if [ "$small" = true ] && [ "$ECOSYSTEM" = "github_actions" ]; then
-            eligible=true
-          fi
-          if [ "$small" = true ] && [ "$DEP_TYPE" = "direct:development" ]; then
-            eligible=true
-          fi
+          case "$UPDATE_TYPE" in
+            version-update:semver-patch|version-update:semver-minor) eligible=true ;;
+            "") [ "$ECOSYSTEM" = "github_actions" ] && eligible=true ;;
+          esac
+          echo "ecosystem=$ECOSYSTEM update-type=${UPDATE_TYPE:-none} eligible=$eligible"
           echo "eligible=$eligible" >> "$GITHUB_OUTPUT"
-          echo "ecosystem:       $ECOSYSTEM"
-          echo "dependency-type: $DEP_TYPE"
-          echo "update-type:     $UPDATE_TYPE"
-          echo "eligible:        $eligible"
 
-      # Poll the CI run for this PR head until it concludes. Merging before CI
-      # finishes is the whole failure mode this workflow exists to avoid.
-      - name: Wait for CI to conclude
+      - name: Wait for every other check to pass
         if: steps.gate.outputs.eligible == 'true'
-        id: ci
+        id: checks
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          SHA: ${{ github.event.pull_request.head.sha }}
           REPO: ${{ github.repository }}
+          SHA: ${{ github.event.pull_request.head.sha }}
+          SELF: ${{ github.job }}
         run: |
-          for i in $(seq 1 60); do
-            runs=$(gh api "repos/$REPO/actions/runs?head_sha=$SHA" \
-                   --jq '[.workflow_runs[] | select(.name == "CI")]')
-            total=$(echo "$runs" | jq 'length')
-            if [ "$total" = "0" ]; then sleep 20; continue; fi
-            pending=$(echo "$runs" | jq '[.[] | select(.status != "completed")] | length')
-            if [ "$pending" = "0" ]; then
-              bad=$(echo "$runs" | jq '[.[] | select(.conclusion != "success")] | length')
-              if [ "$bad" = "0" ]; then echo "result=success" >> "$GITHUB_OUTPUT"; exit 0; fi
+          # Every check run and commit status on the head, this job excluded.
+          # A workflow can start late, so "all settled" has to hold on two
+          # consecutive polls before it counts.
+          settled_once=false
+          for i in $(seq 1 330); do
+            runs=$(gh api --paginate "repos/$REPO/commits/$SHA/check-runs?per_page=100" \
+              --jq ".check_runs[] | select(.name != \"$SELF\") | {status, conclusion}" | jq -s .)
+            statuses=$(gh api "repos/$REPO/commits/$SHA/status" --jq '[.statuses[] | .state]')
+            total=$(jq 'length' <<<"$runs")
+            pending=$(( $(jq '[.[] | select(.status != "completed")] | length' <<<"$runs") \
+                      + $(jq '[.[] | select(. == "pending")] | length' <<<"$statuses") ))
+            bad=$(( $(jq '[.[] | select(.status == "completed" and (.conclusion | IN("success","neutral","skipped") | not))] | length' <<<"$runs") \
+                  + $(jq '[.[] | select(. == "failure" or . == "error")] | length' <<<"$statuses") ))
+            if [ "$bad" -gt 0 ]; then
+              echo "::error::A check on $SHA did not pass; leaving the pull request open."
               echo "result=failure" >> "$GITHUB_OUTPUT"
-              echo "::error::CI did not succeed for $SHA; leaving the PR open."
               exit 0
+            fi
+            if [ "$total" -gt 0 ] && [ "$pending" -eq 0 ]; then
+              if [ "$settled_once" = true ]; then
+                echo "result=success" >> "$GITHUB_OUTPUT"
+                exit 0
+              fi
+              settled_once=true
+            else
+              settled_once=false
             fi
             sleep 20
           done
+          echo "::error::Checks on $SHA did not settle in time; leaving the pull request open."
           echo "result=timeout" >> "$GITHUB_OUTPUT"
-          echo "::error::Timed out waiting for CI on $SHA; leaving the PR open."
 
       - name: Merge
-        if: steps.gate.outputs.eligible == 'true' && steps.ci.outputs.result == 'success'
+        if: steps.gate.outputs.eligible == 'true' && steps.checks.outputs.result == 'success'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR: ${{ github.event.pull_request.html_url }}
@@ -99,7 +102,4 @@ jobs:
 
       - name: Explain a skip
         if: steps.gate.outputs.eligible != 'true'
-        run: |
-          echo "Left for manual review. Merged unattended: patch and minor"
-          echo "workflow-action bumps, and patch/minor devDependencies. Runtime"
-          echo "dependencies bundle into the shipped VSIX, and majors need a human."
+        run: echo "Major update; left open for a person to review."
