@@ -1,0 +1,7 @@
+# Pinned with the crate so a new Rust release reaches the Zed build as a
+# Dependabot pull request rather than as a red main. The runner's rustup
+# installs this toolchain, target and components on first use.
+[toolchain]
+channel = "1.98.1"
+components = ["rustfmt", "clippy"]
+targets = ["wasm32-wasip2"]
