@@ -174,37 +174,37 @@ static CSHARP_STATIC: LazyLock<Regex> = LazyLock::new(|| {
     ))
 });
 
-const PYTHON_FORM: CallForm = CallForm {
+static PYTHON_FORM: CallForm = CallForm {
     name: "python",
     matcher: &PYTHON,
     delimited: false,
 };
-const RUST_FORM: CallForm = CallForm {
+static RUST_FORM: CallForm = CallForm {
     name: "rust",
     matcher: &RUST,
     delimited: false,
 };
-const GO_FORM: CallForm = CallForm {
+static GO_FORM: CallForm = CallForm {
     name: "go",
     matcher: &GO,
     delimited: false,
 };
-const JAVA_FORM: CallForm = CallForm {
+static JAVA_FORM: CallForm = CallForm {
     name: "java",
     matcher: &JAVA,
     delimited: false,
 };
-const RUBY_FORM: CallForm = CallForm {
+static RUBY_FORM: CallForm = CallForm {
     name: "ruby",
     matcher: &RUBY,
     delimited: false,
 };
-const PHP_FORM: CallForm = CallForm {
+static PHP_FORM: CallForm = CallForm {
     name: "php",
     matcher: &PHP,
     delimited: true,
 };
-const CSHARP_FORMS: [CallForm; 2] = [
+static CSHARP_FORMS: [CallForm; 2] = [
     CallForm {
         name: "csharp",
         matcher: &CSHARP_NEW,
