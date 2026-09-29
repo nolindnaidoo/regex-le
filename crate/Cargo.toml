@@ -64,7 +64,7 @@ fancy-regex = "0.19"
 # That is the line between the half of this extension that is ported and
 # the half that is not: matching with JavaScript semantics is the tester,
 # and the tester is not here. See SPEC.md.
-regress = "0.11"
+regress = "0.12"
 # The walker. `ignore` is ripgrep's, so "what this tool walks" and "what
 # ripgrep walks" are the same answer — which is the answer a person
 # auditing a repository already has in their head.
