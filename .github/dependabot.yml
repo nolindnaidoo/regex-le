@@ -50,3 +50,14 @@ updates:
     groups:
       actions:
         patterns: ["*"]
+
+  # The crate and the Zed extension are Rust, and nothing above updates them.
+  - package-ecosystem: "cargo"
+    directories: ["/crate", "/zed"]
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    groups:
+      cargo-minor-patch:
+        applies-to: version-updates
+        update-types: ["minor", "patch"]
