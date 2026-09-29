@@ -7,6 +7,14 @@ this repository release on their own cadence.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- Builds on Rust 1.88, the declared `rust-version`. 0.3.1 failed to compile
+  there: the call-form tables were `const` items holding references to
+  lazily built regexes, which 1.88 rejects and later compilers accept.
+
 ## [0.3.1] - 2026-08-16
 
 ### Fixed
