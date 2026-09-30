@@ -140,7 +140,7 @@
 					"flags": "m",
 					"line": 12,
 					"column": 19,
-					"match": "new RegExp(`^v(\\d+)$`, `m`)",
+					"match": "new RegExp(`^v(\\\\d+)$`, `m`)",
 					"redos": {
 						"detected": false,
 						"severity": "low",
