@@ -158,3 +158,22 @@ describe('patterns javascript cannot parse', () => {
 		expect(patterns('re.compile(r"")', 'python')).toEqual([]);
 	});
 });
+
+describe('static template constructors', () => {
+	it('reads a template with no substitution, and String.raw verbatim', () => {
+		const text =
+			'new RegExp(`^(a+)+$`, `g`);\n' +
+			'new RegExp(String.raw`\\d+\\.\\d+`);\n' +
+			'new RegExp(`x${y}z`);\n' +
+			'RegExp(`multi\nline`);\n' +
+			'new RegExp(`a\\`b`);\n';
+		expect(
+			extractRegexPatterns(text, 'javascript').map((p) => [p.pattern, p.flags]),
+		).toEqual([
+			['^(a+)+$', 'g'],
+			['\\d+\\.\\d+', ''],
+			['multi\nline', ''],
+			['a`b', ''],
+		]);
+	});
+});

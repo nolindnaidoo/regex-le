@@ -41,11 +41,15 @@ const LITERAL = new RegExp(
 
 // Constructor: new RegExp('pattern', 'flags') / RegExp("pattern") with
 // proper escaped-quote handling in both arguments. Whitespace (including
-// newlines) allowed everywhere a JS parser allows it.
+// newlines) allowed everywhere a JS parser allows it. A template literal
+// with no `${` is as static as a string and is read the same way, and
+// String.raw`…` verbatim; a substitution makes the value unknowable here.
+const TEMPLATE_BODY = String.raw`(?:[^\`\\$]|\\[\s\S]|\$(?!\{))*`;
 const CONSTRUCTOR = new RegExp(
 	'(?<![.\\w$])(?:new\\s+)?RegExp\\s*\\(\\s*' +
-		`(?:'(?<sq>(?:[^'\\\\\\r\\n]|\\\\.)*)'|"(?<dq>(?:[^"\\\\\\r\\n]|\\\\.)*)")` +
-		`\\s*(?:,\\s*(?:'(?<sqf>[${VALID_FLAGS}]*)'|"(?<dqf>[${VALID_FLAGS}]*)")\\s*)?,?\\s*\\)`,
+		`(?:'(?<sq>(?:[^'\\\\\\r\\n]|\\\\.)*)'|"(?<dq>(?:[^"\\\\\\r\\n]|\\\\.)*)"` +
+		`|String\\.raw\\s*\\\`(?<raw>${TEMPLATE_BODY})\\\`|\\\`(?<bt>${TEMPLATE_BODY})\\\`)` +
+		`\\s*(?:,\\s*(?:'(?<sqf>[${VALID_FLAGS}]*)'|"(?<dqf>[${VALID_FLAGS}]*)"|\\\`(?<btf>[${VALID_FLAGS}]*)\\\`)\\s*)?,?\\s*\\)`,
 	'dg',
 );
 
@@ -287,13 +291,15 @@ function scanConstructors(
 			continue;
 		}
 		const groups = m.groups ?? {};
-		const body = groups.sq ?? groups.dq ?? '';
-		const flags = groups.sqf ?? groups.dqf ?? '';
+		const body = groups.sq ?? groups.dq ?? groups.bt ?? groups.raw ?? '';
+		const flags = groups.sqf ?? groups.dqf ?? groups.btf ?? '';
 		if (body.length === 0) {
 			continue;
 		}
-		// The string literal escapes a level: '\\d' is the pattern \d.
-		const pattern = unescapeStringLiteral(body);
+		// A string or template literal escapes a level: '\\d' is the pattern
+		// \d. String.raw does not, which is why it is written.
+		const pattern =
+			groups.raw === undefined ? unescapeStringLiteral(body) : body;
 		if (!compiles(pattern, flags)) {
 			continue;
 		}
@@ -406,5 +412,5 @@ function stripPhpDelimiters(value: string): string | undefined {
  * match the same characters the string escape would produce.
  */
 function unescapeStringLiteral(s: string): string {
-	return s.replace(/\\(\\|'|")/g, '$1');
+	return s.replace(/\\(\\|'|"|`|\$)/g, '$1');
 }

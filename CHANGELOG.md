@@ -9,6 +9,17 @@ This file covers the **VS Code extension**. The Rust CLI in `crate/` is a
 separate product on its own cadence and keeps its own
 [CHANGELOG](crate/CHANGELOG.md).
 
+## [Unreleased]
+
+### Added
+
+- **`RegExp` constructors with a template literal are read.**
+  `` new RegExp(`^(a+)+$`, `g`) `` was invisible because only quoted
+  strings were matched. A template with no `${…}` is as static as a string
+  and is read the same way; `` String.raw`\d+` `` is read verbatim, as its
+  author meant; a template with a substitution is still skipped, because
+  its value is not in the file.
+
 ## [2.4.0] - 2026-08-16
 
 ### Changed
