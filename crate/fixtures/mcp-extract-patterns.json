@@ -106,7 +106,7 @@
 					{
 						"pattern": "^v(\\d+)$",
 						"flags": "m",
-						"match": "new RegExp(`^v(\\d+)$`, `m`)",
+						"match": "new RegExp(`^v(\\\\d+)$`, `m`)",
 						"line": 12,
 						"column": 19,
 						"redos": {

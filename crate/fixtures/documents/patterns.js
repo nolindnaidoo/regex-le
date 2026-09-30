@@ -9,10 +9,10 @@ const charClass = /[abc]/gim;
 const ctor = new RegExp('\\d{3}-\\d{4}', 'g');
 const ctorNoFlags = new RegExp('hello');
 const bare = RegExp('world', 'i');
-const templated = new RegExp(`^v(\d+)$`, `m`);
+const templated = new RegExp(`^v(\\d+)$`, `m`);
 const rawCtor = new RegExp(String.raw`\bid=\d+`);
 // A substitution makes the pattern unknowable; this is not extracted
-const dynamic = new RegExp(`${prefix}-\d+`);
+const dynamic = new RegExp(`${prefix}-\\d+`);
 
 // Duplicate pattern on a different line — dedup drops this location
 const digitsAgain = /\d+/g;
