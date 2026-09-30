@@ -134,7 +134,7 @@ What is deliberately **not** extracted:
 
 - Division, dates, and filesystem paths (`a / b`, `10/29/2025`, `/usr/local/bin`): a `/` preceded by an identifier, number, `)`, `]`, `.`, or another `/` is not treated as a regex — after keywords like `return`, it is. That question is only asked where a bare `/…/` is legal.
 - Candidates that are not a well-formed regular expression in any of these languages, or with invalid/duplicate flags. Another language's spelling is not a syntax error: `re.compile(r'(?P<word>\w+)+@')` is reported as written, and still flagged.
-- Constructor calls whose pattern argument is a variable or template literal (only literal string arguments are visible to a text scanner).
+- Constructor calls whose pattern argument is a variable, or a template literal with a `${…}` substitution. String literals, static template literals and `` String.raw`…` `` are read.
 - Flags, on anything but a JavaScript literal or constructor: every other language sets them with constants, builder methods or an inline `(?i)` rather than a string argument.
 - **Anything written in a comment or a string.** A JSDoc block explaining a hazard, a commented-out line, a Python docstring with an example — none of them is code, and reporting one fails a build over a sentence. The rule is about where a candidate *starts*, so `re.compile(r"(a+)+b")` keeps its quoted argument while a docstring holding that whole line is prose. Only when the language is known: a document nothing recognises is scanned as written, because a comment rule guessed from the wrong grammar would drop real patterns instead of phantom ones.
 
@@ -257,12 +257,12 @@ a build only tells you how busy the runner was.
 <!-- coverage:start -->
 | Metric | Coverage |
 | --- | --- |
-| Statements | 92.32% |
-| Branches | 79.83% |
+| Statements | 92.33% |
+| Branches | 79.93% |
 | Functions | 97.94% |
-| Lines | 94.56% |
+| Lines | 94.57% |
 
-260 test cases across 17 files, plus an integration suite that runs
+261 test cases across 17 files, plus an integration suite that runs
 in a real VS Code extension host and an end-to-end test that installs the
 built `.vsix` into a clean profile.
 

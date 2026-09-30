@@ -335,7 +335,7 @@ Order matters beyond this repo: npm must be published *before* any Zed registry 
 
 - Extraction is lexing by heuristic, not a JS parser: a slash inside a string can false-positive when its context looks expression-like (`https://…` and division chains are specifically rejected).
 - Comments and strings are masked per grammar (`mask.ts`), so a documented example is not a finding — but **only when the language is known**. A document nothing recognises is scanned as written, because a comment rule guessed from the wrong grammar would drop real patterns rather than phantom ones.
-- Constructor extraction only sees literal string arguments — variables and template literals are invisible.
+- Constructor extraction reads string literals, template literals with no `${`, and `` String.raw`…` `` (verbatim); a variable or a substitution is invisible to a text scanner.
 - Duplicate pattern+flags pairs are reported once (the location shown is the first occurrence of that form).
 - The ReDoS decider searches for a witness; finding none is not a proof that none exists. What it cannot read — a backreference, lookaround, unparsed syntax, an automaton over its size ceiling — is reported as undecided rather than clean.
 - Performance scores are throughput heuristics; memory is not measured (always reported as unmeasured).

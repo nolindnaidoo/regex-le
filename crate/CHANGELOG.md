@@ -7,6 +7,17 @@ this repository release on their own cadence.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- **`RegExp` constructors with a template literal are read.**
+  `` new RegExp(`^(a+)+$`, `g`) `` was invisible because only quoted
+  strings were matched. A template with no `${…}` is as static as a string
+  and is read the same way; `` String.raw`\d+` `` is read verbatim, as its
+  author meant; a template with a substitution is still skipped, because
+  its value is not in the file.
+
 ## [0.3.2] - 2026-09-29
 
 ### Changed

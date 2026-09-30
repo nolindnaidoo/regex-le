@@ -61,9 +61,13 @@ static LITERAL: LazyLock<Regex> = LazyLock::new(|| {
 /// than reporting a clean file.
 const BACKTRACK_LIMIT: usize = 100_000_000;
 
+/// A template literal's body with no `${`: as static as a string. A
+/// substitution makes the value unknowable here, so it does not match.
+const TEMPLATE_BODY: &str = r"(?:[^`\\$]|\\[\s\S]|\$(?!\{))*";
+
 static CONSTRUCTOR: LazyLock<Regex> = LazyLock::new(|| {
     build(&format!(
-        r#"(?<![.\w$])(?:new[{SPACE}]+)?RegExp[{SPACE}]*\([{SPACE}]*(?:'(?<sq>(?:[^'\\\r\n]|\\.)*)'|"(?<dq>(?:[^"\\\r\n]|\\.)*)")[{SPACE}]*(?:,[{SPACE}]*(?:'(?<sqf>[{VALID_FLAGS}]*)'|"(?<dqf>[{VALID_FLAGS}]*)")[{SPACE}]*)?,?[{SPACE}]*\)"#
+        r#"(?<![.\w$])(?:new[{SPACE}]+)?RegExp[{SPACE}]*\([{SPACE}]*(?:'(?<sq>(?:[^'\\\r\n]|\\.)*)'|"(?<dq>(?:[^"\\\r\n]|\\.)*)"|String\.raw[{SPACE}]*`(?<raw>{TEMPLATE_BODY})`|`(?<bt>{TEMPLATE_BODY})`)[{SPACE}]*(?:,[{SPACE}]*(?:'(?<sqf>[{VALID_FLAGS}]*)'|"(?<dqf>[{VALID_FLAGS}]*)"|`(?<btf>[{VALID_FLAGS}]*)`)[{SPACE}]*)?,?[{SPACE}]*\)"#
     ))
 });
 
@@ -252,7 +256,7 @@ fn unescape_string_literal(value: &str) -> String {
     let mut out = String::with_capacity(value.len());
     let mut chars = value.chars().peekable();
     while let Some(character) = chars.next() {
-        if character == '\\' && matches!(chars.peek(), Some('\\' | '\'' | '"')) {
+        if character == '\\' && matches!(chars.peek(), Some('\\' | '\'' | '"' | '`' | '$')) {
             out.push(chars.next().expect("peeked"));
             continue;
         }
@@ -371,10 +375,13 @@ fn scan_constructors(
         if mask::is_prose(prose, whole.start()) {
             continue;
         }
+        let raw = captures.name("raw").map(|found| found.as_str());
         let body = captures
             .name("sq")
             .or_else(|| captures.name("dq"))
+            .or_else(|| captures.name("bt"))
             .map(|found| found.as_str())
+            .or(raw)
             .unwrap_or_default();
         if body.is_empty() {
             continue;
@@ -382,9 +389,15 @@ fn scan_constructors(
         let flags = captures
             .name("sqf")
             .or_else(|| captures.name("dqf"))
+            .or_else(|| captures.name("btf"))
             .map(|found| found.as_str())
             .unwrap_or_default();
-        let pattern = unescape_string_literal(body);
+        // String.raw does not escape a level, which is why it is written.
+        let pattern = if raw.is_some() {
+            body.to_string()
+        } else {
+            unescape_string_literal(body)
+        };
         // A constructor argument is unambiguously a pattern, so one this
         // cannot judge is refused by name rather than dropped.
         if !heuristics::is_within_parser_limits(&pattern) {
@@ -551,6 +564,26 @@ mod tests {
         assert_eq!(
             values("new RegExp(\n  'a+',\n  'g',\n)"),
             [("a+".into(), "g".into())]
+        );
+    }
+
+    /// A template literal with no substitution is as static as a string;
+    /// `String.raw` is read verbatim, and a `${…}` is not a pattern here.
+    #[test]
+    fn a_static_template_constructor_is_found() {
+        let text = "new RegExp(`^(a+)+$`, `g`);\n\
+                    new RegExp(String.raw`\\d+\\.\\d+`);\n\
+                    new RegExp(`x${y}z`);\n\
+                    RegExp(`multi\nline`);\n\
+                    new RegExp(`a\\`b`);\n";
+        assert_eq!(
+            values(text),
+            [
+                ("^(a+)+$".into(), "g".into()),
+                ("\\d+\\.\\d+".into(), String::new()),
+                ("multi\nline".into(), String::new()),
+                ("a`b".into(), String::new()),
+            ]
         );
     }
 

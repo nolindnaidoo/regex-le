@@ -252,6 +252,15 @@ const LANGUAGES: readonly LanguageSpec[] = [
 			(p) => (p.includes('/') ? undefined : `const re = /${p}/g;`),
 			(p) => `const re = new RegExp('${escapeForQuotes(p, "'")}');`,
 			(p) => `const re = RegExp("${escapeForQuotes(p, '"')}", "i");`,
+			// Templates: a static one escapes like a string, String.raw does
+			// not, and a `${` makes it unknowable to both servers.
+			(p) =>
+				`const re = new RegExp(\`${escapeForQuotes(p, '`').replaceAll('$', '\\$')}\`, \`g\`);`,
+			(p) =>
+				p.includes('`') || p.endsWith('\\')
+					? undefined
+					: `const re = new RegExp(String.raw\`${p.replaceAll('\n', '')}\`);`,
+			(p) => `const re = new RegExp(\`\${prefix}${escapeForQuotes(p, '`')}\`);`,
 		],
 	},
 	{

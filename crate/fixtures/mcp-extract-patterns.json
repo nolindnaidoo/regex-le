@@ -102,13 +102,37 @@
 							"severity": "low",
 							"reason": "no input was found that drives this into backtracking"
 						}
+					},
+					{
+						"pattern": "^v(\\d+)$",
+						"flags": "m",
+						"match": "new RegExp(`^v(\\d+)$`, `m`)",
+						"line": 12,
+						"column": 19,
+						"redos": {
+							"detected": false,
+							"severity": "low",
+							"reason": "no input was found that drives this into backtracking"
+						}
+					},
+					{
+						"pattern": "\\bid=\\d+",
+						"flags": "",
+						"match": "new RegExp(String.raw`\\bid=\\d+`)",
+						"line": 13,
+						"column": 17,
+						"redos": {
+							"detected": false,
+							"severity": "low",
+							"reason": "no input was found that drives this into backtracking"
+						}
 					}
 				]
 			},
 			"diagnostics": [],
 			"meta": {
 				"tool": "extract_patterns",
-				"count": 8,
+				"count": 10,
 				"truncated": false
 			}
 		}
