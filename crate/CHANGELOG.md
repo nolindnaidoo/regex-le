@@ -7,7 +7,7 @@ this repository release on their own cadence.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.4.1] - 2026-10-03
 
 ### Fixed
 
@@ -345,6 +345,7 @@ flag and no tool schema offers text to match against.
 extension's wording and it ports with the code. Silence is not a
 clearance, and the help text says so rather than implying otherwise.
 
+[0.4.1]: https://crates.io/crates/regex-le/0.4.1
 [0.4.0]: https://crates.io/crates/regex-le/0.4.0
 [0.3.2]: https://crates.io/crates/regex-le/0.3.2
 [0.2.2]: https://crates.io/crates/regex-le/0.2.2
