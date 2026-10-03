@@ -65,6 +65,24 @@ describe('mcp/README.md documents the tools this server offers', () => {
 				expect([...documented].sort()).toEqual([...declared].sort());
 			});
 
+			it('names every value an argument offers', () => {
+				const properties = tool.inputSchema.properties as Record<
+					string,
+					{ enum?: readonly string[] }
+				>;
+				for (const [name, property] of Object.entries(properties)) {
+					if (property.enum === undefined) continue;
+					const row =
+						section.match(new RegExp(`^\\| \`${name}\` \\|.*$`, 'm'))?.[0] ??
+						'';
+					for (const value of property.enum) {
+						expect(row, `${name} does not name \`${value}\``).toContain(
+							`\`${value}\``,
+						);
+					}
+				}
+			});
+
 			it('marks the required arguments as required, and nothing else', () => {
 				const required = [
 					...section.matchAll(
