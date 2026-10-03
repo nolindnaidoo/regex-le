@@ -15,8 +15,9 @@
   </a>
 </p>
 
-An [MCP](https://modelcontextprotocol.io) server that extracts URLs from
-documentation, configuration and code — the extraction engine behind the
+An [MCP](https://modelcontextprotocol.io) server that extracts the regular-expression
+patterns in source code and says which can be driven into catastrophic backtracking — the
+engine behind the
 [Regex-LE](https://letools.dev/tools/regex-le)
 editor extension, exposed as a tool an agent can call.
 
@@ -89,24 +90,56 @@ If that prints the tool name, the server works.
 
 | argument | type | |
 |---|---|---|
-| `content` | string | **required.** The text to scan. |
-| `format` | string | The language: `markdown`, `yaml`, `json`, `typescript`… Required unless `filename` is given. |
-| `filename` | string | Used to infer `format` when it is absent — `README.md` resolves to `markdown`. |
-| `dedupe` | boolean | Collapse repeats. Default `false`. |
+| `content` | string | **required.** The source text to scan. |
+| `format` | string | The language, so only its own spellings are looked for: `javascript`, `typescript`, `python`, `rust`, `go`, `java`, `ruby`, `php` or `csharp`; common extensions and aliases are accepted. Optional — with none, every spelling is looked for, which finds more and mistakes a path for a pattern more often. |
+| `filename` | string | Used to infer `format` when it is absent — `validate.py` resolves to `python`. |
 | `maxResults` | number | Default `500`, ceiling `5000`. |
 
-Returns each URL with its protocol and 1-based line and column, plus
-`meta.truncated` so a capped result is never mistaken for a complete one.
+Returns each distinct pattern-and-flags pair once, at its first
+occurrence, with the source text it was written as (`match`), its 1-based
+line and column, and a ReDoS verdict: whether an input was found that drives
+the pattern into catastrophic backtracking, how severe that is, why, and —
+when one was found — the input itself (`witness`). `meta.truncated` says
+whether a capped result dropped anything.
 
 ```json
 {
   "ok": true,
   "data": {
     "patterns": [
-      { "value": "https://example.com/guide", "protocol": "https", "line": 2, "column": 15 }
+      {
+        "pattern": "^(a+)+$",
+        "flags": "",
+        "match": "/^(a+)+$/",
+        "line": 1,
+        "column": 15,
+        "redos": {
+          "detected": true,
+          "severity": "high",
+          "reason": "exponential backtracking: 2000000 steps on 41 characters, against 114717 on 20",
+          "witness": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\u0000"
+        }
+      },
+      {
+        "pattern": "[0-9]+",
+        "flags": "g",
+        "match": "new RegExp(\"[0-9]+\", \"g\")",
+        "line": 2,
+        "column": 12,
+        "redos": {
+          "detected": false,
+          "severity": "low",
+          "reason": "no input was found that drives this into backtracking"
+        }
+      }
     ]
   },
-  "meta": { "count": 1, "truncated": false }
+  "diagnostics": [],
+  "meta": {
+    "tool": "extract_patterns",
+    "count": 2,
+    "truncated": false
+  }
 }
 ```
 
@@ -150,7 +183,7 @@ Architecture. [nolindnaidoo.com](https://nolindnaidoo.com) ·
 
 Twelve Rust tools built the same way: small, single-purpose, and driven by a
 machine rather than a person. pixelcoords and pixelactions make up one loop —
-pixelcoords answers *where*, pixelactions *acts* there. The nine LE crates are
+pixelcoords answers *where*, pixelactions *acts* there. The ten LE crates are
 the terminal half of the extensions they sit in: the same detection, held to
 the extension's own corpus, and an exit code instead of a results editor.
 
@@ -166,6 +199,7 @@ the extension's own corpus, and an exit code instead of a results editor.
 | **[numbers-le](https://github.com/nolindnaidoo/numbers-le/tree/main/crate)** | Find every hardcoded number in a codebase so a person can check them | [crates.io](https://crates.io/crates/numbers-le) |
 | **[envsync-le](https://github.com/nolindnaidoo/envsync-le/tree/main/crate)** | Compare the dotenv files in a tree and say which keys are missing from which | [crates.io](https://crates.io/crates/envsync-le) |
 | **[colors-le](https://github.com/nolindnaidoo/colors-le/tree/main/crate)** | Find every colour in a codebase, and say which are not in your palette | [crates.io](https://crates.io/crates/colors-le) |
+| **[dates-le](https://github.com/nolindnaidoo/dates-le/tree/main/crate)** | Extract every date and timestamp, and the exact instant each one resolves to | [crates.io](https://crates.io/crates/dates-le) |
 | **[scrape-le](https://github.com/nolindnaidoo/scrape-le/tree/main/crate)** | Check whether a page is scrapeable before the scraper is written | [crates.io](https://crates.io/crates/scrape-le) |
 
 ## Licence
