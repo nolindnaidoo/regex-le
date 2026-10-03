@@ -20,18 +20,17 @@ const MAX_MAX_RESULTS: usize = 5000;
 pub(crate) fn definition() -> Value {
     json!({
         "name": "extract_patterns",
-        "description": "Find every regular expression in a document — JavaScript and \
-                        TypeScript literals and RegExp constructors, and the call sites \
-                        Python, Rust, Go, Java, Ruby, PHP and C# write a pattern at — with \
-                        1-based line and column and a ReDoS verdict for each. A pattern is \
-                        reported only when an input was found that demonstrably drives it \
-                        into exponential backtracking, and that input comes back as \
-                        `witness`. Your pattern is never run. Silence is not a clearance: \
-                        what could not be decided says so.",
+        "description": "Extract every regular expression from source code — JavaScript and \
+                        TypeScript literals and RegExp constructors, and the call sites Python, \
+                        Rust, Go, Java, Ruby, PHP and C# write a pattern at — with its flags, \
+                        1-based position, and a ReDoS verdict saying whether the pattern can be \
+                        driven into catastrophic backtracking. Duplicate pattern-and-flags pairs \
+                        are reported once, at first occurrence: the output is a pattern list, not \
+                        an occurrence list.",
         "inputSchema": {
             "type": "object",
             "properties": {
-                "content": { "type": "string", "description": "The document text to scan." },
+                "content": { "type": "string", "description": "The source text to scan." },
                 "format": {
                     "type": "string",
                     "description": format!(

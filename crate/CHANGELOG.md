@@ -7,6 +7,16 @@ this repository release on their own cadence.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- **The `extract_patterns` MCP tool described its output wrongly.** It said a
+  pattern is reported only when an input was found that drives it into
+  exponential backtracking; every pattern is reported, each with a ReDoS
+  verdict. The description and the `content` argument's now match the npm
+  server's word for word, and CI fails when the two servers' definitions differ.
+
 ## [0.4.0] - 2026-09-30
 
 ### Added

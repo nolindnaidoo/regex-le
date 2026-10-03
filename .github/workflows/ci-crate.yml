@@ -21,6 +21,7 @@ on:
       - 'crate/**'
       - 'src/extraction/**'
       - 'src/mcp/**'
+      - 'scripts/check-mcp-definition.ts'
       - 'scripts/check-extraction-parity.ts'
       - '.github/workflows/ci-crate.yml'
       # The policy job greps every *.md, and in the crate-only repos holds
@@ -39,6 +40,7 @@ on:
       - 'crate/**'
       - 'src/extraction/**'
       - 'src/mcp/**'
+      - 'scripts/check-mcp-definition.ts'
       - 'scripts/check-extraction-parity.ts'
       - '.github/workflows/ci-crate.yml'
       # The policy job greps every *.md, and in the crate-only repos holds
@@ -395,6 +397,9 @@ jobs:
         env:
           DIFFERENTIAL_SEED: '20260812'
         run: bun scripts/check-extraction-differential.ts
+      - name: Both servers define the shared tool identically
+        working-directory: .
+        run: bun scripts/check-mcp-definition.ts
 
   # A standing net over the pure layer, time-boxed rather than run to
   # convergence. A ReDoS scanner that can itself be driven into
