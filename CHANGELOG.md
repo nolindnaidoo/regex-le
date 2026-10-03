@@ -9,6 +9,23 @@ This file covers the **VS Code extension**. The Rust CLI in `crate/` is a
 separate product on its own cadence and keeps its own
 [CHANGELOG](crate/CHANGELOG.md).
 
+## [Unreleased]
+
+### Fixed
+
+- **The npm README described a URL extractor.** Its opening line, its argument
+  table, what the tool returns and its example were all copied from `urls-le-mcp`
+  when the package was created. It now documents `extract_patterns` as the code defines
+  it, and the example is an answer the server actually gives.
+- The npm README's list of the family's Rust tools left out `dates-le`.
+
+### Added
+
+- `src/mcp/readme.test.ts` holds the npm README to the tool it documents: the
+  heading names the tool, the argument table lists exactly the schema's
+  arguments, the required ones are marked, the example is this tool's answer,
+  and the opening sentence names what the tool works on.
+
 ## [2.5.0] - 2026-09-30
 
 ### Added
