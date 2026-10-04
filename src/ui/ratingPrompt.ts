@@ -129,21 +129,26 @@ async function settleStored(state: vscode.Memento): Promise<void> {
 	);
 }
 
+/** envsync-le spells the setting without the plural; the rest have it. */
+const LEVEL_KEYS = ['notificationsLevel', 'notificationLevel'] as const;
+
 /**
- * `notificationsLevel` defaults to `silent`, so honouring the effective value
- * would mean nobody is ever asked. What is honoured is a level the user set
- * themselves: anything they chose other than `all` is a request for quiet,
- * and the default is not a choice.
+ * The level defaults to a quiet one in most of the family, so honouring the
+ * effective value would mean nobody is ever asked. What is honoured is a
+ * level the user set themselves: anything they chose other than `all` is a
+ * request for quiet, and the default is not a choice.
  */
 function promptsAllowed(extensionId: string): boolean {
 	const section = extensionId.slice(extensionId.indexOf('.') + 1);
-	const level = vscode.workspace
-		.getConfiguration(section)
-		.inspect<string>('notificationsLevel');
-	const chosen =
-		level?.workspaceFolderValue ?? level?.workspaceValue ?? level?.globalValue;
-	if (chosen === undefined) return true;
-	return chosen === 'all';
+	const config = vscode.workspace.getConfiguration(section);
+	return LEVEL_KEYS.every((key) => {
+		const level = config.inspect<string>(key);
+		const chosen =
+			level?.workspaceFolderValue ??
+			level?.workspaceValue ??
+			level?.globalValue;
+		return chosen === undefined || chosen === 'all';
+	});
 }
 
 /**

@@ -45,10 +45,16 @@ function opening(result: boolean) {
 		.mockImplementation((async () => result) as never);
 }
 
-/** What the user chose for notificationsLevel; undefined is the default. */
-function chosenLevel(level: string | undefined) {
+/** What the user chose for the level setting; undefined is the default. */
+function chosenLevel(
+	level: string | undefined,
+	setting = 'notificationsLevel',
+) {
 	return vi.spyOn(vscode.workspace, 'getConfiguration').mockReturnValue({
-		inspect: () => ({ key: 'notificationsLevel', globalValue: level }),
+		inspect: (key: string) => ({
+			key,
+			globalValue: key === setting ? level : undefined,
+		}),
 	} as never);
 }
 
@@ -214,6 +220,16 @@ describe('rating prompt', () => {
 			expect(stored().asks).toBe(0);
 		},
 	);
+
+	it('honours the singular spelling one tool uses for the setting', async () => {
+		const toast = answerWith(RATE);
+		chosenLevel('silent', 'notificationLevel');
+		const { use, reachThreshold } = setup();
+		await reachThreshold();
+		await use('2026-01-03', 50);
+
+		expect(toast).not.toHaveBeenCalled();
+	});
 
 	it('asks a user who set notificationsLevel to all', async () => {
 		const toast = answerWith(undefined);
