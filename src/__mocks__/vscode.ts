@@ -473,6 +473,7 @@ export const env = {
 		},
 		readText: async () => clipboard.value,
 	},
+	openExternal: async (_uri: unknown) => true,
 };
 
 export function _clipboardText(): string {
@@ -493,6 +494,11 @@ export function _createExtensionContext() {
 			update: async (key: string, value: unknown) => {
 				globalStateStore.set(key, value);
 			},
+			setKeysForSync: (_keys: readonly string[]) => {},
+		},
+		extension: {
+			id: 'nolindnaidoo.regex-le',
+			packageJSON: { displayName: 'Regex-LE' },
 		},
 	};
 }

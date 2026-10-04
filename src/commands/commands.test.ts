@@ -30,6 +30,7 @@ function makeDeps() {
 		telemetry: createTelemetry(),
 		notifier: createNotifier(),
 		statusBar: createStatusBar(makeContext()),
+		ratingPrompt: { recordSuccess: async () => {} },
 	};
 }
 

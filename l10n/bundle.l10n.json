@@ -1,5 +1,9 @@
 {
   "No active editor. Please open a file first.": "No active editor. Please open a file first.",
+  "Enjoying {0}? A rating helps other developers find it.": "Enjoying {0}? A rating helps other developers find it.",
+  "Rate": "Rate",
+  "Later": "Later",
+  "Don't Ask Again": "Don't Ask Again",
   "No regex patterns found in the file. Provide a pattern to validate.": "No regex patterns found in the file. Provide a pattern to validate.",
   "Enter regex pattern to validate": "Enter regex pattern to validate",
   "e.g., /\\d+/": "e.g., /\\d+/",

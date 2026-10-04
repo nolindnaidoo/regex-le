@@ -349,6 +349,7 @@ setting of its own.
 - Testing a pattern the ReDoS screen rates high-severity asks for confirmation first.
 - **The MCP server holds the same line.** It takes content as an argument and returns data: no filesystem access, no network calls, no telemetry. Your agent already has file-read tools, so duplicating them inside the server would add a path-traversal surface for no capability. `check:mcp-bundle` fails the build if the server ever imports something that could reach either.
 - Error notifications redact home directories and credential-shaped fragments.
+- **One rating prompt, at most twice.** After 10 successful uses across 3 separate days the extension asks once whether you would rate it, and once more 30 uses later if you chose *Later* or dismissed it. *Don't Ask Again* ends it. Setting `notificationsLevel` to `important` or `silent` yourself turns it off. The counts are kept in VS Code's extension storage and nothing is sent anywhere; *Rate* opens the listing you installed from — the VS Code Marketplace or Open VSX — in your browser.
 
 ## Documentation
 

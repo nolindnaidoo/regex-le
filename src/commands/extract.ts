@@ -3,6 +3,7 @@ import { getConfiguration } from '../config/config';
 import { extractRegexPatterns } from '../extraction/regex/extractPatterns';
 import type { Telemetry } from '../telemetry/telemetry';
 import type { Notifier } from '../ui/notifier';
+import type { RatingPrompt } from '../ui/ratingPrompt';
 import type { StatusBar } from '../ui/statusBar';
 import { sanitizeErrorMessage } from '../utils/errors';
 import { positioned } from '../utils/positions';
@@ -18,6 +19,7 @@ export function registerExtractCommand(
 		telemetry: Telemetry;
 		notifier: Notifier;
 		statusBar: StatusBar;
+		ratingPrompt: RatingPrompt;
 	}>,
 ): void {
 	const disposable = vscode.commands.registerCommand(
@@ -128,6 +130,9 @@ export function registerExtractCommand(
 						deps.notifier.showInfo(
 							`Extracted ${patterns.length} regex patterns`,
 						);
+						// Not awaited: it resolves when the toast is answered, and a command that
+						// waited on that would stay pending for as long as the toast is ignored.
+						void deps.ratingPrompt.recordSuccess();
 					},
 				);
 			} catch (error) {
