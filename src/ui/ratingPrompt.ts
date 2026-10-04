@@ -17,9 +17,13 @@ export interface RatingPrompt {
 	recordSuccess(): Promise<void>;
 }
 
+/**
+ * String-valued so that it accepts every telemetry sink in the family; the
+ * narrowest of them takes nothing else.
+ */
 export type RatingReport = (
 	event: string,
-	properties?: Record<string, unknown>,
+	properties?: Record<string, string>,
 ) => void;
 
 /**
