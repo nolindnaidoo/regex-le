@@ -1,5 +1,9 @@
 {
 	"Enter regex pattern to validate": "Saisissez un motif d'expression régulière à valider",
+	"Enjoying {0}? A rating helps other developers find it.": "Vous appréciez {0} ? Une note aide d’autres développeurs à le trouver.",
+	"Rate": "Noter",
+	"Later": "Plus tard",
+	"Don't Ask Again": "Ne plus demander",
 	"e.g., /\\d+/": "e.g., /\\d+/",
 	"Validating regex patterns...": "Validation des expressions régulières...",
 	"Enter regex pattern to test": "Saisissez le motif d'expression régulière à tester",

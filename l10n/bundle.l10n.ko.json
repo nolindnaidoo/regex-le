@@ -1,5 +1,9 @@
 {
 	"Enter regex pattern to validate": "유효성 검사를 위한 정규식 패턴을 입력하세요",
+	"Enjoying {0}? A rating helps other developers find it.": "{0}이(가) 마음에 드시나요? 평점을 남기면 다른 개발자가 찾는 데 도움이 됩니다.",
+	"Rate": "평가하기",
+	"Later": "나중에",
+	"Don't Ask Again": "다시 묻지 않기",
 	"e.g., /\\d+/": "e.g., /\\d+/",
 	"Validating regex patterns...": "정규식 패턴 유효성 검사 중...",
 	"Enter regex pattern to test": "테스트할 정규식 패턴을 입력하세요",

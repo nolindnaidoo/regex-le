@@ -80,6 +80,14 @@ separate product on its own cadence and keeps its own
   description or any part of its schema. Six of the ten had drifted.
 - The npm README test also checks that every value an argument offers is
   named in that argument's row.
+- A rating prompt. After 10 successful uses across 3 separate days, one
+  notification asks whether you would rate the extension, with *Rate*,
+  *Later* and *Don't Ask Again*. *Rate* opens the registry your copy was
+  installed from: the VS Code Marketplace or Open VSX. *Later*, or dismissing
+  it, asks once more 30 uses on; that second ask is the last. It never appears
+  on activation or after a failed run, and it is never shown if you have set
+  `notificationsLevel` to `important` or `silent` yourself. The answer follows
+  you through Settings Sync. Translated into all 12 locales.
 
 ### Fixed
 

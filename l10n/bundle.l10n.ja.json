@@ -1,5 +1,9 @@
 {
 	"Enter regex pattern to validate": "検証用の正規表現パターンを入力してください",
+	"Enjoying {0}? A rating helps other developers find it.": "{0} を気に入っていただけましたか？評価は、他の開発者がこの拡張機能を見つける助けになります。",
+	"Rate": "評価する",
+	"Later": "後で",
+	"Don't Ask Again": "今後表示しない",
 	"e.g., /\\d+/": "e.g., /\\d+/",
 	"Validating regex patterns...": "正規表現パターンの検証中...",
 	"Enter regex pattern to test": "テストする正規表現を入力してください",

@@ -1,5 +1,9 @@
 {
 	"Enter regex pattern to validate": "Введіть шаблон регулярного виразу для перевірки",
+	"Enjoying {0}? A rating helps other developers find it.": "Подобається {0}? Оцінка допомагає іншим розробникам знайти це розширення.",
+	"Rate": "Оцінити",
+	"Later": "Пізніше",
+	"Don't Ask Again": "Більше не питати",
 	"e.g., /\\d+/": "e.g., /\\d+/",
 	"Validating regex patterns...": "Перевірка шаблонів регулярних виразів...",
 	"Enter regex pattern to test": "Введіть шаблон регулярного виразу для перевірки",

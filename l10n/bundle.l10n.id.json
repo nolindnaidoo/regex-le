@@ -1,5 +1,9 @@
 {
 	"Enter regex pattern to validate": "Masukkan pola regex untuk validasi",
+	"Enjoying {0}? A rating helps other developers find it.": "Suka dengan {0}? Penilaian membantu pengembang lain menemukannya.",
+	"Rate": "Beri Nilai",
+	"Later": "Nanti",
+	"Don't Ask Again": "Jangan Tanya Lagi",
 	"e.g., /\\d+/": "e.g., /\\d+/",
 	"Validating regex patterns...": "Memverifikasi pola regex...",
 	"Enter regex pattern to test": "Masukkan pola regex yang akan diuji",

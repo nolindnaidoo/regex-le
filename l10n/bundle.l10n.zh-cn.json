@@ -1,5 +1,9 @@
 {
 	"Enter regex pattern to validate": "输入正则表达式模式以进行验证",
+	"Enjoying {0}? A rating helps other developers find it.": "喜欢 {0} 吗？评分可以帮助其他开发者发现它。",
+	"Rate": "评分",
+	"Later": "稍后",
+	"Don't Ask Again": "不再询问",
 	"e.g., /\\d+/": "e.g., /\\d+/",
 	"Validating regex patterns...": "正在验证正则表达式模式……",
 	"Enter regex pattern to test": "输入要测试的正则表达式模式",
