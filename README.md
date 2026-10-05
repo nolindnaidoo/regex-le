@@ -195,7 +195,9 @@ No command is bound to a key by default. Give any of them one under **Keyboard S
 | Setting | Default | Description |
 |---|---|---|
 | `regex-le.openResultsSideBySide` | `true` | Open results beside the current editor |
+| `regex-le.showPositions` | `true` | Show the line and column of each pattern and match |
 | `regex-le.copyToClipboardEnabled` | `false` | Also copy results to the clipboard |
+| `regex-le.clipboardIncludesPositions` | `true` | Include the line and column in that copy |
 | `regex-le.notificationsLevel` | `silent` | `all` = every notification, `important` = warnings + errors, `silent` = errors only |
 | `regex-le.safety.enabled` | `true` | Guardrails for very large files and outputs |
 | `regex-le.safety.fileSizeWarnBytes` | `1000000` | Refuse processing above this file size |
@@ -257,12 +259,12 @@ a build only tells you how busy the runner was.
 <!-- coverage:start -->
 | Metric | Coverage |
 | --- | --- |
-| Statements | 92.33% |
-| Branches | 79.93% |
-| Functions | 97.94% |
-| Lines | 94.57% |
+| Statements | 92.35% |
+| Branches | 79.85% |
+| Functions | 97.98% |
+| Lines | 94.59% |
 
-267 test cases across 18 files, plus an integration suite that runs
+275 test cases across 19 files, plus an integration suite that runs
 in a real VS Code extension host and an end-to-end test that installs the
 built `.vsix` into a clean profile.
 

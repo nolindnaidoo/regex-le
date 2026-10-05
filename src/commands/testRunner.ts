@@ -8,6 +8,7 @@ import { testRegexWithPerformance } from '../extraction/regex/regexTest';
 import type { Telemetry } from '../telemetry/telemetry';
 import type { Notifier } from '../ui/notifier';
 import type { StatusBar } from '../ui/statusBar';
+import { positioned } from '../utils/positions';
 
 /**
  * Running regex tests and rendering their reports.
@@ -155,7 +156,9 @@ export async function testSinglePattern(
 	// convenience.
 	if (config.copyToClipboardEnabled) {
 		try {
-			await vscode.env.clipboard.writeText(report);
+			await vscode.env.clipboard.writeText(
+				positioned(report, config.clipboardIncludesPositions),
+			);
 		} catch (error) {
 			const message = error instanceof Error ? error.message : 'Unknown error';
 			deps.notifier.showWarning(
@@ -169,7 +172,7 @@ export async function testSinglePattern(
 
 	// Open result document
 	const doc = await vscode.workspace.openTextDocument({
-		content: report,
+		content: positioned(report, config.showPositions),
 		language: 'markdown',
 	});
 
@@ -242,7 +245,7 @@ export async function testAllPatterns(
 
 	// Open result document
 	const doc = await vscode.workspace.openTextDocument({
-		content: report,
+		content: positioned(report, config.showPositions),
 		language: 'markdown',
 	});
 

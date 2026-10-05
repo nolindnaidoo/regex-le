@@ -129,6 +129,11 @@
 		"configuration": {
 			"title": "%manifest.settings.title%",
 			"properties": {
+				"regex-le.clipboardIncludesPositions": {
+					"type": "boolean",
+					"default": true,
+					"description": "%manifest.settings.clipboard.positions.desc%"
+				},
 				"regex-le.copyToClipboardEnabled": {
 					"type": "boolean",
 					"default": false,
@@ -170,6 +175,11 @@
 					"default": 50000,
 					"minimum": 100,
 					"description": "%manifest.settings.safety.warn.large-output.desc%"
+				},
+				"regex-le.showPositions": {
+					"type": "boolean",
+					"default": true,
+					"description": "%manifest.settings.show.positions.desc%"
 				},
 				"regex-le.statusBar.enabled": {
 					"type": "boolean",

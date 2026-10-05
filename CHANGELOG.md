@@ -11,6 +11,14 @@ separate product on its own cadence and keeps its own
 
 ## [Unreleased]
 
+### Added
+
+- Positions are now a setting. `regex-le.showPositions` decides whether the
+  output gives the line and column of each pattern and match, and
+  `regex-le.clipboardIncludesPositions` decides the same for the copy on the
+  clipboard. Both are on by default, so the output is what it was. Extract now
+  gives each pattern's position too, as Test and Validate already did.
+
 ### Changed
 
 - No command is bound to a key by default any more. The one default this
