@@ -20,6 +20,7 @@ describe('config defaults parity with package.json', () => {
 	const props = manifest.contributes.configuration.properties;
 
 	const KEY_MAP: Record<string, keyof typeof CONFIG_DEFAULTS> = {
+		'regex-le.clipboardIncludesPositions': 'clipboardIncludesPositions',
 		'regex-le.copyToClipboardEnabled': 'copyToClipboardEnabled',
 		'regex-le.notificationsLevel': 'notificationsLevel',
 		'regex-le.openResultsSideBySide': 'openResultsSideBySide',
@@ -27,6 +28,7 @@ describe('config defaults parity with package.json', () => {
 		'regex-le.safety.fileSizeWarnBytes': 'safetyFileSizeWarnBytes',
 		'regex-le.safety.largeOutputLinesThreshold':
 			'safetyLargeOutputLinesThreshold',
+		'regex-le.showPositions': 'showPositions',
 		'regex-le.statusBar.enabled': 'statusBarEnabled',
 		'regex-le.telemetryEnabled': 'telemetryEnabled',
 		'regex-le.regex.redosDetectionEnabled': 'regexRedosDetectionEnabled',

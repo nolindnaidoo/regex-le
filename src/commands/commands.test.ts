@@ -61,6 +61,22 @@ describe('regex-le.extract', () => {
 		await runCommand('regex-le.extract');
 
 		expect(_openedDocuments()).toHaveLength(1);
+		// Each pattern led by where it is, as Test and Validate give the line.
+		expect(_openedDocuments()[0]?.getText()).toBe(
+			'1:11\t/\\d+/g\n2:11\t/x|y/i',
+		);
+	});
+
+	it('lists the bare patterns when positions are off', async () => {
+		_setConfig('regex-le.showPositions', false);
+		registerExtractCommand(makeContext(), makeDeps());
+		_setActiveEditor(
+			_createDocument({
+				content: 'const a = /\\d+/g;\nconst b = new RegExp("x|y", "i");\n',
+			}),
+		);
+		await runCommand('regex-le.extract');
+
 		expect(_openedDocuments()[0]?.getText()).toBe('/\\d+/g\n/x|y/i');
 	});
 
@@ -70,6 +86,17 @@ describe('regex-le.extract', () => {
 		_setActiveEditor(_createDocument({ content: 'const a = /\\d+/g;' }));
 		await runCommand('regex-le.extract');
 
+		expect(_clipboardText()).toBe('1:11\t/\\d+/g');
+	});
+
+	it('decides positions for the clipboard separately from the document', async () => {
+		_setConfig('regex-le.copyToClipboardEnabled', true);
+		_setConfig('regex-le.clipboardIncludesPositions', false);
+		registerExtractCommand(makeContext(), makeDeps());
+		_setActiveEditor(_createDocument({ content: 'const a = /\\d+/g;' }));
+		await runCommand('regex-le.extract');
+
+		expect(_openedDocuments()[0]?.getText()).toBe('1:11\t/\\d+/g');
 		expect(_clipboardText()).toBe('/\\d+/g');
 	});
 

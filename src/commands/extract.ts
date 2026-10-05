@@ -5,6 +5,7 @@ import type { Telemetry } from '../telemetry/telemetry';
 import type { Notifier } from '../ui/notifier';
 import type { StatusBar } from '../ui/statusBar';
 import { sanitizeErrorMessage } from '../utils/errors';
+import { positioned } from '../utils/positions';
 import { checkOutputSafety, handleSafetyChecks } from '../utils/safety';
 
 /**
@@ -71,9 +72,14 @@ export function registerExtractCommand(
 						// Format results - one pattern per line
 						const outputLines: string[] = [];
 						for (const pattern of patterns) {
-							// Format as /pattern/flags with line number
+							// Format as /pattern/flags, led by where it is. The
+							// position comes off again where it is not wanted.
 							const formatted = `/${pattern.pattern}/${pattern.flags}`;
-							outputLines.push(formatted);
+							outputLines.push(
+								pattern.line === undefined
+									? formatted
+									: `${pattern.line}:${pattern.column ?? 1}	${formatted}`,
+							);
 						}
 
 						const outputSafety = checkOutputSafety(outputLines, config);
@@ -86,7 +92,7 @@ export function registerExtractCommand(
 
 						// Open result document side-by-side
 						const doc = await vscode.workspace.openTextDocument({
-							content: output,
+							content: positioned(output, config.showPositions),
 							language: 'plaintext',
 						});
 
@@ -99,7 +105,9 @@ export function registerExtractCommand(
 						// Copy to clipboard if enabled
 						if (config.copyToClipboardEnabled) {
 							try {
-								await vscode.env.clipboard.writeText(output);
+								await vscode.env.clipboard.writeText(
+									positioned(output, config.clipboardIncludesPositions),
+								);
 								deps.statusBar.updateText(
 									`Extracted ${patterns.length} patterns to clipboard`,
 								);
