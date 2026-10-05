@@ -57,7 +57,7 @@ jobs:
 
   release:
     # The VSIX registries only. npm is a separate job because it authenticates
-    # with an OIDC identity token rather than a secret, and that permission
+    # with its own secret and holds an identity token, and that permission
     # should not be held by a job handling registry PATs.
     if: inputs.marketplace || inputs.openvsx
     needs: preflight
@@ -128,10 +128,11 @@ jobs:
           OVSX_PAT: ${{ secrets.OVSX_PAT }}
         run: bunx ovsx publish "${{ steps.vsix.outputs.path }}"
 
-  # The MCP server on npm, the delivery channel for every host but VS Code. Published by trusted publishing: GitHub mints a short-lived identity
-  # token, npm verifies the claim against the publisher configured on the
-  # package, and no npm credential exists in this repo or in Doppler. That is
-  # also why `id-token: write` is scoped here instead of workflow-wide.
+  # The MCP server on npm, the delivery channel for every host but VS Code.
+  # Published with the NPM_TOKEN secret, the same token every package in the
+  # family is published with. `id-token: write` is scoped here and not
+  # workflow-wide: it signs the provenance statement and logs in to the MCP
+  # registry, and no other job needs it.
   npm:
     if: inputs.npm
     needs: preflight
@@ -143,15 +144,12 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      # Trusted publishing needs npm >= 11.5.1 on Node >= 22.14.0. Node 22
-      # ships npm 10, so the CLI is upgraded explicitly rather than assumed.
+      # With a registry URL, setup-node writes an .npmrc that reads the token
+      # from NODE_AUTH_TOKEN, so it is never written to disk or passed in argv.
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 22.14.0
           registry-url: https://registry.npmjs.org
-
-      - name: Install an npm that speaks OIDC
-        run: npm install -g npm@^11.5.1
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
@@ -160,6 +158,16 @@ jobs:
 
       - name: Install dependencies
         run: bun install --frozen-lockfile
+
+      # Runs before anything irreversible, as the VSIX job's check does.
+      - name: Check the npm credential
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          if [ -z "$NPM_TOKEN" ]; then
+            echo "::error::npm publishing requested but NPM_TOKEN is not set."
+            exit 1
+          fi
 
       # Before anything irreversible: a published version can never be reused,
       # and the unpublish window is 72 hours.
@@ -181,11 +189,13 @@ jobs:
           bun run check:npm-package
 
       - name: Publish to npm
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: npm publish ./mcp --access public
 
       # The registry hosts metadata pointing at the npm package, so it can only
-      # be correct once that version exists. Same OIDC identity as the publish
-      # above — no registry credential either.
+      # be correct once that version exists. It logs in with this job's OIDC
+      # identity, so the registry needs no credential of its own.
       #
       # Pinned by version AND checksum: this is a binary fetched over the
       # network into a job that holds an identity token, and `latest` would

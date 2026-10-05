@@ -323,7 +323,7 @@ sits at 2.x is intended.
 
 **Open VSX defaults off deliberately.** `ovsx publish` takes no namespace argument; it derives the namespace from `publisher` in the VSIX. Enabling it publishes to whatever `package.json` currently names, with no confirmation.
 
-**The npm package ships from the same tag**, as a third opt-in on the `Release` workflow. It publishes by **trusted publishing** — GitHub mints a short-lived OIDC identity token and npm verifies it against the publisher configured on the package — so there is no npm credential in this repo, in Doppler, or in CI. That is why `id-token: write` is scoped to that job alone, and why it cannot run from a laptop. `bun run publish:npm` exists for a bootstrap publish only (a package must exist before a trusted publisher can be attached to it) and needs a token.
+**The npm package ships from the same release**, as a third opt-in on the `Release` workflow. It publishes with the **`NPM_TOKEN`** repository secret, the same token every package in the family uses, kept in Doppler under `extensions` / `prd`. It expires and has to be replaced in both places when it does. Trusted publishing was written into this workflow and never set up on npm, so that step failed every time it ran until it was changed to the token.
 
 ## Known limitations (documented, not bugs)
 
