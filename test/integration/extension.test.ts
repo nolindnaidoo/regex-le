@@ -61,7 +61,14 @@ describe('Regex-LE integration', function () {
 		);
 		assert.ok(resultDoc, 'no results document found');
 		const lines = resultDoc.getText().split('\n');
-		assert.deepStrictEqual(lines, ['/\\d+/g', '/[a-z]+/i']);
+		// Each pattern leads with where it is, a tab, then the pattern: the
+		// default for this extension, as Test and Validate give the line.
+		assert.strictEqual(lines[0], '1:16\t/\\d+/g');
+		assert.match(lines[1] ?? '', /^[23]:\d+\t\/\[a-z\]\+\/i$/);
+		assert.deepStrictEqual(
+			lines.map((line) => line.replace(/^\d+:\d+\t/, '')),
+			['/\\d+/g', '/[a-z]+/i'],
+		);
 	});
 
 	it('offers its MCP server to agent mode', async () => {
