@@ -70,7 +70,7 @@ artifact users actually install.
   translated label against an English literal, and use positional `{0}`
   placeholders rather than template literals.
 - **CI narrows itself on a docs-only push.** A change touching only `*.md` and
-  `LICENSE` runs the Linux leg alone and skips the Zed build; `ci-crate.yml`
+  `LICENSE` runs the Linux leg alone and skips the version gate; `ci-crate.yml`
   runs its `policy` gate with every Rust job skipped. Nothing that covers the
   change is skipped — the README coverage gate, the integration suite and the
   installed-VSIX end-to-end are Linux-only anyway. Anything unrecognised, and an

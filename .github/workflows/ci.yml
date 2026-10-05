@@ -187,44 +187,22 @@ jobs:
           if-no-files-found: error
           retention-days: 14
 
-  # The Zed extension is a separate toolchain and would otherwise only break at
-  # submission time, days after the change that broke it. It is a thin launcher
-  # for the same npm package, so building it is the whole check — there is no
-  # extraction logic in the crate to test.
-  zed:
-    name: Zed extension
+  # One version across three files, and the registry identity across two more.
+  # build-npm.js writes most of these, but only when it is run — CI is where
+  # a hand-edit that skipped it gets caught.
+  versions:
+    name: Versions and registry identity
     needs: changes
-    # A wasm build and a version-agreement check over package.json, server.json
-    # and the Zed manifests. Every input is a code file, so a docs-only push
-    # cannot move it.
+    # Every input is a code file, so a docs-only push cannot move it.
     if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      # zed/rust-toolchain.toml pins the toolchain with its wasm target and
-      # components; the runner's rustup installs them on first use.
-      - name: Build
-        working-directory: zed
-        run: cargo build --release --target wasm32-wasip2 --locked
-
-      - name: Clippy
-        working-directory: zed
-        run: cargo clippy --release --target wasm32-wasip2 --locked -- -D warnings
-
-      - name: Formatting
-        working-directory: zed
-        run: cargo fmt --check
-
-      # One version across five files, and the registry identity across two more.
-      # build-npm.js writes most of these, but only when it is run — CI is where
-      # a hand-edit that skipped it gets caught.
       - name: Versions and registry identity agree
         run: |
           extension_version=$(node -p "require('./package.json').version")
-          zed_version=$(grep -m1 '^version' zed/extension.toml | cut -d'"' -f2)
-          crate_version=$(grep -m1 '^version' zed/Cargo.toml | cut -d'"' -f2)
           npm_version=$(node -p "require('./mcp/package.json').version")
           npm_name=$(node -p "require('./mcp/package.json').name")
           mcp_name=$(node -p "require('./mcp/package.json').mcpName || ''")
@@ -235,8 +213,6 @@ jobs:
 
           fail=0
           for pair in \
-            "zed/extension.toml:$zed_version" \
-            "zed/Cargo.toml:$crate_version" \
             "mcp/package.json:$npm_version" \
             "server.json:$registry_version" \
             "server.json packages[0]:$registry_pkg_version"; do
@@ -261,10 +237,6 @@ jobs:
           fi
           if [ "$registry_identifier" != "$npm_name" ]; then
             echo "::error::server.json publishes $registry_identifier, expected $npm_name"
-            fail=1
-          fi
-          if ! grep -q "\"$npm_name\"" zed/src/lib.rs; then
-            echo "::error::zed/src/lib.rs does not install $npm_name"
             fail=1
           fi
           exit $fail

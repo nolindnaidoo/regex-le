@@ -238,7 +238,6 @@ vulnerable pattern is a result, not an error.
 | **VS Code** | The lint *and* the tester, in your editor | [Marketplace](https://marketplace.visualstudio.com/items?itemName=nolindnaidoo.regex-le) |
 | **Cursor, VSCodium, Windsurf** | The same extension | [Open VSX](https://open-vsx.org/extension/nolindnaidoo/regex-le) |
 | **Any MCP agent, via Node** | `extract_patterns` over stdio | `npx regex-le-mcp` · [npm](https://www.npmjs.com/package/regex-le-mcp) |
-| **Zed** | The MCP server as a context server | [add it by hand](https://zed.dev/docs/ai/mcp) *(no listing yet)* |
 
 All sixteen LE tools are on **[letools.dev](https://letools.dev)**.
 

@@ -51,9 +51,9 @@ updates:
       actions:
         patterns: ["*"]
 
-  # The crate and the Zed extension are Rust, and nothing above updates them.
+  # The crate is Rust, and nothing above updates it.
   - package-ecosystem: "cargo"
-    directories: ["/crate", "/zed"]
+    directories: ["/crate"]
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 5
@@ -65,6 +65,6 @@ updates:
   # A new Rust release arrives as a pull request against the pinned toolchain
   # instead of reddening main through an unpinned stable.
   - package-ecosystem: "rust-toolchain"
-    directories: ["/crate", "/zed"]
+    directories: ["/crate"]
     schedule:
       interval: "weekly"

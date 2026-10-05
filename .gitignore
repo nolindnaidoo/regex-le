@@ -82,9 +82,6 @@ package.nls.zh-cn.json
 
 benchmark-results.json
 
-# Zed extension build output (Cargo.lock IS committed — it pins the wasm build)
-zed/target/
-
 # Rust CLI build output (crate/Cargo.lock IS committed — it pins the binary build)
 crate/target/
 mcp/server.js

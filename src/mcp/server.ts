@@ -1,8 +1,8 @@
 /**
  * The Regex-LE MCP server.
  *
- * Runs outside the editor: VS Code launches the bundled copy over stdio, Zed
- * and every other MCP host run the published npm package. It imports the
+ * Runs outside the editor: VS Code launches the bundled copy over stdio,
+ * and every other MCP host runs the published npm package. It imports the
  * extraction engine and nothing from `vscode` — `check:mcp-bundle` fails the
  * build if that ever stops being true.
  */

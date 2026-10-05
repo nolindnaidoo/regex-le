@@ -25,6 +25,11 @@ separate product on its own cadence and keeps its own
   README and the Help command pointed at a namespace the listing has left, so
   they led nowhere. The listing is under `nolindnaidoo` now, and so are they.
 
+### Removed
+
+- The Zed extension in `zed/`, with the CI job that built it and the workflow
+  that synced it. It was never listed in Zed's registry.
+
 ## [2.5.1] - 2026-10-03
 
 ### Fixed
