@@ -26,7 +26,7 @@ const args = [
 	'--main-fields=module,main',
 	'--banner:js=#!/usr/bin/env node',
 	// Deliberately no --external:vscode. The server must fail to build if any
-	// import path reaches the editor API, rather than fail at runtime in Zed.
+	// import path reaches the editor API, rather than fail at runtime in an agent host.
 	`--define:__MCP_NAME__=${JSON.stringify(pkg.name)}`,
 	`--define:__MCP_VERSION__=${JSON.stringify(pkg.version)}`,
 	prod ? '--minify' : '--sourcemap',

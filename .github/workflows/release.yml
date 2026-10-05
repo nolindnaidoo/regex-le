@@ -8,10 +8,7 @@
 # to whatever `package.json` currently names, with no confirmation prompt.
 # Turn it on deliberately, once that namespace is the intended one.
 #
-# npm defaults to OFF for the same reason, and is usually the *first* target of
-# a release rather than an afterthought: Zed's extension resolves the package
-# at runtime, so a Zed release pointing at an unpublished version is broken for
-# everyone who installs it.
+# npm defaults to OFF for the same reason.
 name: Release
 
 on:
@@ -131,8 +128,7 @@ jobs:
           OVSX_PAT: ${{ secrets.OVSX_PAT }}
         run: bunx ovsx publish "${{ steps.vsix.outputs.path }}"
 
-  # The MCP server on npm, the delivery channel for Zed and every non-VS-Code
-  # host. Published by trusted publishing: GitHub mints a short-lived identity
+  # The MCP server on npm, the delivery channel for every host but VS Code. Published by trusted publishing: GitHub mints a short-lived identity
   # token, npm verifies the claim against the publisher configured on the
   # package, and no npm credential exists in this repo or in Doppler. That is
   # also why `id-token: write` is scoped here instead of workflow-wide.

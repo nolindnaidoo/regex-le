@@ -48,7 +48,6 @@ Open any file and run one of three commands. **Extract** lists every regex patte
 | **Cursor, VSCodium, Windsurf** | The same extension | [Open VSX](https://open-vsx.org/extension/nolindnaidoo/regex-le) |
 | **A terminal or a CI step** | The same run over a whole tree, with exit codes | `cargo install regex-le` · [crates.io](https://crates.io/crates/regex-le) |
 | **Any MCP agent, via Node** | `extract_patterns` over stdio | `npx regex-le-mcp` · [npm](https://www.npmjs.com/package/regex-le-mcp) |
-| **Zed** | The MCP server as a context server | [add it by hand](https://zed.dev/docs/ai/mcp) *(no listing yet)* |
 
 ## Use it from an AI agent
 
@@ -57,7 +56,6 @@ The same engine runs as an [MCP](https://modelcontextprotocol.io) server, so an 
 | Editor | How |
 |---|---|
 | **VS Code** 1.101+ | Nothing to install — the extension registers `extract_patterns` with agent mode |
-| **Zed** | No listing yet — [add the MCP server by hand](https://zed.dev/docs/ai/mcp) |
 | **Claude Code** | `claude mcp add regex-le -- npx -y regex-le-mcp` |
 | **Cursor, Windsurf, anything else** | point it at `npx regex-le-mcp` |
 

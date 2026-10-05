@@ -6,7 +6,7 @@
  * `dist/mcp-server.js`, and it asserts three things nothing else can:
  *
  * 1. **Self-contained, and free of `vscode`.** The server runs outside the
- *    editor — in Zed, in Claude Code, from `npx`. A stray `vscode` import would
+ *    editor — in Claude Code, from `npx`. A stray `vscode` import would
  *    only fail there, in a user's session.
  * 2. **It actually speaks MCP.** A real stdio handshake against the built file.
  *    A source-level test would have missed the jsonc-parser UMD bug that
