@@ -83,7 +83,13 @@ exports.run = async function run() {
 		(d) => d.languageId === 'plaintext' && d.getText().includes('/\\\\d+/g'),
 	);
 	assert.ok(result, 'no results document produced');
-	assert.deepStrictEqual(result.getText().split('\\n'), ['/\\\\d+/g', '/[a-z]+/i']);
+	// Each pattern leads with where it is, a tab, then the pattern.
+	const lines = result.getText().split('\\n');
+	assert.ok(lines.every((line) => /^\\d+:\\d+\\t/.test(line)), 'a pattern without its position');
+	assert.deepStrictEqual(
+		lines.map((line) => line.replace(/^\\d+:\\d+\\t/, '')),
+		['/\\\\d+/g', '/[a-z]+/i'],
+	);
 	console.log('VSIX E2E OK:', JSON.stringify(result.getText().split('\\n')));
 	// --- the MCP server, as it ships ------------------------------------
 	// check:mcp-bundle proves dist/mcp-server.js works before packaging. This
