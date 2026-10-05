@@ -38,7 +38,7 @@
 
 ## What it does
 
-Open any file and run one of three commands. **Extract** lists every regex pattern found in the document. **Test** (`Ctrl+Alt+R` / `Cmd+Alt+R`) runs a found — or manually entered — pattern against the file content and reports matches with real line/column positions and capture groups (named groups included). **Validate** checks every found pattern for syntax errors and screens it for catastrophic backtracking, reporting the input that causes it. Works in VS Code and VS Code–based editors like Cursor and VSCodium (installable from Open VSX).
+Open any file and run one of three commands. **Extract** lists every regex pattern found in the document. **Test** runs a found — or manually entered — pattern against the file content and reports matches with real line/column positions and capture groups (named groups included). **Validate** checks every found pattern for syntax errors and screens it for catastrophic backtracking, reporting the input that causes it. Works in VS Code and VS Code–based editors like Cursor and VSCodium (installable from Open VSX).
 
 ## Install
 
@@ -182,11 +182,13 @@ exactly as the screening in this extension does.
 
 | Command | Description |
 |---|---|
-| `Regex-LE: Test Regex` (`Ctrl+Alt+R` / `Cmd+Alt+R`) | Test a found or entered pattern against the file |
+| `Regex-LE: Test Regex` | Test a found or entered pattern against the file |
 | `Regex-LE: Extract Patterns` | List every regex pattern found in the document |
 | `Regex-LE: Validate Regex` | Syntax + ReDoS report for every found pattern |
 | `Regex-LE: Open Settings` | Open Regex-LE settings |
 | `Regex-LE: Help & Troubleshooting` | Built-in documentation |
+
+No command is bound to a key by default. Give any of them one under **Keyboard Shortcuts** in the editor.
 
 ## Settings
 

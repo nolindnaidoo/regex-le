@@ -9,6 +9,15 @@ This file covers the **VS Code extension**. The Rust CLI in `crate/` is a
 separate product on its own cadence and keeps its own
 [CHANGELOG](crate/CHANGELOG.md).
 
+## [Unreleased]
+
+### Changed
+
+- No command is bound to a key by default any more. The one default this
+  extension shipped sat on a key the editor, the system or another LE
+  extension already used. Every command can still be given a key under
+  Keyboard Shortcuts.
+
 ## [2.5.2] - 2026-10-04
 
 ### Added
