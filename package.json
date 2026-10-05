@@ -100,14 +100,6 @@
 				"category": "%manifest.command.category%"
 			}
 		],
-		"keybindings": [
-			{
-				"command": "regex-le.test",
-				"key": "ctrl+alt+r",
-				"mac": "cmd+alt+r",
-				"when": "editorTextFocus"
-			}
-		],
 		"menus": {
 			"editor/context": [
 				{

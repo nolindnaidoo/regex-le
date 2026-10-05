@@ -30,7 +30,7 @@ export function registerHelpCommand(
 function buildHelpContent(): string {
 	const title = 'Regex-LE Help';
 	const quickStart =
-		'1. Open a file with text content\n2. Run "Regex-LE: Test Regex" (Ctrl+Alt+R / Cmd+Alt+R)\n3. Enter a regex pattern\n4. View results with matches and performance metrics';
+		'1. Open a file with text content\n2. Run "Regex-LE: Test Regex"\n3. Enter a regex pattern\n4. View results with matches and performance metrics';
 	const commands =
 		'**Test**: Test a regex pattern against the active editor content\n**Extract**: Extract all regex patterns from the active editor\n**Validate**: Validate a regex pattern and check for ReDoS vulnerabilities\n**Settings**: Configure extension options';
 	const troubleshooting =
