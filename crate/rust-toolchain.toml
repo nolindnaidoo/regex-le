@@ -2,5 +2,5 @@
 # install anything. Scoped to crate/ because the rest of this repository
 # is TypeScript and has no business acquiring a Rust toolchain.
 [toolchain]
-channel = "1.98.1"
+channel = "1.99.0"
 components = ["rustfmt", "clippy", "llvm-tools-preview"]
