@@ -162,12 +162,12 @@ The report opens with a table of the files that hold something to look at, then 
 ```markdown
 # Regex-LE workspace report
 
-`my-project` · 3 file(s) read · 4 pattern(s), 1 can hang, 1 not checked
+`my-project` · 3 file(s) read · 5 pattern(s), 1 can hang, 1 not checked
 
 | File | Patterns | Can hang | Not checked |
 |---|---|---|---|
 | `src/a.ts` | 2 | 1 | 0 |
-| `src/b.py` | 1 | 0 | 1 |
+| `src/b.py` | 2 | 0 | 1 |
 
 > 1 other file(s) hold only patterns with no finding.
 
@@ -176,7 +176,9 @@ The report opens with a table of the files that hold something to look at, then 
 - **2:14** · `/(a+)+$/` · can hang (high): exponential backtracking: 2000000 steps on 41 characters, against 229328 on 20 · complexity 0/100
 ```
 
-**Can hang** means an input was found that drives the pattern into backtracking, the same search [ReDoS screening](#redos-screening) describes. **Not checked** means this engine could not compile the pattern, so the search never ran. That is not a verdict on the pattern: `(?P<year>\d{4})` is sound in Python and unreadable to a JavaScript engine, and calling it invalid would be a guess.
+**Can hang** means an input was found that drives the pattern into backtracking, the same search [ReDoS screening](#redos-screening) describes. **Not checked** means the search could not answer for the pattern either way, because it uses a backreference or a lookaround. That is not a verdict on the pattern, and the report gives the reason.
+
+A pattern written for another language's engine is read, not refused: a Python `(?P<year>\d{4})`, an atomic group or a possessive quantifier is searched like any other.
 
 Only the patterns that can hang are listed. The rest are counted per file, and `regex-le.workspace.scanIncludePassing` lists every one with what was found. `regex-le.workspace.scanProblemsEnabled` also puts the ones that can hang in the Problems panel, where each is a line you can click.
 
@@ -346,7 +348,7 @@ a build only tells you how busy the runner was.
 | Metric | Coverage |
 | --- | --- |
 | Statements | 92.87% |
-| Branches | 81.41% |
+| Branches | 81.42% |
 | Functions | 98.38% |
 | Lines | 95.03% |
 

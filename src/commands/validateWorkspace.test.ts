@@ -21,8 +21,10 @@ import { registerValidateWorkspaceCommands } from './validateWorkspace';
 
 const TREE = {
 	'/w/src/a.ts': 'const ok = /\\d+/g;\nconst slow = /(a+)+$/;\n',
-	// Sound in Python, and not something this engine can compile.
-	'/w/src/b.py': 'import re\nyear = re.compile(r"(?P<year>\\d{4})")\n',
+	// A Python named group, which a JavaScript engine alone cannot compile,
+	// and a backreference, which the hang search cannot decide either way.
+	'/w/src/b.py':
+		'import re\nyear = re.compile(r"(?P<year>\\d{4})")\nsame = re.compile(r"(a+)\\1")\n',
 	'/w/src/c.ts': 'const fine = /^x$/;\n',
 	'/w/README.md': 'See /not/a/pattern/ here.\n',
 	'/w/node_modules/dep.js': 'const slow = /(a+)+$/;\n',
@@ -71,11 +73,11 @@ describe('regex-le.validateWorkspace and regex-le.validateFolder', () => {
 		const text = report();
 		expect(text).toContain('# Regex-LE workspace report');
 		expect(text).toContain(
-			'3 file(s) read · 4 pattern(s), 1 can hang, 1 not checked',
+			'3 file(s) read · 5 pattern(s), 1 can hang, 1 not checked',
 		);
 		expect(text).toContain('| File | Patterns | Can hang | Not checked |');
 		expect(text).toContain('| `/w/src/a.ts` | 2 | 1 | 0 |');
-		expect(text).toContain('| `/w/src/b.py` | 1 | 0 | 1 |');
+		expect(text).toContain('| `/w/src/b.py` | 2 | 0 | 1 |');
 		// A file whose patterns are all sound is counted, not tabled.
 		expect(text).not.toContain('`/w/src/c.ts`');
 		expect(text).toContain(
@@ -95,23 +97,27 @@ describe('regex-le.validateWorkspace and regex-le.validateFolder', () => {
 		);
 	});
 
-	it('says a pattern it cannot compile was not checked, and never that it is invalid', async () => {
+	it('reads a pattern written for another engine, and says not checked only where the search cannot decide', async () => {
 		open();
 		_setConfig('regex-le.workspace.scanIncludePassing', true);
 		await runCommand('regex-le.validateWorkspace');
 
 		const text = report();
-		expect(text).toMatch(
-			/^- \*\*2:8\*\* · `\/\(\?P<year>\\d\{4\}\)\/` · not checked: /m,
+		// A Python named group is no syntax error: it is read and searched.
+		expect(text).toContain(
+			'- **2:8** · `/(?P<year>\\d{4})/` · no finding · complexity',
 		);
-		expect(text.toLowerCase()).not.toContain('invalid:');
+		// A backreference is where the search has no answer, and says so.
+		expect(text).toContain(
+			'- **3:8** · `/(a+)\\1/` · not checked: a backreference is not a regular language · complexity',
+		);
+		expect(text.toLowerCase()).not.toContain('invalid');
 		// Listing everything: the sound ones too, and no note about hiding them.
 		expect(text.match(/^## .*$/gm)).toEqual([
 			'## `/w/src/a.ts` (2)',
-			'## `/w/src/b.py` (1)',
+			'## `/w/src/b.py` (2)',
 			'## `/w/src/c.ts` (1)',
 		]);
-		expect(text).toContain('· no finding · complexity');
 		expect(text).not.toContain('scanIncludePassing');
 	});
 
@@ -179,8 +185,11 @@ describe('regex-le.validateWorkspace and regex-le.validateFolder', () => {
 		await runCommand('regex-le.validateWorkspace');
 
 		const text = report();
-		expect(text).toContain('| `/w/src/b.py` | 1 | — | 1 |');
-		expect(text).not.toContain('`/w/src/a.ts`');
+		// With the search off nothing was asked, so nothing went unanswered.
+		expect(text).not.toContain('| `/w/src/');
+		expect(text).toContain(
+			'> 3 other file(s) hold only patterns with no finding.',
+		);
 		expect(text).toContain('`regex-le.regex.redosDetectionEnabled`');
 		expect(text.match(/^## .*$/gm)).toBeNull();
 	});
@@ -216,7 +225,7 @@ describe('regex-le.validateWorkspace and regex-le.validateFolder', () => {
 		expect(shown).toHaveLength(3);
 		for (const line of shown) expect(readme).toContain(line);
 		expect(readme).toContain(
-			'3 file(s) read · 4 pattern(s), 1 can hang, 1 not checked',
+			'3 file(s) read · 5 pattern(s), 1 can hang, 1 not checked',
 		);
 	});
 });

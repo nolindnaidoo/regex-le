@@ -120,7 +120,7 @@ describe('Regex-LE integration', function () {
 		for (const dir of ['src', 'node_modules', 'generated']) mkdirSync(join(root, dir));
 		writeFileSync(join(root, '.gitignore'), 'generated/\n');
 		writeFileSync(join(root, 'src', 'a.ts'), 'const ok = /\\d+/g;\nconst slow = /(a+)+$/;\n');
-		writeFileSync(join(root, 'src', 'b.py'), 'import re\nyear = re.compile(r"(?P<year>\\d{4})")\n');
+		writeFileSync(join(root, 'src', 'b.py'), 'import re\nyear = re.compile(r"(?P<year>\\d{4})")\nsame = re.compile(r"(a+)\\1")\n');
 		writeFileSync(join(root, 'node_modules', 'dep.js'), 'const slow = /(a+)+$/;\n');
 		writeFileSync(join(root, 'generated', 'g.ts'), 'const slow = /(a+)+$/;\n');
 		writeFileSync(join(root, 'README.md'), 'See /not/a/pattern/ here.\n');
@@ -136,9 +136,9 @@ describe('Regex-LE integration', function () {
 		);
 		assert.ok(report, 'no workspace report was opened');
 		const text = report.getText();
-		assert.match(text, /2 file\(s\) read · 3 pattern\(s\), 1 can hang, 1 not checked/);
+		assert.match(text, /2 file\(s\) read · 4 pattern\(s\), 1 can hang, 1 not checked/);
 		assert.match(text, /\| `src\/a\.ts` \| 2 \| 1 \| 0 \|/);
-		assert.match(text, /\| `src\/b\.py` \| 1 \| 0 \| 1 \|/);
+		assert.match(text, /\| `src\/b\.py` \| 2 \| 0 \| 1 \|/);
 		assert.deepStrictEqual(text.match(/^## .*$/gm), ['## `src/a.ts` (1)']);
 		assert.ok(!text.includes('node_modules') && !text.includes('generated/') && !text.includes('README'));
 		assert.match(text, /1 file\(s\) ignored by \.gitignore/);

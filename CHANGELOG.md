@@ -21,9 +21,11 @@ separate product on its own cadence and keeps its own
   a table of the files that hold a pattern that can hang or was not checked,
   counts the rest, lists the patterns that can hang, and ends with a line for
   each thing the scan left unread.
-- A pattern this engine cannot compile is reported as not checked, never as
-  invalid. A Python or Go pattern can be sound there and unreadable to a
-  JavaScript engine.
+- A pattern written for another language's engine is read, not refused: a
+  Python named group, an atomic group or a possessive quantifier is searched
+  like any other. A pattern the search cannot decide either way, because it
+  uses a backreference or a lookaround, is reported as not checked with the
+  reason, never as sound and never as invalid.
 - Only the patterns that can hang are listed in a scan.
   `regex-le.workspace.scanIncludePassing` lists every one, and
   `regex-le.workspace.scanProblemsEnabled` also shows the ones that can hang
