@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { NO_REDOS_FINDING } from '../analysis/noFinding';
 import { getConfiguration } from '../config/config';
 import type { extractRegexPatterns } from '../extraction/regex/extractPatterns';
+import { isWellFormed } from '../extraction/regex/heuristics';
 import { estimatePatternComplexity } from '../extraction/regex/performance';
 import { detectReDoS } from '../extraction/regex/redos';
 import type { Telemetry } from '../telemetry/telemetry';
@@ -69,6 +70,23 @@ function recommendation(
 }
 
 /**
+ * What this engine says is wrong with a pattern that is not well formed.
+ *
+ * Whether a pattern is valid is `isWellFormed`'s question, not this one's:
+ * `new RegExp` alone refuses a Python named group or a possessive
+ * quantifier, and the report then called working code invalid. This only
+ * supplies the message once that judge has said no.
+ */
+function syntaxErrorOf(pattern: string, flags: string): string | undefined {
+	try {
+		new RegExp(pattern, flags);
+		return undefined;
+	} catch (error) {
+		return error instanceof Error ? error.message : String(error);
+	}
+}
+
+/**
  * Running regex validation and rendering its report.
  *
  * Split from the command file, which held registration, prompting, the run
@@ -87,14 +105,8 @@ export async function validateSinglePattern(
 	const config = getConfiguration();
 
 	// Validate syntax
-	let isValid = false;
-	let syntaxError: string | undefined;
-	try {
-		new RegExp(pattern, flags);
-		isValid = true;
-	} catch (error) {
-		syntaxError = error instanceof Error ? error.message : String(error);
-	}
+	const isValid = isWellFormed(pattern, flags);
+	const syntaxError = isValid ? undefined : syntaxErrorOf(pattern, flags);
 
 	// Check for ReDoS
 	const redosResult = config.regexRedosDetectionEnabled
@@ -233,16 +245,10 @@ export async function validateAllPatterns(
 		});
 
 		// Validate syntax
-		let isValid = false;
-		let syntaxError: string | undefined;
-		try {
-			new RegExp(p.pattern, p.flags);
-			isValid = true;
-			validCount++;
-		} catch (error) {
-			syntaxError = error instanceof Error ? error.message : String(error);
-			invalidCount++;
-		}
+		const isValid = isWellFormed(p.pattern, p.flags);
+		const syntaxError = isValid ? undefined : syntaxErrorOf(p.pattern, p.flags);
+		if (isValid) validCount++;
+		else invalidCount++;
 
 		// Check for ReDoS
 		let redosResult;
