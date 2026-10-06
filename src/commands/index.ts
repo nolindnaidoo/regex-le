@@ -3,6 +3,7 @@ import type { Telemetry } from '../telemetry/telemetry';
 import type { Notifier } from '../ui/notifier';
 import type { StatusBar } from '../ui/statusBar';
 import { registerExtractCommand } from './extract';
+import { registerExtractWorkspaceCommands } from './extractWorkspace';
 import { registerHelpCommand } from './help';
 import { registerTestCommand } from './test';
 import { registerValidateCommand } from './validate';
@@ -18,6 +19,7 @@ export function registerCommands(
 ): void {
 	registerTestCommand(context, deps);
 	registerExtractCommand(context, deps);
+	registerExtractWorkspaceCommands(context, deps);
 	registerValidateCommand(context, deps);
 	registerValidateWorkspaceCommands(context, deps);
 	registerHelpCommand(context, deps.telemetry);

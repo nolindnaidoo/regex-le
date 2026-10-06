@@ -41,5 +41,9 @@
 	"not checked": "non vérifié",
 	"Only patterns that can hang are listed. The rest are counted per file, and the {0} setting lists each one.": "Seuls les motifs qui peuvent se bloquer sont listés. Les autres sont comptés par fichier, et le paramètre {0} liste chacun.",
 	"{0} pattern(s) that can hang in {1} file(s)": "{0} motif(s) pouvant se bloquer dans {1} fichier(s)",
-	"{0} other file(s) hold only patterns with no finding.": "{0} autre(s) fichier(s) ne contiennent que des motifs sans constat."
+	"{0} other file(s) hold only patterns with no finding.": "{0} autre(s) fichier(s) ne contiennent que des motifs sans constat.",
+	"{0} distinct pattern(s) in {1} file(s)": "{0} motif(s) distinct(s) dans {1} fichier(s)",
+	"Pattern": "Motif",
+	"Files": "Fichiers",
+	"Could not copy the report to the clipboard: {0}": "Impossible de copier le rapport dans le presse-papiers : {0}"
 }

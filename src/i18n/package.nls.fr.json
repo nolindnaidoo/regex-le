@@ -2,6 +2,8 @@
 	"manifest.command.category": "Regex-LE",
 	"manifest.command.test.title": "Test d'expression régulière",
 	"manifest.command.extract.title": "Modèles d'extraction",
+	"manifest.command.extract-workspace.title": "Extraire les motifs de l'espace de travail",
+	"manifest.command.extract-folder.title": "Extraire les motifs du dossier",
 	"manifest.command.validate.title": "Valider l'expression régulière",
 	"manifest.command.validate-workspace.title": "Valider les motifs de l'espace de travail",
 	"manifest.command.validate-folder.title": "Valider les motifs du dossier",

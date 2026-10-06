@@ -2,6 +2,8 @@
 	"manifest.command.category": "Regex-LE",
 	"manifest.command.test.title": "Prueba de expresiones regulares",
 	"manifest.command.extract.title": "Patrones de extracción",
+	"manifest.command.extract-workspace.title": "Extraer patrones del área de trabajo",
+	"manifest.command.extract-folder.title": "Extraer patrones de la carpeta",
 	"manifest.command.validate.title": "Validar expresión regular",
 	"manifest.command.validate-workspace.title": "Validar patrones en el área de trabajo",
 	"manifest.command.validate-folder.title": "Validar patrones en la carpeta",

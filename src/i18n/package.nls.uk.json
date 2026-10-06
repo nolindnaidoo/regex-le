@@ -2,6 +2,8 @@
 	"manifest.command.category": "Regex-LE",
 	"manifest.command.test.title": "Перевірка регулярного виразу",
 	"manifest.command.extract.title": "Шаблони вилучення",
+	"manifest.command.extract-workspace.title": "Видобути шаблони з робочої області",
+	"manifest.command.extract-folder.title": "Видобути шаблони з папки",
 	"manifest.command.validate.title": "Перевірити регулярний вираз",
 	"manifest.command.validate-workspace.title": "Перевірити шаблони в робочій області",
 	"manifest.command.validate-folder.title": "Перевірити шаблони в папці",

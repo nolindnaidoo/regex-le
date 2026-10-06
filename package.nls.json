@@ -2,6 +2,8 @@
 	"manifest.command.category": "Regex-LE",
 	"manifest.command.test.title": "Test Regex",
 	"manifest.command.extract.title": "Extract Patterns",
+	"manifest.command.extract-workspace.title": "Extract Patterns from Workspace",
+	"manifest.command.extract-folder.title": "Extract Patterns from Folder",
 	"manifest.command.validate.title": "Validate Regex",
 	"manifest.command.validate-workspace.title": "Validate Patterns in Workspace",
 	"manifest.command.validate-folder.title": "Validate Patterns in Folder",

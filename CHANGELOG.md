@@ -13,6 +13,12 @@ separate product on its own cadence and keeps its own
 
 ### Added
 
+- Extract across a folder or the whole workspace.
+  `Regex-LE: Extract Patterns from Workspace` reads every source file in the
+  workspace from disk, and `Regex-LE: Extract Patterns from Folder` does the
+  same for one folder, from the command palette or from a folder in the
+  Explorer. The report lists each distinct pattern once, the most widely
+  used first, with every file that holds it.
 - Validate across a folder or the whole workspace.
   `Regex-LE: Validate Patterns in Workspace` reads every source file in the
   workspace from disk and validates every pattern in it.

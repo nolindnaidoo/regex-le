@@ -2,6 +2,8 @@
 	"manifest.command.category": "Regex-LE",
 	"manifest.command.test.title": "Uji Regex",
 	"manifest.command.extract.title": "Pola Ekstraksi",
+	"manifest.command.extract-workspace.title": "Ekstrak Pola dari Ruang Kerja",
+	"manifest.command.extract-folder.title": "Ekstrak Pola dari Folder",
 	"manifest.command.validate.title": "Memverifikasi Ekspresi Reguler",
 	"manifest.command.validate-workspace.title": "Validasi Pola di Ruang Kerja",
 	"manifest.command.validate-folder.title": "Validasi Pola di Folder",

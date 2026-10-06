@@ -32,7 +32,7 @@ function buildHelpContent(): string {
 	const quickStart =
 		'1. Open a file with text content\n2. Run "Regex-LE: Test Regex"\n3. Enter a regex pattern\n4. View results with matches and performance metrics';
 	const commands =
-		'**Test**: Test a regex pattern against the active editor content\n**Extract**: Extract all regex patterns from the active editor\n**Validate**: Validate a regex pattern and check for ReDoS vulnerabilities\n**Validate Patterns in Workspace**: Validate every pattern in every source file in the workspace, read from disk\n**Validate Patterns in Folder**: The same for one folder. Also on a folder in the Explorer\n**Settings**: Configure extension options';
+		'**Test**: Test a regex pattern against the active editor content\n**Extract**: Extract all regex patterns from the active editor\n**Validate**: Validate a regex pattern and check for ReDoS vulnerabilities\n**Extract Patterns from Workspace**: The distinct patterns in every source file in the workspace, and the files that hold each\n**Extract Patterns from Folder**: The same for one folder. Also on a folder in the Explorer\n**Validate Patterns in Workspace**: Validate every pattern in every source file in the workspace, read from disk\n**Validate Patterns in Folder**: The same for one folder. Also on a folder in the Explorer\n**Settings**: Configure extension options';
 	const troubleshooting =
 		'**No matches found?** Check your pattern syntax and flags\n**ReDoS warnings?** The report carries the witness — the input that drives the pattern into backtracking. Run it yourself, then change the pattern so that input fails fast\n**Need help?** Check Output panel for details';
 	const settings =

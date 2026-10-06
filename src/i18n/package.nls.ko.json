@@ -2,6 +2,8 @@
 	"manifest.command.category": "Regex-LE",
 	"manifest.command.test.title": "정규식 테스트",
 	"manifest.command.extract.title": "패턴 추출",
+	"manifest.command.extract-workspace.title": "작업 영역에서 패턴 추출",
+	"manifest.command.extract-folder.title": "폴더에서 패턴 추출",
 	"manifest.command.validate.title": "정규식 유효성 검사",
 	"manifest.command.validate-workspace.title": "작업 영역의 패턴 검증",
 	"manifest.command.validate-folder.title": "폴더의 패턴 검증",

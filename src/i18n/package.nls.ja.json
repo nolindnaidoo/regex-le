@@ -2,6 +2,8 @@
 	"manifest.command.category": "Regex-LE",
 	"manifest.command.test.title": "正規表現のテスト",
 	"manifest.command.extract.title": "パターンの抽出",
+	"manifest.command.extract-workspace.title": "ワークスペースからパターンを抽出",
+	"manifest.command.extract-folder.title": "フォルダーからパターンを抽出",
 	"manifest.command.validate.title": "正規表現の検証",
 	"manifest.command.validate-workspace.title": "ワークスペースのパターンを検証",
 	"manifest.command.validate-folder.title": "フォルダーのパターンを検証",

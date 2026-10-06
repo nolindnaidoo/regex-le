@@ -2,6 +2,8 @@
 	"manifest.command.category": "Regex-LE",
 	"manifest.command.test.title": "Kiểm tra biểu thức chính quy",
 	"manifest.command.extract.title": "Các mẫu trích xuất",
+	"manifest.command.extract-workspace.title": "Trích xuất mẫu từ không gian làm việc",
+	"manifest.command.extract-folder.title": "Trích xuất mẫu từ thư mục",
 	"manifest.command.validate.title": "Xác thực biểu thức chính quy",
 	"manifest.command.validate-workspace.title": "Xác thực mẫu trong không gian làm việc",
 	"manifest.command.validate-folder.title": "Xác thực mẫu trong thư mục",
