@@ -41,5 +41,9 @@
 	"not checked": "не перевірено",
 	"Only patterns that can hang are listed. The rest are counted per file, and the {0} setting lists each one.": "Перелічуються лише шаблони, здатні зависнути. Решта підраховуються за файлами, а параметр {0} перелічує кожен.",
 	"{0} pattern(s) that can hang in {1} file(s)": "Шаблонів, здатних зависнути: {0}, файлів: {1}",
-	"{0} other file(s) hold only patterns with no finding.": "Інших файлів, що містять лише шаблони без зауважень: {0}."
+	"{0} other file(s) hold only patterns with no finding.": "Інших файлів, що містять лише шаблони без зауважень: {0}.",
+	"{0} distinct pattern(s) in {1} file(s)": "Різних шаблонів: {0}, файлів: {1}",
+	"Pattern": "Шаблон",
+	"Files": "Файли",
+	"Could not copy the report to the clipboard: {0}": "Не вдалося скопіювати звіт до буфера обміну: {0}"
 }

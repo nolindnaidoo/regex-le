@@ -85,6 +85,16 @@
 				"category": "%manifest.command.category%"
 			},
 			{
+				"command": "regex-le.extractWorkspace",
+				"title": "%manifest.command.extract-workspace.title%",
+				"category": "%manifest.command.category%"
+			},
+			{
+				"command": "regex-le.extractFolder",
+				"title": "%manifest.command.extract-folder.title%",
+				"category": "%manifest.command.category%"
+			},
+			{
 				"command": "regex-le.validate",
 				"title": "%manifest.command.validate.title%",
 				"category": "%manifest.command.category%"
@@ -126,6 +136,12 @@
 					"command": "regex-le.extract"
 				},
 				{
+					"command": "regex-le.extractWorkspace"
+				},
+				{
+					"command": "regex-le.extractFolder"
+				},
+				{
 					"command": "regex-le.validate"
 				},
 				{
@@ -143,9 +159,14 @@
 			],
 			"explorer/context": [
 				{
-					"command": "regex-le.validateFolder",
+					"command": "regex-le.extractFolder",
 					"when": "explorerResourceIsFolder",
 					"group": "7_modification@1"
+				},
+				{
+					"command": "regex-le.validateFolder",
+					"when": "explorerResourceIsFolder",
+					"group": "7_modification@2"
 				}
 			]
 		},

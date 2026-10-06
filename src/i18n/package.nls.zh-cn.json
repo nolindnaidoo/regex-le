@@ -2,6 +2,8 @@
 	"manifest.command.category": "Regex-LE",
 	"manifest.command.test.title": "正则表达式测试",
 	"manifest.command.extract.title": "提取模式",
+	"manifest.command.extract-workspace.title": "从工作区提取模式",
+	"manifest.command.extract-folder.title": "从文件夹提取模式",
 	"manifest.command.validate.title": "验证正则表达式",
 	"manifest.command.validate-workspace.title": "验证工作区中的模式",
 	"manifest.command.validate-folder.title": "验证文件夹中的模式",

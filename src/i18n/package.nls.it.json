@@ -2,6 +2,8 @@
 	"manifest.command.category": "Regex-LE",
 	"manifest.command.test.title": "Test dell'espressione regolare",
 	"manifest.command.extract.title": "Modelli di estrazione",
+	"manifest.command.extract-workspace.title": "Estrai i pattern dall'area di lavoro",
+	"manifest.command.extract-folder.title": "Estrai i pattern dalla cartella",
 	"manifest.command.validate.title": "Verifica l'espressione regolare",
 	"manifest.command.validate-workspace.title": "Convalida i pattern nell'area di lavoro",
 	"manifest.command.validate-folder.title": "Convalida i pattern nella cartella",

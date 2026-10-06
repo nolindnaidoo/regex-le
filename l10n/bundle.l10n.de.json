@@ -41,5 +41,9 @@
 	"not checked": "nicht geprüft",
 	"Only patterns that can hang are listed. The rest are counted per file, and the {0} setting lists each one.": "Nur Muster, die hängen können, werden aufgelistet. Die übrigen werden pro Datei gezählt, und die Einstellung {0} listet jedes einzeln auf.",
 	"{0} pattern(s) that can hang in {1} file(s)": "{0} Muster, die hängen können, in {1} Datei(en)",
-	"{0} other file(s) hold only patterns with no finding.": "{0} weitere Datei(en) enthalten nur Muster ohne Befund."
+	"{0} other file(s) hold only patterns with no finding.": "{0} weitere Datei(en) enthalten nur Muster ohne Befund.",
+	"{0} distinct pattern(s) in {1} file(s)": "{0} verschiedene Muster in {1} Datei(en)",
+	"Pattern": "Muster",
+	"Files": "Dateien",
+	"Could not copy the report to the clipboard: {0}": "Der Bericht konnte nicht in die Zwischenablage kopiert werden: {0}"
 }

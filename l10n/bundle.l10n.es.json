@@ -41,5 +41,9 @@
 	"not checked": "sin comprobar",
 	"Only patterns that can hang are listed. The rest are counted per file, and the {0} setting lists each one.": "Solo se enumeran los patrones que pueden bloquearse. El resto se cuenta por archivo, y el ajuste {0} enumera cada uno.",
 	"{0} pattern(s) that can hang in {1} file(s)": "{0} patrón(es) que pueden bloquearse en {1} archivo(s)",
-	"{0} other file(s) hold only patterns with no finding.": "Otros {0} archivo(s) solo contienen patrones sin hallazgos."
+	"{0} other file(s) hold only patterns with no finding.": "Otros {0} archivo(s) solo contienen patrones sin hallazgos.",
+	"{0} distinct pattern(s) in {1} file(s)": "{0} patrón(es) distinto(s) en {1} archivo(s)",
+	"Pattern": "Patrón",
+	"Files": "Archivos",
+	"Could not copy the report to the clipboard: {0}": "No se pudo copiar el informe al portapapeles: {0}"
 }

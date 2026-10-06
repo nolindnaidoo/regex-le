@@ -41,5 +41,9 @@
 	"not checked": "tidak diperiksa",
 	"Only patterns that can hang are listed. The rest are counted per file, and the {0} setting lists each one.": "Hanya pola yang dapat macet yang dicantumkan. Sisanya dihitung per file, dan pengaturan {0} mencantumkan masing-masing.",
 	"{0} pattern(s) that can hang in {1} file(s)": "{0} pola yang dapat macet dalam {1} file",
-	"{0} other file(s) hold only patterns with no finding.": "{0} file lainnya hanya berisi pola tanpa temuan."
+	"{0} other file(s) hold only patterns with no finding.": "{0} file lainnya hanya berisi pola tanpa temuan.",
+	"{0} distinct pattern(s) in {1} file(s)": "{0} pola berbeda dalam {1} file",
+	"Pattern": "Pola",
+	"Files": "File",
+	"Could not copy the report to the clipboard: {0}": "Tidak dapat menyalin laporan ke papan klip: {0}"
 }

@@ -152,10 +152,43 @@ The reports also include a rough performance score based on execution time relat
 
 ## Across a folder or a workspace
 
-Validate reads the document you have open. A scan validates every pattern in many files from disk and gives one report.
+Extract and Validate read the document you have open. Each has a form that reads many files from disk and gives one report.
 
-- **The whole workspace**: run `Regex-LE: Validate Patterns in Workspace` from the command palette.
-- **One folder**: right-click it in the Explorer and choose `Validate Patterns in Folder`, or run `Regex-LE: Validate Patterns in Folder` and pick one.
+- **The whole workspace**: run `Regex-LE: Extract Patterns from Workspace` or `Regex-LE: Validate Patterns in Workspace` from the command palette.
+- **One folder**: right-click it in the Explorer and choose `Extract Patterns from Folder` or `Validate Patterns in Folder`. The same two commands in the palette ask for a folder.
+
+### Extract
+
+A project writes the same pattern in many places, so the report is the distinct patterns and where each one is, the most widely used first:
+
+```markdown
+# Regex-LE workspace report
+
+`my-project` · 3 file(s) read · 3 distinct pattern(s) in 3 file(s)
+
+| Pattern | Files |
+|---|---|
+| `/\d+/g` | 2 |
+| `/\d+/` | 1 |
+| `/^x$/` | 1 |
+
+## `/\d+/g` (2)
+
+- `src/a.ts` · **1:11**
+- `src/b.ts` · **1:11**
+
+## `/\d+/` (1)
+
+- `src/c.py` · **2:5**
+
+## `/^x$/` (1)
+
+- `src/a.ts` · **2:11**
+```
+
+Two patterns are the same when their text and flags are, so `/\d+/g` and `/\d+/` are listed apart. A pattern is counted once per file, at the first place it is written there.
+
+### Validate
 
 The report opens with a table of the files that hold something to look at, then lists the patterns that can hang:
 
@@ -260,6 +293,8 @@ exactly as the screening in this extension does.
 |---|---|
 | `Regex-LE: Test Regex` | Test a found or entered pattern against the file |
 | `Regex-LE: Extract Patterns` | List every regex pattern found in the document |
+| `Regex-LE: Extract Patterns from Workspace` | The distinct patterns in every source file in the workspace, and the files that hold each |
+| `Regex-LE: Extract Patterns from Folder` | The same for one folder. Also on a folder in the Explorer |
 | `Regex-LE: Validate Regex` | Syntax + ReDoS report for every found pattern |
 | `Regex-LE: Validate Patterns in Workspace` | Every pattern in every source file in the workspace, and which can hang |
 | `Regex-LE: Validate Patterns in Folder` | The same for one folder. Also on a folder in the Explorer |
@@ -292,8 +327,8 @@ No command is bound to a key by default. Give any of them one under **Keyboard S
 | `regex-le.workspace.scanAlwaysInclude` | `[]` | Files to read even when one of the three above would skip them |
 | `regex-le.workspace.scanMaxFiles` | `5000` | The most files one scan reads |
 | `regex-le.workspace.scanMaxResults` | `10000` | The most patterns one scan lists before it stops reading |
-| `regex-le.workspace.scanIncludePassing` | `false` | List every pattern, not only the ones that can hang |
-| `regex-le.workspace.scanProblemsEnabled` | `false` | Also show the patterns that can hang in the Problems panel |
+| `regex-le.workspace.scanIncludePassing` | `false` | In a Validate scan, list every pattern, not only the ones that can hang |
+| `regex-le.workspace.scanProblemsEnabled` | `false` | In a Validate scan, also show the patterns that can hang in the Problems panel |
 
 ## Languages
 
@@ -347,12 +382,12 @@ a build only tells you how busy the runner was.
 <!-- coverage:start -->
 | Metric | Coverage |
 | --- | --- |
-| Statements | 92.87% |
-| Branches | 81.42% |
-| Functions | 98.38% |
-| Lines | 95.03% |
+| Statements | 93.10% |
+| Branches | 81.74% |
+| Functions | 98.50% |
+| Lines | 95.23% |
 
-329 test cases across 22 files, plus an integration suite that runs
+338 test cases across 23 files, plus an integration suite that runs
 in a real VS Code extension host and an end-to-end test that installs the
 built `.vsix` into a clean profile.
 

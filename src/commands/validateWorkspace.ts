@@ -9,10 +9,6 @@ import { isWellFormed } from '../extraction/regex/heuristics';
 import { estimatePatternComplexity } from '../extraction/regex/performance';
 import { detectReDoS } from '../extraction/regex/redos';
 import { resolveFormat } from '../mcp/fileType';
-import type { Telemetry } from '../telemetry/telemetry';
-import type { Configuration } from '../types';
-import type { Notifier } from '../ui/notifier';
-import type { StatusBar } from '../ui/statusBar';
 import {
 	listFiles,
 	type ScanLimits,
@@ -20,12 +16,14 @@ import {
 	scanFiles,
 	unreadNotes,
 } from '../workspace/scan';
-
-type Deps = Readonly<{
-	telemetry: Telemetry;
-	notifier: Notifier;
-	statusBar: StatusBar;
-}>;
+import {
+	askForFolder,
+	code,
+	deliver,
+	hasSomethingToScan,
+	limitsFrom,
+	type WorkspaceDeps,
+} from './workspaceShared';
 
 /** One pattern and what validating it found. */
 export interface Checked {
@@ -93,7 +91,7 @@ export function check(pattern: ExtractedRegexPattern, redos: boolean): Checked {
 
 export function registerValidateWorkspaceCommands(
 	context: vscode.ExtensionContext,
-	deps: Deps,
+	deps: WorkspaceDeps,
 ): void {
 	const diagnostics = vscode.languages.createDiagnosticCollection('regex-le');
 	context.subscriptions.push(
@@ -114,18 +112,6 @@ export function registerValidateWorkspaceCommands(
 	);
 }
 
-async function askForFolder(): Promise<vscode.Uri | undefined> {
-	const start = vscode.workspace.workspaceFolders?.[0]?.uri;
-	const chosen = await vscode.window.showOpenDialog({
-		canSelectFiles: false,
-		canSelectFolders: true,
-		canSelectMany: false,
-		...(start === undefined ? {} : { defaultUri: start }),
-		openLabel: vscode.l10n.t('Scan Folder'),
-	});
-	return chosen?.[0];
-}
-
 /**
  * Validate every pattern in every source file under a folder, or in the
  * whole workspace when no folder is given.
@@ -134,7 +120,7 @@ async function askForFolder(): Promise<vscode.Uri | undefined> {
  * the project holds, where Validate reports what the editor holds.
  */
 async function validateWorkspace(
-	deps: Deps,
+	deps: WorkspaceDeps,
 	diagnostics: vscode.DiagnosticCollection,
 	root?: vscode.Uri,
 ): Promise<void> {
@@ -143,28 +129,9 @@ async function validateWorkspace(
 			? 'command-validate-workspace'
 			: 'command-validate-folder',
 	);
-	if (
-		root === undefined &&
-		(vscode.workspace.workspaceFolders ?? []).length === 0
-	) {
-		deps.notifier.showWarning(
-			vscode.l10n.t('No workspace open. Please open a workspace folder first.'),
-		);
-		return;
-	}
+	if (!hasSomethingToScan(root, deps)) return;
 	const config = getConfiguration();
-	const limits: ScanLimits = {
-		patterns: config.workspaceScanPatterns,
-		excludes: config.workspaceScanExcludes,
-		useDefaultExcludes: config.workspaceScanUseDefaultExcludes,
-		skipBinaryFiles: config.workspaceScanSkipBinaryFiles,
-		alwaysInclude: config.workspaceScanAlwaysInclude,
-		maxFiles: config.workspaceScanMaxFiles,
-		maxFileBytes: config.safetyEnabled
-			? config.safetyFileSizeWarnBytes
-			: undefined,
-		respectGitignore: config.workspaceScanRespectGitignore,
-	};
+	const limits = limitsFrom(config);
 
 	await vscode.window.withProgress(
 		{
@@ -263,39 +230,6 @@ async function validateWorkspace(
 				);
 			}
 		},
-	);
-}
-
-/** Copy first, then open, as the single-file commands do, and for their reason. */
-async function deliver(
-	report: (positions: boolean) => string,
-	config: Configuration,
-	deps: Deps,
-): Promise<void> {
-	if (config.copyToClipboardEnabled) {
-		try {
-			await vscode.env.clipboard.writeText(
-				report(config.clipboardIncludesPositions),
-			);
-		} catch (error) {
-			const message = error instanceof Error ? error.message : 'Unknown error';
-			deps.notifier.showWarning(
-				vscode.l10n.t(
-					'Could not copy the validation report to the clipboard: {0}',
-					message,
-				),
-			);
-		}
-	}
-	const document = await vscode.workspace.openTextDocument({
-		content: report(config.showPositions),
-		language: 'markdown',
-	});
-	await vscode.window.showTextDocument(
-		document,
-		config.openResultsSideBySide
-			? vscode.ViewColumn.Beside
-			: vscode.ViewColumn.Active,
 	);
 }
 
@@ -426,9 +360,4 @@ export function formatValidateWorkspaceReport({
 	const notes = unreadNotes(summary, limits, code('regex-le.workspace.*'));
 	if (notes.length > 0) lines.push(...notes.map((note) => `> ${note}`), '');
 	return lines.join('\n');
-}
-
-/** Text as a code span. A code span cannot escape a backtick, so one becomes a quote. */
-function code(text: string): string {
-	return `\`${text.replace(/`/g, "'").replace(/\r?\n/g, ' ')}\``;
 }

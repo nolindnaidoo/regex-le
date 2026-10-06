@@ -34,6 +34,8 @@ describe('Regex-LE integration', function () {
 		for (const id of [
 			'regex-le.test',
 			'regex-le.extract',
+			'regex-le.extractWorkspace',
+			'regex-le.extractFolder',
 			'regex-le.validate',
 			'regex-le.validateWorkspace',
 			'regex-le.validateFolder',
@@ -151,5 +153,28 @@ describe('Regex-LE integration', function () {
 		assert.ok(uri.path.endsWith('/src/a.ts'));
 		assert.strictEqual(list[0]?.range.start.line, 1);
 		assert.strictEqual(list[0]?.range.start.character, 13);
+	});
+	it('extracts the distinct patterns of a folder from disk, with the files that hold each', async () => {
+		const root = mkdtempSync(join(tmpdir(), 'regex-le-extract-'));
+		for (const dir of ['src', 'node_modules']) mkdirSync(join(root, dir));
+		writeFileSync(join(root, 'src', 'a.ts'), 'const d = /\\d+/g;\nconst e = /^x$/;\n');
+		writeFileSync(join(root, 'src', 'b.ts'), 'const d = /\\d+/g;\n');
+		writeFileSync(join(root, 'node_modules', 'dep.js'), 'const d = /\\d+/g;\n');
+		writeFileSync(join(root, 'README.md'), 'See /not/a/pattern/ here.\n');
+
+		await vscode.commands.executeCommand('regex-le.extractFolder', vscode.Uri.file(root));
+
+		const report = vscode.workspace.textDocuments.find(
+			(doc) => doc.languageId === 'markdown' && doc.getText().includes('regex-le-extract-'),
+		);
+		assert.ok(report, 'no workspace report was opened');
+		const text = report.getText();
+		assert.match(text, /2 file\(s\) read · 2 distinct pattern\(s\) in 2 file\(s\)/);
+		assert.deepStrictEqual(
+			text.split('\n').filter((line) => line.startsWith('| `')),
+			['| `/\\d+/g` | 2 |', '| `/^x$/` | 1 |'],
+		);
+		assert.ok(text.includes('- `src/a.ts` · **1:11**\n- `src/b.ts` · **1:11**'));
+		assert.ok(!text.includes('node_modules') && !text.includes('README'));
 	});
 });

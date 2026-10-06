@@ -41,5 +41,9 @@
   "not checked": "not checked",
   "Only patterns that can hang are listed. The rest are counted per file, and the {0} setting lists each one.": "Only patterns that can hang are listed. The rest are counted per file, and the {0} setting lists each one.",
   "{0} pattern(s) that can hang in {1} file(s)": "{0} pattern(s) that can hang in {1} file(s)",
-  "{0} other file(s) hold only patterns with no finding.": "{0} other file(s) hold only patterns with no finding."
+  "{0} other file(s) hold only patterns with no finding.": "{0} other file(s) hold only patterns with no finding.",
+  "{0} distinct pattern(s) in {1} file(s)": "{0} distinct pattern(s) in {1} file(s)",
+  "Pattern": "Pattern",
+  "Files": "Files",
+  "Could not copy the report to the clipboard: {0}": "Could not copy the report to the clipboard: {0}"
 }

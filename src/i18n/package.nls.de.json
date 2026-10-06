@@ -2,6 +2,8 @@
 	"manifest.command.category": "Regex-LE",
 	"manifest.command.test.title": "Regex-Test",
 	"manifest.command.extract.title": "Muster extrahieren",
+	"manifest.command.extract-workspace.title": "Muster aus dem Arbeitsbereich extrahieren",
+	"manifest.command.extract-folder.title": "Muster aus dem Ordner extrahieren",
 	"manifest.command.validate.title": "Regex überprüfen",
 	"manifest.command.validate-workspace.title": "Muster im Arbeitsbereich validieren",
 	"manifest.command.validate-folder.title": "Muster im Ordner validieren",
