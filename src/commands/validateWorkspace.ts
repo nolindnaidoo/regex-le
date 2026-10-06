@@ -1,9 +1,11 @@
 import * as vscode from 'vscode';
 import { getConfiguration } from '../config/config';
+import { decide } from '../extraction/regex/ambiguity';
 import {
 	type ExtractedRegexPattern,
 	extractRegexPatterns,
 } from '../extraction/regex/extractPatterns';
+import { isWellFormed } from '../extraction/regex/heuristics';
 import { estimatePatternComplexity } from '../extraction/regex/performance';
 import { detectReDoS } from '../extraction/regex/redos';
 import { resolveFormat } from '../mcp/fileType';
@@ -29,12 +31,13 @@ type Deps = Readonly<{
 export interface Checked {
 	readonly pattern: ExtractedRegexPattern;
 	/**
-	 * Why the pattern could not be checked: this engine's message when it
-	 * cannot compile it.
+	 * Why the search for a hang could not answer for this pattern: it uses a
+	 * backreference or a lookaround, which the search cannot decide either
+	 * way.
 	 *
-	 * **This is not a verdict on the pattern.** The extractor only returns
-	 * what its own language would accept, and a Python or Go pattern can be
-	 * sound there and unreadable here. Calling that invalid would be a guess.
+	 * **This is not a verdict on the pattern**, and it is not about which
+	 * language wrote it. A Python named group or a possessive quantifier is
+	 * read through `isWellFormed`, as the extractor and the search read it.
 	 */
 	readonly unchecked: string | undefined;
 	/** Set when an input was found that drives the pattern into backtracking. */
@@ -64,15 +67,19 @@ function hasFinding(row: Checked): boolean {
 
 /** What Validate decides for one pattern, without the report around it. */
 export function check(pattern: ExtractedRegexPattern, redos: boolean): Checked {
-	let unchecked: string | undefined;
-	try {
-		new RegExp(pattern.pattern, pattern.flags);
-	} catch (error) {
-		unchecked = error instanceof Error ? error.message : String(error);
-	}
+	// The same judge the extractor and the hang search use. `new RegExp`
+	// alone would refuse a pattern written for another language's engine.
+	const readable = isWellFormed(pattern.pattern, pattern.flags);
 	const found =
-		redos && unchecked === undefined
-			? detectReDoS(pattern.pattern, pattern.flags)
+		redos && readable ? detectReDoS(pattern.pattern, pattern.flags) : undefined;
+	const decision =
+		found !== undefined && !found.detected
+			? decide(pattern.pattern)
+			: undefined;
+	const unchecked = !readable
+		? 'not a pattern this can read'
+		: decision?.kind === 'undecided'
+			? decision.reason
 			: undefined;
 	return {
 		pattern,
