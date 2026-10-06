@@ -3,6 +3,8 @@
 	"manifest.command.test.title": "Перевірка регулярного виразу",
 	"manifest.command.extract.title": "Шаблони вилучення",
 	"manifest.command.validate.title": "Перевірити регулярний вираз",
+	"manifest.command.validate-workspace.title": "Перевірити шаблони в робочій області",
+	"manifest.command.validate-folder.title": "Перевірити шаблони в папці",
 	"manifest.command.settings.title": "Відкрити налаштування",
 	"manifest.command.help.title": "Довідка та усунення несправностей",
 	"manifest.settings.title": "Налаштування Regex-LE",
@@ -22,5 +24,15 @@
 	"manifest.settings.regex.redos-detection.desc": "Увімкнути виявлення вразливості ReDoS (відмова в обслуговуванні на основі регулярних виразів)",
 	"manifest.settings.regex.max-match-limit.desc": "Максимальна кількість результатів, що відображаються (запобігає надмірному використанню пам’яті)",
 	"manifest.capability.untrusted-workspaces.desc": "Обмежена функціональність у ненадійних робочих середовищах",
-	"manifest.mcp.label": "Інструменти вилучення шаблонів Regex-LE для режиму агента"
+	"manifest.mcp.label": "Інструменти вилучення шаблонів Regex-LE для режиму агента",
+	"manifest.settings.workspace.excludes.desc": "Glob-шаблони додаткових файлів, які пропускає сканування папки або робочої області, окрім вбудованого списку. Приклад: **/fixtures/**",
+	"manifest.settings.workspace.max-files.desc": "Найбільша кількість файлів, яку читає одне сканування папки або робочої області",
+	"manifest.settings.workspace.max-results.desc": "Найбільша кількість результатів, яку повідомляє одне сканування папки або робочої області, перш ніж припинити читання",
+	"manifest.settings.workspace.patterns.desc": "Glob-шаблони файлів, які читає сканування папки або робочої області",
+	"manifest.settings.workspace.gitignore.desc": "Пропускати файли, які пропускають файли .gitignore проєкту",
+	"manifest.settings.workspace.always-include.desc": "Glob-шаблони файлів, які сканування папки або робочої області читає, навіть якщо вбудований список або .gitignore їх пропустили б. Приклад: **/vendor/**",
+	"manifest.settings.workspace.binary.desc": "Пропускати зображення, шрифти, архіви та інші нетекстові файли",
+	"manifest.settings.workspace.default-excludes.desc": "Пропускати папки залежностей, результати збирання, кеші та lock-файли, наприклад node_modules, dist, .next і package-lock.json",
+	"manifest.settings.workspace.passing.desc": "Перелічувати кожен шаблон, знайдений під час сканування папки або робочої області, а не лише здатні зависнути",
+	"manifest.settings.workspace.findings-problems.desc": "Показувати на панелі «Проблеми» також шаблони, здатні зависнути"
 }

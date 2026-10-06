@@ -3,6 +3,8 @@
 	"manifest.command.test.title": "Проверка регулярного выражения",
 	"manifest.command.extract.title": "Шаблоны извлечения",
 	"manifest.command.validate.title": "Проверить выражение регулярного выражения",
+	"manifest.command.validate-workspace.title": "Проверить шаблоны в рабочей области",
+	"manifest.command.validate-folder.title": "Проверить шаблоны в папке",
 	"manifest.command.settings.title": "Открыть настройки",
 	"manifest.command.help.title": "Справка и устранение неполадок",
 	"manifest.settings.title": "Настройки Regex-LE",
@@ -22,5 +24,15 @@
 	"manifest.settings.regex.redos-detection.desc": "Включить обнаружение уязвимости ReDoS (отказ в обслуживании с использованием регулярных выражений)",
 	"manifest.settings.regex.max-match-limit.desc": "Максимальное количество результатов, которые будут возвращены (предотвращает чрезмерное использование памяти)",
 	"manifest.capability.untrusted-workspaces.desc": "Ограниченная функциональность в ненадежных рабочих средах",
-	"manifest.mcp.label": "Инструменты извлечения шаблонов Regex-LE для режима агента"
+	"manifest.mcp.label": "Инструменты извлечения шаблонов Regex-LE для режима агента",
+	"manifest.settings.workspace.excludes.desc": "Glob-шаблоны дополнительных файлов, которые пропускает сканирование папки или рабочей области, помимо встроенного списка. Пример: **/fixtures/**",
+	"manifest.settings.workspace.max-files.desc": "Наибольшее число файлов, которое читает одно сканирование папки или рабочей области",
+	"manifest.settings.workspace.max-results.desc": "Наибольшее число результатов, которое сообщает одно сканирование папки или рабочей области, прежде чем прекратить чтение",
+	"manifest.settings.workspace.patterns.desc": "Glob-шаблоны файлов, которые читает сканирование папки или рабочей области",
+	"manifest.settings.workspace.gitignore.desc": "Пропускать файлы, которые пропускают файлы .gitignore проекта",
+	"manifest.settings.workspace.always-include.desc": "Glob-шаблоны файлов, которые сканирование папки или рабочей области читает, даже если встроенный список или .gitignore их пропустили бы. Пример: **/vendor/**",
+	"manifest.settings.workspace.binary.desc": "Пропускать изображения, шрифты, архивы и другие нетекстовые файлы",
+	"manifest.settings.workspace.default-excludes.desc": "Пропускать папки зависимостей, результаты сборки, кэши и lock-файлы, например node_modules, dist, .next и package-lock.json",
+	"manifest.settings.workspace.passing.desc": "Перечислять каждый шаблон, найденный при сканировании папки или рабочей области, а не только способные зависнуть",
+	"manifest.settings.workspace.findings-problems.desc": "Показывать на панели «Проблемы» также шаблоны, способные зависнуть"
 }

@@ -3,6 +3,8 @@
 	"manifest.command.test.title": "Prueba de expresiones regulares",
 	"manifest.command.extract.title": "Patrones de extracción",
 	"manifest.command.validate.title": "Validar expresión regular",
+	"manifest.command.validate-workspace.title": "Validar patrones en el área de trabajo",
+	"manifest.command.validate-folder.title": "Validar patrones en la carpeta",
 	"manifest.command.settings.title": "Abrir «Configuración»",
 	"manifest.command.help.title": "Ayuda y resolución de problemas",
 	"manifest.settings.title": "Configuración de Regex-LE",
@@ -22,5 +24,15 @@
 	"manifest.settings.regex.redos-detection.desc": "Habilitar la detección de vulnerabilidades ReDoS (denegación de servicio mediante expresiones regulares)",
 	"manifest.settings.regex.max-match-limit.desc": "Número máximo de resultados que se deben devolver (evita un uso excesivo de memoria)",
 	"manifest.capability.untrusted-workspaces.desc": "Funcionalidad limitada en entornos de trabajo no fiables",
-	"manifest.mcp.label": "Herramientas de extracción de patrones Regex-LE para el modo agente"
+	"manifest.mcp.label": "Herramientas de extracción de patrones Regex-LE para el modo agente",
+	"manifest.settings.workspace.excludes.desc": "Patrones glob de más archivos que omite un análisis de carpeta o de área de trabajo, además de la lista integrada. Ejemplo: **/fixtures/**",
+	"manifest.settings.workspace.max-files.desc": "El máximo de archivos que lee un análisis de carpeta o de área de trabajo",
+	"manifest.settings.workspace.max-results.desc": "El máximo de resultados que informa un análisis de carpeta o de área de trabajo antes de dejar de leer",
+	"manifest.settings.workspace.patterns.desc": "Patrones glob de los archivos que lee un análisis de carpeta o de área de trabajo",
+	"manifest.settings.workspace.gitignore.desc": "Omitir los archivos que omiten los archivos .gitignore del proyecto",
+	"manifest.settings.workspace.always-include.desc": "Patrones glob de los archivos que un análisis de carpeta o de área de trabajo lee aunque la lista integrada o .gitignore los omitirían. Ejemplo: **/vendor/**",
+	"manifest.settings.workspace.binary.desc": "Omitir imágenes, fuentes, archivos comprimidos y otros archivos que no son texto",
+	"manifest.settings.workspace.default-excludes.desc": "Omitir carpetas de dependencias, resultados de compilación, cachés y archivos de bloqueo, como node_modules, dist, .next y package-lock.json",
+	"manifest.settings.workspace.passing.desc": "Enumerar cada patrón que encuentra un análisis de carpeta o de área de trabajo, no solo los que pueden bloquearse",
+	"manifest.settings.workspace.findings-problems.desc": "Mostrar también en el panel Problemas los patrones que pueden bloquearse"
 }

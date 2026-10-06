@@ -9,10 +9,37 @@ This file covers the **VS Code extension**. The Rust CLI in `crate/` is a
 separate product on its own cadence and keeps its own
 [CHANGELOG](crate/CHANGELOG.md).
 
-## [2.6.0] - 2026-10-05
+## [2.6.0] - 2026-10-06
 
 ### Added
 
+- Validate across a folder or the whole workspace.
+  `Regex-LE: Validate Patterns in Workspace` reads every source file in the
+  workspace from disk and validates every pattern in it.
+  `Regex-LE: Validate Patterns in Folder` does the same for one folder, from
+  the command palette or from a folder in the Explorer. The report opens with
+  a table of the files that hold a pattern that can hang or was not checked,
+  counts the rest, lists the patterns that can hang, and ends with a line for
+  each thing the scan left unread.
+- A pattern this engine cannot compile is reported as not checked, never as
+  invalid. A Python or Go pattern can be sound there and unreadable to a
+  JavaScript engine.
+- Only the patterns that can hang are listed in a scan.
+  `regex-le.workspace.scanIncludePassing` lists every one, and
+  `regex-le.workspace.scanProblemsEnabled` also shows the ones that can hang
+  in the Problems panel.
+- A scan reads source files in the nine languages the extractor knows, and
+  `regex-le.workspace.scanPatterns` widens that. It skips three things by
+  default, each with its own switch: dependency folders, build output, caches
+  and lockfiles (`regex-le.workspace.scanUseDefaultExcludes`), whatever the
+  project's `.gitignore` files skip
+  (`regex-le.workspace.scanRespectGitignore`), and files that are not text
+  (`regex-le.workspace.scanSkipBinaryFiles`).
+  `regex-le.workspace.scanExcludes` skips more, and
+  `regex-le.workspace.scanAlwaysInclude` reads a path whatever the switches
+  say. The report names which of these were on.
+- `regex-le.workspace.scanMaxFiles` caps how many files are read and
+  `regex-le.workspace.scanMaxResults` caps how many patterns are listed.
 - Positions are now a setting. `regex-le.showPositions` decides whether the
   output gives the line and column of each pattern and match, and
   `regex-le.clipboardIncludesPositions` decides the same for the copy on the

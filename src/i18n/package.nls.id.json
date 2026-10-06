@@ -3,6 +3,8 @@
 	"manifest.command.test.title": "Uji Regex",
 	"manifest.command.extract.title": "Pola Ekstraksi",
 	"manifest.command.validate.title": "Memverifikasi Ekspresi Reguler",
+	"manifest.command.validate-workspace.title": "Validasi Pola di Ruang Kerja",
+	"manifest.command.validate-folder.title": "Validasi Pola di Folder",
 	"manifest.command.settings.title": "Buka Pengaturan",
 	"manifest.command.help.title": "Bantuan & Pemecahan Masalah",
 	"manifest.settings.title": "Pengaturan Regex-LE",
@@ -22,5 +24,15 @@
 	"manifest.settings.regex.redos-detection.desc": "Aktifkan deteksi kerentanan ReDoS (Regular Expression Denial of Service)",
 	"manifest.settings.regex.max-match-limit.desc": "Jumlah hasil pencocokan maksimum yang akan ditampilkan (untuk mencegah penggunaan memori yang berlebihan)",
 	"manifest.capability.untrusted-workspaces.desc": "Fungsionalitas terbatas di ruang kerja yang tidak tepercaya",
-	"manifest.mcp.label": "Alat ekstraksi pola Regex-LE untuk mode agen"
+	"manifest.mcp.label": "Alat ekstraksi pola Regex-LE untuk mode agen",
+	"manifest.settings.workspace.excludes.desc": "Pola glob file tambahan yang dilewati oleh pemindaian folder atau ruang kerja, di luar daftar bawaan. Contoh: **/fixtures/**",
+	"manifest.settings.workspace.max-files.desc": "Jumlah file terbanyak yang dibaca oleh satu pemindaian folder atau ruang kerja",
+	"manifest.settings.workspace.max-results.desc": "Jumlah hasil terbanyak yang dilaporkan oleh satu pemindaian folder atau ruang kerja sebelum berhenti membaca",
+	"manifest.settings.workspace.patterns.desc": "Pola glob file yang dibaca oleh pemindaian folder atau ruang kerja",
+	"manifest.settings.workspace.gitignore.desc": "Lewati file yang dilewati oleh file .gitignore proyek",
+	"manifest.settings.workspace.always-include.desc": "Pola glob file yang tetap dibaca oleh pemindaian folder atau ruang kerja meskipun daftar bawaan atau .gitignore akan melewatinya. Contoh: **/vendor/**",
+	"manifest.settings.workspace.binary.desc": "Lewati gambar, font, arsip, dan file lain yang bukan teks",
+	"manifest.settings.workspace.default-excludes.desc": "Lewati folder dependensi, keluaran build, cache, dan lockfile, seperti node_modules, dist, .next, dan package-lock.json",
+	"manifest.settings.workspace.passing.desc": "Cantumkan setiap pola yang ditemukan oleh pemindaian folder atau ruang kerja, bukan hanya yang dapat macet",
+	"manifest.settings.workspace.findings-problems.desc": "Tampilkan juga pola yang dapat macet di panel Masalah"
 }

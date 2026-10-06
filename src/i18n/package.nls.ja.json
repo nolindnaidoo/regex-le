@@ -3,6 +3,8 @@
 	"manifest.command.test.title": "正規表現のテスト",
 	"manifest.command.extract.title": "パターンの抽出",
 	"manifest.command.validate.title": "正規表現の検証",
+	"manifest.command.validate-workspace.title": "ワークスペースのパターンを検証",
+	"manifest.command.validate-folder.title": "フォルダーのパターンを検証",
 	"manifest.command.settings.title": "「設定」を開く",
 	"manifest.command.help.title": "ヘルプとトラブルシューティング",
 	"manifest.settings.title": "Regex-LE の設定",
@@ -22,5 +24,15 @@
 	"manifest.settings.regex.redos-detection.desc": "ReDoS（正規表現によるサービス拒否）の脆弱性検出を有効にする",
 	"manifest.settings.regex.max-match-limit.desc": "返すマッチの最大数（メモリの過剰な使用を防ぐため）",
 	"manifest.capability.untrusted-workspaces.desc": "信頼できないワークスペースでの機能制限",
-	"manifest.mcp.label": "エージェントモード用のRegex-LEパターン抽出ツール"
+	"manifest.mcp.label": "エージェントモード用のRegex-LEパターン抽出ツール",
+	"manifest.settings.workspace.excludes.desc": "フォルダーまたはワークスペースのスキャンで、組み込みリストに加えて除外するファイルの glob パターン。例: **/fixtures/**",
+	"manifest.settings.workspace.max-files.desc": "フォルダーまたはワークスペースの 1 回のスキャンで読み取るファイルの最大数",
+	"manifest.settings.workspace.max-results.desc": "フォルダーまたはワークスペースの 1 回のスキャンが読み取りを止めるまでに報告する結果の最大数",
+	"manifest.settings.workspace.patterns.desc": "フォルダーまたはワークスペースのスキャンで読み取るファイルの glob パターン",
+	"manifest.settings.workspace.gitignore.desc": "プロジェクトの .gitignore で除外されているファイルを除外します",
+	"manifest.settings.workspace.always-include.desc": "組み込みリストや .gitignore で除外される場合でも、フォルダーまたはワークスペースのスキャンで読み取るファイルの glob パターン。例: **/vendor/**",
+	"manifest.settings.workspace.binary.desc": "画像、フォント、アーカイブなど、テキストではないファイルを除外します",
+	"manifest.settings.workspace.default-excludes.desc": "node_modules、dist、.next、package-lock.json など、依存関係フォルダー、ビルド出力、キャッシュ、ロックファイルを除外します",
+	"manifest.settings.workspace.passing.desc": "フォルダーまたはワークスペースのスキャンで見つかったすべてのパターンを、ハングする可能性のあるものだけでなく一覧表示します",
+	"manifest.settings.workspace.findings-problems.desc": "ハングする可能性のあるパターンを問題パネルにも表示します"
 }

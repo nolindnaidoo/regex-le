@@ -3,6 +3,8 @@
 	"manifest.command.test.title": "正则表达式测试",
 	"manifest.command.extract.title": "提取模式",
 	"manifest.command.validate.title": "验证正则表达式",
+	"manifest.command.validate-workspace.title": "验证工作区中的模式",
+	"manifest.command.validate-folder.title": "验证文件夹中的模式",
 	"manifest.command.settings.title": "打开“设置”",
 	"manifest.command.help.title": "帮助与故障排除",
 	"manifest.settings.title": "Regex-LE 设置",
@@ -22,5 +24,15 @@
 	"manifest.settings.regex.redos-detection.desc": "启用 ReDoS（正则表达式拒绝服务）漏洞检测",
 	"manifest.settings.regex.max-match-limit.desc": "要返回的匹配结果最大数量（用于防止内存使用过多）",
 	"manifest.capability.untrusted-workspaces.desc": "在不受信任的工作区中功能受限",
-	"manifest.mcp.label": "适用于代理模式的 Regex-LE 模式提取工具"
+	"manifest.mcp.label": "适用于代理模式的 Regex-LE 模式提取工具",
+	"manifest.settings.workspace.excludes.desc": "文件夹或工作区扫描在内置列表之外额外跳过的文件的 glob 模式。示例：**/fixtures/**",
+	"manifest.settings.workspace.max-files.desc": "一次文件夹或工作区扫描最多读取的文件数",
+	"manifest.settings.workspace.max-results.desc": "一次文件夹或工作区扫描在停止读取前最多报告的结果数",
+	"manifest.settings.workspace.patterns.desc": "文件夹或工作区扫描要读取的文件的 glob 模式",
+	"manifest.settings.workspace.gitignore.desc": "跳过项目的 .gitignore 文件所忽略的文件",
+	"manifest.settings.workspace.always-include.desc": "即使内置列表或 .gitignore 会跳过，文件夹或工作区扫描仍会读取的文件的 glob 模式。示例：**/vendor/**",
+	"manifest.settings.workspace.binary.desc": "跳过图像、字体、压缩包等非文本文件",
+	"manifest.settings.workspace.default-excludes.desc": "跳过依赖文件夹、构建输出、缓存和锁文件，例如 node_modules、dist、.next 和 package-lock.json",
+	"manifest.settings.workspace.passing.desc": "列出文件夹或工作区扫描找到的每个模式，而不仅是可能挂起的模式",
+	"manifest.settings.workspace.findings-problems.desc": "同时在“问题”面板中显示可能挂起的模式"
 }

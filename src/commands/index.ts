@@ -6,6 +6,7 @@ import { registerExtractCommand } from './extract';
 import { registerHelpCommand } from './help';
 import { registerTestCommand } from './test';
 import { registerValidateCommand } from './validate';
+import { registerValidateWorkspaceCommands } from './validateWorkspace';
 
 export function registerCommands(
 	context: vscode.ExtensionContext,
@@ -18,5 +19,6 @@ export function registerCommands(
 	registerTestCommand(context, deps);
 	registerExtractCommand(context, deps);
 	registerValidateCommand(context, deps);
+	registerValidateWorkspaceCommands(context, deps);
 	registerHelpCommand(context, deps.telemetry);
 }

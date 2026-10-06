@@ -3,6 +3,8 @@
 	"manifest.command.test.title": "Kiểm tra biểu thức chính quy",
 	"manifest.command.extract.title": "Các mẫu trích xuất",
 	"manifest.command.validate.title": "Xác thực biểu thức chính quy",
+	"manifest.command.validate-workspace.title": "Xác thực mẫu trong không gian làm việc",
+	"manifest.command.validate-folder.title": "Xác thực mẫu trong thư mục",
 	"manifest.command.settings.title": "Mở Cài đặt",
 	"manifest.command.help.title": "Trợ giúp & Khắc phục sự cố",
 	"manifest.settings.title": "Cài đặt Regex-LE",
@@ -22,5 +24,15 @@
 	"manifest.settings.regex.redos-detection.desc": "Kích hoạt tính năng phát hiện lỗ hổng ReDoS (Tấn công từ chối dịch vụ bằng biểu thức chính quy)",
 	"manifest.settings.regex.max-match-limit.desc": "Số lượng kết quả tối đa được trả về (để tránh sử dụng quá nhiều bộ nhớ)",
 	"manifest.capability.untrusted-workspaces.desc": "Chức năng bị hạn chế trong các không gian làm việc không đáng tin cậy",
-	"manifest.mcp.label": "Các công cụ trích xuất mẫu Regex-LE cho chế độ tác nhân"
+	"manifest.mcp.label": "Các công cụ trích xuất mẫu Regex-LE cho chế độ tác nhân",
+	"manifest.settings.workspace.excludes.desc": "Mẫu glob của các tệp bổ sung mà lượt quét thư mục hoặc không gian làm việc bỏ qua, ngoài danh sách tích hợp sẵn. Ví dụ: **/fixtures/**",
+	"manifest.settings.workspace.max-files.desc": "Số tệp tối đa mà một lượt quét thư mục hoặc không gian làm việc đọc",
+	"manifest.settings.workspace.max-results.desc": "Số kết quả tối đa mà một lượt quét thư mục hoặc không gian làm việc báo cáo trước khi ngừng đọc",
+	"manifest.settings.workspace.patterns.desc": "Mẫu glob của các tệp mà lượt quét thư mục hoặc không gian làm việc đọc",
+	"manifest.settings.workspace.gitignore.desc": "Bỏ qua các tệp mà các tệp .gitignore của dự án bỏ qua",
+	"manifest.settings.workspace.always-include.desc": "Mẫu glob của các tệp mà lượt quét thư mục hoặc không gian làm việc vẫn đọc ngay cả khi danh sách tích hợp sẵn hoặc .gitignore sẽ bỏ qua chúng. Ví dụ: **/vendor/**",
+	"manifest.settings.workspace.binary.desc": "Bỏ qua hình ảnh, phông chữ, tệp nén và các tệp khác không phải văn bản",
+	"manifest.settings.workspace.default-excludes.desc": "Bỏ qua thư mục phụ thuộc, đầu ra bản dựng, bộ nhớ đệm và lockfile, chẳng hạn node_modules, dist, .next và package-lock.json",
+	"manifest.settings.workspace.passing.desc": "Liệt kê mọi mẫu mà lượt quét thư mục hoặc không gian làm việc tìm thấy, không chỉ các mẫu có thể bị treo",
+	"manifest.settings.workspace.findings-problems.desc": "Cũng hiển thị trong bảng Sự cố các mẫu có thể bị treo"
 }

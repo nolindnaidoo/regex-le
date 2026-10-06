@@ -1,3 +1,6 @@
+import { join } from 'node:path';
+import { tmpdir } from 'node:os';
+import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
 import * as assert from 'node:assert';
 import * as vscode from 'vscode';
 
@@ -32,6 +35,8 @@ describe('Regex-LE integration', function () {
 			'regex-le.test',
 			'regex-le.extract',
 			'regex-le.validate',
+			'regex-le.validateWorkspace',
+			'regex-le.validateFolder',
 			'regex-le.openSettings',
 			'regex-le.help',
 		]) {
@@ -109,5 +114,42 @@ describe('Regex-LE integration', function () {
 			report.getText().includes('ReDoS'),
 			'report should mention ReDoS for (a+)+b',
 		);
+	});
+	it('validates a folder from disk: counts per file, lists what can hang, skips what it should', async () => {
+		const root = mkdtempSync(join(tmpdir(), 'regex-le-scan-'));
+		for (const dir of ['src', 'node_modules', 'generated']) mkdirSync(join(root, dir));
+		writeFileSync(join(root, '.gitignore'), 'generated/\n');
+		writeFileSync(join(root, 'src', 'a.ts'), 'const ok = /\\d+/g;\nconst slow = /(a+)+$/;\n');
+		writeFileSync(join(root, 'src', 'b.py'), 'import re\nyear = re.compile(r"(?P<year>\\d{4})")\n');
+		writeFileSync(join(root, 'node_modules', 'dep.js'), 'const slow = /(a+)+$/;\n');
+		writeFileSync(join(root, 'generated', 'g.ts'), 'const slow = /(a+)+$/;\n');
+		writeFileSync(join(root, 'README.md'), 'See /not/a/pattern/ here.\n');
+		const settings = vscode.workspace.getConfiguration('regex-le');
+		await settings.update('workspace.scanProblemsEnabled', true, vscode.ConfigurationTarget.Global);
+
+		// As the Explorer calls it: with the folder that was clicked.
+		await vscode.commands.executeCommand('regex-le.validateFolder', vscode.Uri.file(root));
+		await settings.update('workspace.scanProblemsEnabled', undefined, vscode.ConfigurationTarget.Global);
+
+		const report = vscode.workspace.textDocuments.find(
+			(doc) => doc.languageId === 'markdown' && doc.getText().includes('regex-le-scan-'),
+		);
+		assert.ok(report, 'no workspace report was opened');
+		const text = report.getText();
+		assert.match(text, /2 file\(s\) read · 3 pattern\(s\), 1 can hang, 1 not checked/);
+		assert.match(text, /\| `src\/a\.ts` \| 2 \| 1 \| 0 \|/);
+		assert.match(text, /\| `src\/b\.py` \| 1 \| 0 \| 1 \|/);
+		assert.deepStrictEqual(text.match(/^## .*$/gm), ['## `src/a.ts` (1)']);
+		assert.ok(!text.includes('node_modules') && !text.includes('generated/') && !text.includes('README'));
+		assert.match(text, /1 file\(s\) ignored by \.gitignore/);
+
+		const problems = vscode.languages
+			.getDiagnostics()
+			.filter(([, list]) => list.some((d) => d.source === 'regex-le'));
+		assert.strictEqual(problems.length, 1);
+		const [uri, list] = problems[0] as [vscode.Uri, vscode.Diagnostic[]];
+		assert.ok(uri.path.endsWith('/src/a.ts'));
+		assert.strictEqual(list[0]?.range.start.line, 1);
+		assert.strictEqual(list[0]?.range.start.character, 13);
 	});
 });
