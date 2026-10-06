@@ -132,7 +132,11 @@ export function proseSpans(
 	text: string,
 	language: Language | undefined,
 ): readonly Span[] {
-	if (language === undefined) return [];
+	if (language === undefined) {
+		// The one span no grammar is needed to recognise.
+		const shebang = shebangEnd(text);
+		return shebang === undefined ? [] : [[0, shebang]];
+	}
 	return scan(text, SYNTAXES[language]);
 }
 
@@ -165,6 +169,11 @@ export function isProse(spans: readonly Span[], offset: number): boolean {
 function scan(text: string, syntax: Syntax): readonly Span[] {
 	const spans: Span[] = [];
 	let at = 0;
+	const shebang = shebangEnd(text);
+	if (shebang !== undefined) {
+		spans.push([0, shebang]);
+		at = shebang;
+	}
 
 	while (at < text.length) {
 		const end = spanEnd(text, at, syntax);
@@ -176,6 +185,20 @@ function scan(text: string, syntax: Syntax): readonly Span[] {
 		at += characterAt(text, at).length;
 	}
 	return spans;
+}
+
+/**
+ * Where a `#!` line that opens the document ends, if it opens with one.
+ *
+ * That line is for the kernel, in every grammar, and is no part of the
+ * program: `#!/usr/bin/env node` otherwise reads as the pattern `/usr/`
+ * sitting after a `!`. Rust's `#![allow(...)]` opens the same way and is an
+ * attribute, which is why a `[` rules it out.
+ */
+function shebangEnd(text: string): number | undefined {
+	if (!text.startsWith('#!') || /^#!\s*\[/.test(text)) return undefined;
+	const end = text.indexOf('\n');
+	return end === -1 ? text.length : end;
 }
 
 /**

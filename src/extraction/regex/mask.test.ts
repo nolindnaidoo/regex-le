@@ -50,6 +50,28 @@ describe('comments are prose', () => {
 	});
 });
 
+describe('a shebang line', () => {
+	it('is masked in every grammar, and with none', () => {
+		const text = '#!/usr/bin/env node\nconst ok = /[a-z]+/;\n';
+		expect(masked(text, 'javascript', '/usr/')).toBe(true);
+		expect(masked(text, 'typescript', '/usr/')).toBe(true);
+		expect(masked(text, 'javascript', '/[a-z]+/')).toBe(false);
+		expect(proseSpans(text, undefined)).toEqual([[0, 19]]);
+	});
+
+	it('is only the first line, and only when the document opens with it', () => {
+		expect(
+			proseSpans('const a = 1;\n#!/usr/bin/env node\n', undefined),
+		).toEqual([]);
+		expect(proseSpans('#!/usr/bin/env node', undefined)).toEqual([[0, 19]]);
+	});
+
+	it('is not a Rust inner attribute, which opens the same way', () => {
+		expect(proseSpans('#![allow(dead_code)]\n', undefined)).toEqual([]);
+		expect(proseSpans('#! [allow(dead_code)]\n', undefined)).toEqual([]);
+	});
+});
+
 describe('a call is code even though its argument is not', () => {
 	// The distinction the whole module turns on. Masking every string
 	// would delete the extractor; masking every candidate that *starts*
