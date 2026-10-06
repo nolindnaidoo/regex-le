@@ -3,6 +3,8 @@
 	"manifest.command.test.title": "Regex-Test",
 	"manifest.command.extract.title": "Muster extrahieren",
 	"manifest.command.validate.title": "Regex überprüfen",
+	"manifest.command.validate-workspace.title": "Muster im Arbeitsbereich validieren",
+	"manifest.command.validate-folder.title": "Muster im Ordner validieren",
 	"manifest.command.settings.title": "Einstellungen öffnen",
 	"manifest.command.help.title": "Hilfe & Fehlerbehebung",
 	"manifest.settings.title": "Regex-LE-Einstellungen",
@@ -22,5 +24,15 @@
 	"manifest.settings.regex.redos-detection.desc": "Erkennung von ReDoS-Sicherheitslücken (Regular Expression Denial of Service) aktivieren",
 	"manifest.settings.regex.max-match-limit.desc": "Maximale Anzahl der zurückzugebenden Treffer (verhindert übermäßigen Speicherverbrauch)",
 	"manifest.capability.untrusted-workspaces.desc": "Eingeschränkte Funktionalität in nicht vertrauenswürdigen Arbeitsbereichen",
-	"manifest.mcp.label": "Regex-LE-Tools zur Mustererkennung für den Agent-Modus"
+	"manifest.mcp.label": "Regex-LE-Tools zur Mustererkennung für den Agent-Modus",
+	"manifest.settings.workspace.excludes.desc": "Glob-Muster weiterer Dateien, die ein Ordner- oder Arbeitsbereichsscan zusätzlich zur integrierten Liste überspringt. Beispiel: **/fixtures/**",
+	"manifest.settings.workspace.max-files.desc": "Die Höchstzahl der Dateien, die ein Ordner- oder Arbeitsbereichsscan liest",
+	"manifest.settings.workspace.max-results.desc": "Die Höchstzahl der Ergebnisse, die ein Ordner- oder Arbeitsbereichsscan meldet, bevor er das Lesen beendet",
+	"manifest.settings.workspace.patterns.desc": "Glob-Muster der Dateien, die ein Ordner- oder Arbeitsbereichsscan liest",
+	"manifest.settings.workspace.gitignore.desc": "Dateien auslassen, die die .gitignore-Dateien des Projekts auslassen",
+	"manifest.settings.workspace.always-include.desc": "Glob-Muster der Dateien, die ein Ordner- oder Arbeitsbereichsscan auch dann liest, wenn die integrierte Liste oder .gitignore sie überspringen würde. Beispiel: **/vendor/**",
+	"manifest.settings.workspace.binary.desc": "Bilder, Schriftarten, Archive und andere Dateien überspringen, die kein Text sind",
+	"manifest.settings.workspace.default-excludes.desc": "Abhängigkeitsordner, Build-Ausgaben, Caches und Lockfiles überspringen, etwa node_modules, dist, .next und package-lock.json",
+	"manifest.settings.workspace.passing.desc": "Jedes Muster auflisten, das ein Ordner- oder Arbeitsbereichsscan findet, nicht nur die, die hängen können",
+	"manifest.settings.workspace.findings-problems.desc": "Muster, die hängen können, auch im Problembereich anzeigen"
 }

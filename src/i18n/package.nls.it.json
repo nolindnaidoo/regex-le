@@ -3,6 +3,8 @@
 	"manifest.command.test.title": "Test dell'espressione regolare",
 	"manifest.command.extract.title": "Modelli di estrazione",
 	"manifest.command.validate.title": "Verifica l'espressione regolare",
+	"manifest.command.validate-workspace.title": "Convalida i pattern nell'area di lavoro",
+	"manifest.command.validate-folder.title": "Convalida i pattern nella cartella",
 	"manifest.command.settings.title": "Apri Impostazioni",
 	"manifest.command.help.title": "Aiuto e risoluzione dei problemi",
 	"manifest.settings.title": "Impostazioni Regex-LE",
@@ -22,5 +24,15 @@
 	"manifest.settings.regex.redos-detection.desc": "Abilita il rilevamento della vulnerabilità ReDoS (Regular Expression Denial of Service)",
 	"manifest.settings.regex.max-match-limit.desc": "Numero massimo di risultati da restituire (per evitare un utilizzo eccessivo della memoria)",
 	"manifest.capability.untrusted-workspaces.desc": "Funzionalità limitate negli spazi di lavoro non attendibili",
-	"manifest.mcp.label": "Strumenti di estrazione di pattern Regex-LE per la modalità agente"
+	"manifest.mcp.label": "Strumenti di estrazione di pattern Regex-LE per la modalità agente",
+	"manifest.settings.workspace.excludes.desc": "Pattern glob di altri file ignorati da una scansione di cartella o dell'area di lavoro, oltre all'elenco integrato. Esempio: **/fixtures/**",
+	"manifest.settings.workspace.max-files.desc": "Il numero massimo di file letti da una scansione di cartella o dell'area di lavoro",
+	"manifest.settings.workspace.max-results.desc": "Il numero massimo di risultati riportati da una scansione di cartella o dell'area di lavoro prima di interrompere la lettura",
+	"manifest.settings.workspace.patterns.desc": "Pattern glob dei file letti da una scansione di cartella o dell'area di lavoro",
+	"manifest.settings.workspace.gitignore.desc": "Escludi i file esclusi dai file .gitignore del progetto",
+	"manifest.settings.workspace.always-include.desc": "Pattern glob dei file che una scansione di cartella o dell'area di lavoro legge anche quando l'elenco integrato o .gitignore li escluderebbe. Esempio: **/vendor/**",
+	"manifest.settings.workspace.binary.desc": "Ignora immagini, font, archivi e altri file che non sono testo",
+	"manifest.settings.workspace.default-excludes.desc": "Ignora cartelle delle dipendenze, output di build, cache e lockfile, come node_modules, dist, .next e package-lock.json",
+	"manifest.settings.workspace.passing.desc": "Elenca ogni pattern trovato da una scansione di cartella o dell'area di lavoro, non solo quelli che possono bloccarsi",
+	"manifest.settings.workspace.findings-problems.desc": "Mostra anche nel pannello Problemi i pattern che possono bloccarsi"
 }

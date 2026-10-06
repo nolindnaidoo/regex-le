@@ -21,6 +21,34 @@ export const CONFIG_DEFAULTS = Object.freeze({
 	telemetryEnabled: false,
 	regexRedosDetectionEnabled: true,
 	regexMaxMatchLimit: 1000,
+	workspaceScanAlwaysInclude: Object.freeze([]) as readonly string[],
+	workspaceScanExcludes: Object.freeze([]) as readonly string[],
+	workspaceScanIncludePassing: false,
+	workspaceScanMaxFiles: 5000,
+	workspaceScanMaxResults: 10000,
+	// The languages the extractor has forms for. Any other file would be
+	// scanned for every form, and a path in a README reads as a pattern.
+	workspaceScanPatterns: Object.freeze([
+		'**/*.js',
+		'**/*.jsx',
+		'**/*.mjs',
+		'**/*.cjs',
+		'**/*.ts',
+		'**/*.tsx',
+		'**/*.mts',
+		'**/*.cts',
+		'**/*.py',
+		'**/*.rs',
+		'**/*.go',
+		'**/*.java',
+		'**/*.rb',
+		'**/*.php',
+		'**/*.cs',
+	]) as readonly string[],
+	workspaceScanProblemsEnabled: false,
+	workspaceScanRespectGitignore: true,
+	workspaceScanSkipBinaryFiles: true,
+	workspaceScanUseDefaultExcludes: true,
 });
 
 export function getConfiguration(): Configuration {
@@ -87,7 +115,72 @@ export function getConfiguration(): Configuration {
 			10,
 			10_000,
 		),
+		workspaceScanAlwaysInclude: readStrings(
+			config,
+			'workspace.scanAlwaysInclude',
+			CONFIG_DEFAULTS.workspaceScanAlwaysInclude,
+		),
+		workspaceScanExcludes: readStrings(
+			config,
+			'workspace.scanExcludes',
+			CONFIG_DEFAULTS.workspaceScanExcludes,
+		),
+		workspaceScanIncludePassing: readBoolean(
+			config,
+			'workspace.scanIncludePassing',
+			CONFIG_DEFAULTS.workspaceScanIncludePassing,
+		),
+		workspaceScanMaxFiles: readNumber(
+			config,
+			'workspace.scanMaxFiles',
+			CONFIG_DEFAULTS.workspaceScanMaxFiles,
+			1,
+		),
+		workspaceScanMaxResults: readNumber(
+			config,
+			'workspace.scanMaxResults',
+			CONFIG_DEFAULTS.workspaceScanMaxResults,
+			1,
+		),
+		workspaceScanPatterns: readStrings(
+			config,
+			'workspace.scanPatterns',
+			CONFIG_DEFAULTS.workspaceScanPatterns,
+		),
+		workspaceScanProblemsEnabled: readBoolean(
+			config,
+			'workspace.scanProblemsEnabled',
+			CONFIG_DEFAULTS.workspaceScanProblemsEnabled,
+		),
+		workspaceScanRespectGitignore: readBoolean(
+			config,
+			'workspace.scanRespectGitignore',
+			CONFIG_DEFAULTS.workspaceScanRespectGitignore,
+		),
+		workspaceScanSkipBinaryFiles: readBoolean(
+			config,
+			'workspace.scanSkipBinaryFiles',
+			CONFIG_DEFAULTS.workspaceScanSkipBinaryFiles,
+		),
+		workspaceScanUseDefaultExcludes: readBoolean(
+			config,
+			'workspace.scanUseDefaultExcludes',
+			CONFIG_DEFAULTS.workspaceScanUseDefaultExcludes,
+		),
 	});
+}
+
+function readStrings(
+	config: vscode.WorkspaceConfiguration,
+	key: string,
+	defaultValue: readonly string[],
+): readonly string[] {
+	const value = config.get<unknown>(key, defaultValue);
+	return Object.freeze(
+		Array.isArray(value)
+			? value.filter((item): item is string => typeof item === 'string')
+			: [...defaultValue],
+	);
 }
 
 function readBoolean(

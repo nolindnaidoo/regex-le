@@ -150,6 +150,80 @@ Nothing is reported on the strength of how a pattern is *shaped*. Shape is a poo
 
 The reports also include a rough performance score based on execution time relative to input size — treat it as a hint, not a benchmark (memory is not measured).
 
+## Across a folder or a workspace
+
+Validate reads the document you have open. A scan validates every pattern in many files from disk and gives one report.
+
+- **The whole workspace**: run `Regex-LE: Validate Patterns in Workspace` from the command palette.
+- **One folder**: right-click it in the Explorer and choose `Validate Patterns in Folder`, or run `Regex-LE: Validate Patterns in Folder` and pick one.
+
+The report opens with a table of the files that hold something to look at, then lists the patterns that can hang:
+
+```markdown
+# Regex-LE workspace report
+
+`my-project` · 3 file(s) read · 4 pattern(s), 1 can hang, 1 not checked
+
+| File | Patterns | Can hang | Not checked |
+|---|---|---|---|
+| `src/a.ts` | 2 | 1 | 0 |
+| `src/b.py` | 1 | 0 | 1 |
+
+> 1 other file(s) hold only patterns with no finding.
+
+## `src/a.ts` (1)
+
+- **2:14** · `/(a+)+$/` · can hang (high): exponential backtracking: 2000000 steps on 41 characters, against 229328 on 20 · complexity 0/100
+```
+
+**Can hang** means an input was found that drives the pattern into backtracking, the same search [ReDoS screening](#redos-screening) describes. **Not checked** means this engine could not compile the pattern, so the search never ran. That is not a verdict on the pattern: `(?P<year>\d{4})` is sound in Python and unreadable to a JavaScript engine, and calling it invalid would be a guess.
+
+Only the patterns that can hang are listed. The rest are counted per file, and `regex-le.workspace.scanIncludePassing` lists every one with what was found. `regex-le.workspace.scanProblemsEnabled` also puts the ones that can hang in the Problems panel, where each is a line you can click.
+
+**What a scan reads.** Source files in the nine languages the extractor knows: JavaScript, TypeScript, Python, Rust, Go, Java, Ruby, PHP and C#. Any other file would be searched for every spelling of a pattern at once, and a path in a README reads as one. `scanPatterns` widens that. Files come from disk, so an unsaved edit is not seen. A file over the safety size, or one that is not UTF-8 text, is left unread. It stops at 5,000 files or 10,000 listed patterns. The report ends with a line for each thing it left out, so a short report is never mistaken for a clean project.
+
+**What it skips, and how to change that.** Three switches are on by default, and each can be turned off on its own in Settings:
+
+| Switch | Skips |
+|---|---|
+| `scanUseDefaultExcludes` | Dependency folders, build output, tool caches and lockfiles. The full list is below |
+| `scanRespectGitignore` | Whatever the project's `.gitignore` files skip |
+| `scanSkipBinaryFiles` | Images, fonts, archives and other files that are not text |
+
+Two lists adjust the result without turning a switch off. To skip more, add a pattern to `scanExcludes`. To read something a switch would skip, add it to `scanAlwaysInclude`:
+
+```jsonc
+{
+	// Also skip the test fixtures.
+	"regex-le.workspace.scanExcludes": ["**/fixtures/**"],
+	// Read the vendored code, though the built-in list skips it.
+	"regex-le.workspace.scanAlwaysInclude": ["**/vendor/**"]
+}
+```
+
+`Regex-LE: Open Settings` opens all of these in the Settings editor.
+
+<details>
+<summary>The built-in list</summary>
+
+Folders, wherever they appear:
+
+<!-- built-in-folders -->
+`.git`, `.hg`, `.svn`, `node_modules`, `bower_components`, `jspm_packages`, `.pnpm-store`, `.yarn`, `vendor`, `site-packages`, `Pods`, `Carthage`, `dist`, `build`, `out`, `target`, `_build`, `_site`, `dist-newstyle`, `zig-out`, `storybook-static`, `cdk.out`, `DerivedData`, `CMakeFiles`, `.next`, `.nuxt`, `.output`, `.svelte-kit`, `.angular`, `.astro`, `.docusaurus`, `.vuepress`, `.expo`, `.turbo`, `.parcel-cache`, `.cache`, `.sass-cache`, `.jekyll-cache`, `.dart_tool`, `.pub-cache`, `.gradle`, `.kotlin`, `.cxx`, `.externalNativeBuild`, `captures`, `ephemeral`, `.symlinks`, `.swiftpm`, `.build`, `.bundle`, `.stack-work`, `.zig-cache`, `.godot`, `elm-stuff`, `.vercel`, `.netlify`, `.serverless`, `.aws-sam`, `.terraform`, `.venv`, `venv`, `__pycache__`, `.tox`, `.nox`, `.mypy_cache`, `.pytest_cache`, `.ruff_cache`, `.ipynb_checkpoints`, `.eggs`, `coverage`, `htmlcov`, `.nyc_output`, `.vscode-test`, `.idea`, `.vs`, `xcuserdata`, `*.egg-info`
+<!-- /built-in-folders -->
+
+Files, wherever they appear:
+
+<!-- built-in-files -->
+`*.min.js`, `*.min.css`, `*.map`, `*.snap`, `*.lock`, `package-lock.json`, `pnpm-lock.yaml`, `npm-shrinkwrap.json`, `go.sum`, `*.pbxproj`, `*.iml`, `local.properties`, `output-metadata.json`, `.flutter-plugins`, `.flutter-plugins-dependencies`, `.packages`, `Generated.xcconfig`, `flutter_export_environment.sh`, `GeneratedPluginRegistrant.*`, `fastlane/report.xml`, `fastlane/test_output/**`, `doc/api/**`
+<!-- /built-in-files -->
+
+Not on the list, because they are ordinary folders in many projects: `bin`, `obj`, `tmp`, `logs`, `public`, `generated`. A project that generates those ignores them in git, and the scan reads `.gitignore`.
+
+</details>
+
+The settings that shape a scan are under [Settings](#settings). The positions settings apply to it as they do to the single-file commands.
+
 ## The CLI
 
 The same lint runs from a terminal or a shell pipeline: a Rust CLI in
@@ -185,6 +259,8 @@ exactly as the screening in this extension does.
 | `Regex-LE: Test Regex` | Test a found or entered pattern against the file |
 | `Regex-LE: Extract Patterns` | List every regex pattern found in the document |
 | `Regex-LE: Validate Regex` | Syntax + ReDoS report for every found pattern |
+| `Regex-LE: Validate Patterns in Workspace` | Every pattern in every source file in the workspace, and which can hang |
+| `Regex-LE: Validate Patterns in Folder` | The same for one folder. Also on a folder in the Explorer |
 | `Regex-LE: Open Settings` | Open Regex-LE settings |
 | `Regex-LE: Help & Troubleshooting` | Built-in documentation |
 
@@ -206,6 +282,16 @@ No command is bound to a key by default. Give any of them one under **Keyboard S
 | `regex-le.telemetryEnabled` | `false` | Local-only event log (see Privacy) |
 | `regex-le.regex.redosDetectionEnabled` | `true` | ReDoS screening in Test/Validate |
 | `regex-le.regex.maxMatchLimit` | `1000` | Cap on matches collected per test (10–10000) |
+| `regex-le.workspace.scanPatterns` | Source files in the nine languages | The files a folder or workspace scan reads |
+| `regex-le.workspace.scanUseDefaultExcludes` | `true` | Skip dependency folders, build output, caches and lockfiles |
+| `regex-le.workspace.scanRespectGitignore` | `true` | Skip what the project's `.gitignore` files skip |
+| `regex-le.workspace.scanSkipBinaryFiles` | `true` | Skip images, fonts, archives and other files that are not text |
+| `regex-le.workspace.scanExcludes` | `[]` | More files to skip, as glob patterns |
+| `regex-le.workspace.scanAlwaysInclude` | `[]` | Files to read even when one of the three above would skip them |
+| `regex-le.workspace.scanMaxFiles` | `5000` | The most files one scan reads |
+| `regex-le.workspace.scanMaxResults` | `10000` | The most patterns one scan lists before it stops reading |
+| `regex-le.workspace.scanIncludePassing` | `false` | List every pattern, not only the ones that can hang |
+| `regex-le.workspace.scanProblemsEnabled` | `false` | Also show the patterns that can hang in the Problems panel |
 
 ## Languages
 
@@ -259,12 +345,12 @@ a build only tells you how busy the runner was.
 <!-- coverage:start -->
 | Metric | Coverage |
 | --- | --- |
-| Statements | 92.35% |
-| Branches | 79.85% |
-| Functions | 97.98% |
-| Lines | 94.59% |
+| Statements | 92.87% |
+| Branches | 81.41% |
+| Functions | 98.38% |
+| Lines | 95.03% |
 
-275 test cases across 19 files, plus an integration suite that runs
+329 test cases across 22 files, plus an integration suite that runs
 in a real VS Code extension host and an end-to-end test that installs the
 built `.vsix` into a clean profile.
 

@@ -3,6 +3,8 @@
 	"manifest.command.test.title": "정규식 테스트",
 	"manifest.command.extract.title": "패턴 추출",
 	"manifest.command.validate.title": "정규식 유효성 검사",
+	"manifest.command.validate-workspace.title": "작업 영역의 패턴 검증",
+	"manifest.command.validate-folder.title": "폴더의 패턴 검증",
 	"manifest.command.settings.title": "설정 열기",
 	"manifest.command.help.title": "도움말 및 문제 해결",
 	"manifest.settings.title": "Regex-LE 설정",
@@ -22,5 +24,15 @@
 	"manifest.settings.regex.redos-detection.desc": "ReDoS(정규식 서비스 거부) 취약점 탐지 활성화",
 	"manifest.settings.regex.max-match-limit.desc": "반환할 최대 일치 항목 수 (과도한 메모리 사용 방지)",
 	"manifest.capability.untrusted-workspaces.desc": "신뢰할 수 없는 작업 공간에서의 제한된 기능",
-	"manifest.mcp.label": "에이전트 모드용 Regex-LE 패턴 추출 도구"
+	"manifest.mcp.label": "에이전트 모드용 Regex-LE 패턴 추출 도구",
+	"manifest.settings.workspace.excludes.desc": "폴더 또는 작업 영역 검사에서 기본 제공 목록 외에 추가로 건너뛰는 파일의 glob 패턴. 예: **/fixtures/**",
+	"manifest.settings.workspace.max-files.desc": "폴더 또는 작업 영역 검사 한 번에 읽는 최대 파일 수",
+	"manifest.settings.workspace.max-results.desc": "폴더 또는 작업 영역 검사 한 번이 읽기를 멈추기 전에 보고하는 최대 결과 수",
+	"manifest.settings.workspace.patterns.desc": "폴더 또는 작업 영역 검사에서 읽는 파일의 glob 패턴",
+	"manifest.settings.workspace.gitignore.desc": "프로젝트의 .gitignore 파일이 제외하는 파일을 제외합니다",
+	"manifest.settings.workspace.always-include.desc": "기본 제공 목록이나 .gitignore가 건너뛰더라도 폴더 또는 작업 영역 검사에서 읽는 파일의 glob 패턴. 예: **/vendor/**",
+	"manifest.settings.workspace.binary.desc": "이미지, 글꼴, 압축 파일 등 텍스트가 아닌 파일을 건너뜁니다",
+	"manifest.settings.workspace.default-excludes.desc": "node_modules, dist, .next, package-lock.json 등 종속성 폴더, 빌드 출력, 캐시, 잠금 파일을 건너뜁니다",
+	"manifest.settings.workspace.passing.desc": "폴더 또는 작업 영역 검사에서 찾은 모든 패턴을, 멈출 수 있는 패턴뿐 아니라 모두 나열합니다",
+	"manifest.settings.workspace.findings-problems.desc": "멈출 수 있는 패턴을 문제 패널에도 표시합니다"
 }

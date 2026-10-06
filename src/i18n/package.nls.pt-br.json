@@ -3,6 +3,8 @@
 	"manifest.command.test.title": "Teste de expressão regular",
 	"manifest.command.extract.title": "Padrões de extração",
 	"manifest.command.validate.title": "Validar expressão regular",
+	"manifest.command.validate-workspace.title": "Validar padrões no espaço de trabalho",
+	"manifest.command.validate-folder.title": "Validar padrões na pasta",
 	"manifest.command.settings.title": "Abrir Configurações",
 	"manifest.command.help.title": "Ajuda e Solução de Problemas",
 	"manifest.settings.title": "Configurações do Regex-LE",
@@ -22,5 +24,15 @@
 	"manifest.settings.regex.redos-detection.desc": "Ativar a detecção de vulnerabilidades ReDoS (Negação de Serviço por Expressões Regulares)",
 	"manifest.settings.regex.max-match-limit.desc": "Número máximo de resultados a serem exibidos (evita o uso excessivo de memória)",
 	"manifest.capability.untrusted-workspaces.desc": "Funcionalidade limitada em espaços de trabalho não confiáveis",
-	"manifest.mcp.label": "Ferramentas de extração de padrões Regex-LE para o modo de agente"
+	"manifest.mcp.label": "Ferramentas de extração de padrões Regex-LE para o modo de agente",
+	"manifest.settings.workspace.excludes.desc": "Padrões glob de mais arquivos ignorados por uma verificação de pasta ou de espaço de trabalho, além da lista integrada. Exemplo: **/fixtures/**",
+	"manifest.settings.workspace.max-files.desc": "O máximo de arquivos lidos por uma verificação de pasta ou de espaço de trabalho",
+	"manifest.settings.workspace.max-results.desc": "O máximo de resultados informados por uma verificação de pasta ou de espaço de trabalho antes de parar de ler",
+	"manifest.settings.workspace.patterns.desc": "Padrões glob dos arquivos lidos por uma verificação de pasta ou de espaço de trabalho",
+	"manifest.settings.workspace.gitignore.desc": "Ignorar os arquivos que os arquivos .gitignore do projeto ignoram",
+	"manifest.settings.workspace.always-include.desc": "Padrões glob dos arquivos que uma verificação de pasta ou de espaço de trabalho lê mesmo quando a lista integrada ou o .gitignore os ignoraria. Exemplo: **/vendor/**",
+	"manifest.settings.workspace.binary.desc": "Ignorar imagens, fontes, arquivos compactados e outros arquivos que não são texto",
+	"manifest.settings.workspace.default-excludes.desc": "Ignorar pastas de dependências, saídas de build, caches e lockfiles, como node_modules, dist, .next e package-lock.json",
+	"manifest.settings.workspace.passing.desc": "Listar cada padrão encontrado por uma verificação de pasta ou de espaço de trabalho, não apenas os que podem travar",
+	"manifest.settings.workspace.findings-problems.desc": "Mostrar também no painel Problemas os padrões que podem travar"
 }

@@ -3,6 +3,8 @@
 	"manifest.command.test.title": "Test d'expression régulière",
 	"manifest.command.extract.title": "Modèles d'extraction",
 	"manifest.command.validate.title": "Valider l'expression régulière",
+	"manifest.command.validate-workspace.title": "Valider les motifs de l'espace de travail",
+	"manifest.command.validate-folder.title": "Valider les motifs du dossier",
 	"manifest.command.settings.title": "Ouvrir les paramètres",
 	"manifest.command.help.title": "Aide et dépannage",
 	"manifest.settings.title": "Paramètres de Regex-LE",
@@ -22,5 +24,15 @@
 	"manifest.settings.regex.redos-detection.desc": "Activer la détection des vulnérabilités ReDoS (déni de service par expressions régulières)",
 	"manifest.settings.regex.max-match-limit.desc": "Nombre maximal de résultats à renvoyer (pour éviter une utilisation excessive de la mémoire)",
 	"manifest.capability.untrusted-workspaces.desc": "Fonctionnalités limitées dans les espaces de travail non fiables",
-	"manifest.mcp.label": "Outils d'extraction de motifs Regex-LE pour le mode agent"
+	"manifest.mcp.label": "Outils d'extraction de motifs Regex-LE pour le mode agent",
+	"manifest.settings.workspace.excludes.desc": "Motifs glob d'autres fichiers ignorés par une analyse de dossier ou d'espace de travail, en plus de la liste intégrée. Exemple : **/fixtures/**",
+	"manifest.settings.workspace.max-files.desc": "Le nombre maximal de fichiers lus par une analyse de dossier ou d'espace de travail",
+	"manifest.settings.workspace.max-results.desc": "Le nombre maximal de résultats signalés par une analyse de dossier ou d'espace de travail avant l'arrêt de la lecture",
+	"manifest.settings.workspace.patterns.desc": "Motifs glob des fichiers lus par une analyse de dossier ou d'espace de travail",
+	"manifest.settings.workspace.gitignore.desc": "Ignorer les fichiers que les fichiers .gitignore du projet ignorent",
+	"manifest.settings.workspace.always-include.desc": "Motifs glob des fichiers qu'une analyse de dossier ou d'espace de travail lit même si la liste intégrée ou .gitignore les ignorerait. Exemple : **/vendor/**",
+	"manifest.settings.workspace.binary.desc": "Ignorer les images, polices, archives et autres fichiers qui ne sont pas du texte",
+	"manifest.settings.workspace.default-excludes.desc": "Ignorer les dossiers de dépendances, les sorties de build, les caches et les fichiers de verrouillage, comme node_modules, dist, .next et package-lock.json",
+	"manifest.settings.workspace.passing.desc": "Lister chaque motif trouvé par une analyse de dossier ou d'espace de travail, pas seulement ceux qui peuvent se bloquer",
+	"manifest.settings.workspace.findings-problems.desc": "Afficher aussi dans le panneau Problèmes les motifs qui peuvent se bloquer"
 }

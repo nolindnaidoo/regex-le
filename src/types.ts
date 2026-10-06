@@ -48,6 +48,21 @@ export interface Configuration {
 	readonly telemetryEnabled: boolean;
 	readonly regexRedosDetectionEnabled: boolean;
 	readonly regexMaxMatchLimit: number;
+	/** Globs read whatever the excludes and `.gitignore` say. */
+	readonly workspaceScanAlwaysInclude: readonly string[];
+	/** Globs left out on top of the built-in list. */
+	readonly workspaceScanExcludes: readonly string[];
+	/** List every pattern in a folder scan, not only the ones that can hang. */
+	readonly workspaceScanIncludePassing: boolean;
+	readonly workspaceScanMaxFiles: number;
+	/** The most patterns one folder scan lists before it stops reading. */
+	readonly workspaceScanMaxResults: number;
+	readonly workspaceScanPatterns: readonly string[];
+	/** Publish the patterns a folder scan found can hang to the Problems panel. */
+	readonly workspaceScanProblemsEnabled: boolean;
+	readonly workspaceScanRespectGitignore: boolean;
+	readonly workspaceScanSkipBinaryFiles: boolean;
+	readonly workspaceScanUseDefaultExcludes: boolean;
 }
 
 export interface PerformanceMetrics {

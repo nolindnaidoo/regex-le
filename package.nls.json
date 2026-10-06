@@ -3,6 +3,8 @@
 	"manifest.command.test.title": "Test Regex",
 	"manifest.command.extract.title": "Extract Patterns",
 	"manifest.command.validate.title": "Validate Regex",
+	"manifest.command.validate-workspace.title": "Validate Patterns in Workspace",
+	"manifest.command.validate-folder.title": "Validate Patterns in Folder",
 	"manifest.command.settings.title": "Open Settings",
 	"manifest.command.help.title": "Help & Troubleshooting",
 	"manifest.settings.title": "Regex-LE Settings",
@@ -22,5 +24,15 @@
 	"manifest.settings.regex.redos-detection.desc": "Enable ReDoS (Regular Expression Denial of Service) vulnerability detection",
 	"manifest.settings.regex.max-match-limit.desc": "Maximum number of matches to return (prevents excessive memory usage)",
 	"manifest.capability.untrusted-workspaces.desc": "Limited functionality in untrusted workspaces",
-	"manifest.mcp.label": "Regex-LE pattern extraction tools for agent mode"
+	"manifest.mcp.label": "Regex-LE pattern extraction tools for agent mode",
+	"manifest.settings.workspace.excludes.desc": "Glob patterns of more files a folder or workspace scan skips, on top of the built-in list. Example: **/fixtures/**",
+	"manifest.settings.workspace.max-files.desc": "The most files one folder or workspace scan reads",
+	"manifest.settings.workspace.max-results.desc": "The most results one folder or workspace scan reports before it stops reading",
+	"manifest.settings.workspace.patterns.desc": "Glob patterns of the files a folder or workspace scan reads",
+	"manifest.settings.workspace.gitignore.desc": "Leave out the files the project's .gitignore files leave out",
+	"manifest.settings.workspace.always-include.desc": "Glob patterns of files a folder or workspace scan reads even when the built-in list or .gitignore would skip them. Example: **/vendor/**",
+	"manifest.settings.workspace.binary.desc": "Skip images, fonts, archives and other files that are not text",
+	"manifest.settings.workspace.default-excludes.desc": "Skip dependency folders, build output, caches and lockfiles, such as node_modules, dist, .next and package-lock.json",
+	"manifest.settings.workspace.passing.desc": "List every pattern a folder or workspace scan finds, not only the ones that can hang",
+	"manifest.settings.workspace.findings-problems.desc": "Also show the patterns that can hang in the Problems panel"
 }
