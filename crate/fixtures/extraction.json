@@ -665,6 +665,24 @@
 					}
 				}
 			]
+		},
+		{
+			"name": "shebang.js",
+			"file": "shebang.js",
+			"expected": [
+				{
+					"pattern": "\\d+",
+					"flags": "g",
+					"line": 3,
+					"column": 16,
+					"match": "/\\d+/g",
+					"redos": {
+						"detected": false,
+						"severity": "low",
+						"reason": "no input was found that drives this into backtracking"
+					}
+				}
+			]
 		}
 	],
 	"redos": [

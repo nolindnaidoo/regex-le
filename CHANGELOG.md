@@ -56,6 +56,9 @@ separate product on its own cadence and keeps its own
 
 ### Fixed
 
+- A shebang line was read as a pattern. `#!/usr/bin/env node` at the top of
+  a script made Extract, Test and Validate report `/usr/` as a regex. The
+  line is skipped now, in every language.
 - Validate called a pattern invalid when it was written for another
   language's engine. A Python named group such as `(?P<year>\d{4})`, an
   atomic group or a possessive quantifier is valid where it was written, and

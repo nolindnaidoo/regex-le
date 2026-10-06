@@ -36,7 +36,10 @@ type Span = (usize, usize);
 /// example regex in a comment is the lesser error.
 pub(crate) fn prose_spans(text: &str, language: Option<Language>) -> Vec<Span> {
     let Some(language) = language else {
-        return Vec::new();
+        // The one span no grammar is needed to recognise.
+        return shebang_end(text)
+            .map(|end| vec![(0, end)])
+            .unwrap_or_default();
     };
     match language {
         Language::Python => scan(text, &Syntax::PYTHON),
@@ -135,10 +138,28 @@ impl Syntax {
     };
 }
 
+/// Where a `#!` line that opens the document ends, if it opens with one.
+///
+/// That line is for the kernel, in every grammar, and is no part of the
+/// program: `#!/usr/bin/env node` otherwise reads as the pattern `/usr/`
+/// sitting after a `!`. Rust's `#![allow(...)]` opens the same way and is an
+/// attribute, which is why a `[` rules it out.
+fn shebang_end(text: &str) -> Option<usize> {
+    let rest = text.strip_prefix("#!")?;
+    if rest.trim_start().starts_with('[') {
+        return None;
+    }
+    Some(text.find('\n').unwrap_or(text.len()))
+}
+
 fn scan(text: &str, syntax: &Syntax) -> Vec<Span> {
     let bytes = text.as_bytes();
     let mut spans: Vec<Span> = Vec::new();
     let mut at = 0usize;
+    if let Some(end) = shebang_end(text) {
+        spans.push((0, end));
+        at = end;
+    }
 
     while at < bytes.len() {
         if let Some(end) = block_comment_end(text, at, syntax) {
@@ -262,6 +283,21 @@ mod tests {
         let spans = prose_spans(text, Some(language));
         let offset = text.find(needle).expect("the needle is in the text");
         is_prose(&spans, offset)
+    }
+
+    #[test]
+    fn a_shebang_line_is_masked_in_every_grammar_and_with_none() {
+        let text = "#!/usr/bin/env node\nconst ok = /[a-z]+/;\n";
+        assert!(masked(text, Language::JavaScript, "/usr/"));
+        assert!(masked(text, Language::TypeScript, "/usr/"));
+        assert!(!masked(text, Language::JavaScript, "/[a-z]+/"));
+        assert_eq!(prose_spans(text, None), vec![(0, 19)]);
+        // Only the first line, and only when the document opens with it.
+        assert!(prose_spans("const a = 1;\n#!/usr/bin/env node\n", None).is_empty());
+        assert_eq!(prose_spans("#!/usr/bin/env node", None), vec![(0, 19)]);
+        // A Rust inner attribute opens the same way and is not one.
+        assert!(prose_spans("#![allow(dead_code)]\n", None).is_empty());
+        assert!(prose_spans("#! [allow(dead_code)]\n", None).is_empty());
     }
 
     #[test]

@@ -7,6 +7,16 @@ this repository release on their own cadence.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.2] - 2026-10-06
+
+### Fixed
+
+- **A shebang line was read as a pattern.** `#!/usr/bin/env node` at the top
+  of a script reported `/usr/` as a regex, in every JavaScript and TypeScript
+  file that opens with one. The line is for the kernel and is no part of the
+  program, so it is skipped in every grammar. Rust's `#![allow(...)]` opens
+  the same way and is still read.
+
 ## [0.4.1] - 2026-10-03
 
 ### Fixed
@@ -345,6 +355,7 @@ flag and no tool schema offers text to match against.
 extension's wording and it ports with the code. Silence is not a
 clearance, and the help text says so rather than implying otherwise.
 
+[0.4.2]: https://crates.io/crates/regex-le/0.4.2
 [0.4.1]: https://crates.io/crates/regex-le/0.4.1
 [0.4.0]: https://crates.io/crates/regex-le/0.4.0
 [0.3.2]: https://crates.io/crates/regex-le/0.3.2

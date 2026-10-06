@@ -13,7 +13,7 @@ use super::redos::{Severity, detect_redos};
 
 const EXTRACTION: &str = include_str!("../../fixtures/extraction.json");
 
-const DOCUMENTS: [(&str, &str); 13] = [
+const DOCUMENTS: [(&str, &str); 14] = [
     ("log.txt", include_str!("../../fixtures/documents/log.txt")),
     (
         "multiline.js",
@@ -60,6 +60,10 @@ const DOCUMENTS: [(&str, &str); 13] = [
         include_str!("../../fixtures/documents/division.py"),
     ),
     ("pcre.py", include_str!("../../fixtures/documents/pcre.py")),
+    (
+        "shebang.js",
+        include_str!("../../fixtures/documents/shebang.js"),
+    ),
 ];
 
 /// Every embedded document, for the fuzzer to seed itself from. Real
