@@ -48,6 +48,13 @@ separate product on its own cadence and keeps its own
   clipboard. Both are on by default, so the output is what it was. Extract now
   gives each pattern's position too, as Test and Validate already did.
 
+### Fixed
+
+- Validate called a pattern invalid when it was written for another
+  language's engine. A Python named group such as `(?P<year>\d{4})`, an
+  atomic group or a possessive quantifier is valid where it was written, and
+  Validate now says so, as Extract and the ReDoS search already did.
+
 ### Changed
 
 - No command is bound to a key by default any more. The one default this

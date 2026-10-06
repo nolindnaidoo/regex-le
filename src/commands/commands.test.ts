@@ -243,6 +243,27 @@ describe('regex-le.validate', () => {
 		expect(report).toContain('ReDoS');
 	});
 
+	it('calls a pattern written for another engine valid, where JavaScript alone would not', async () => {
+		registerValidateCommand(makeContext(), makeDeps());
+		_setActiveEditor(
+			_createDocument({
+				content:
+					'import re\nyear = re.compile(r"(?P<year>\\d{4})")\nstep = re.compile(r"a++b")\n',
+				languageId: 'python',
+			}),
+		);
+		// The engine here refuses both, which is the whole point.
+		const namedGroup = '(?P<year>\\d{4})';
+		expect(() => new RegExp(namedGroup)).toThrow();
+		await runCommand('regex-le.validate');
+
+		const report = _openedDocuments()[0]?.getText() ?? '';
+		expect(report).toContain('`/(?P<year>\\d{4})/`');
+		expect(report).toContain('**✅ Valid:** 2');
+		expect(report).toContain('**❌ Invalid:** 0');
+		expect(report).not.toContain('**Status:** ❌ Invalid');
+	});
+
 	it('falls back to an input box when the file has no patterns', async () => {
 		registerValidateCommand(makeContext(), makeDeps());
 		_setActiveEditor(_createDocument({ content: 'no patterns here' }));
