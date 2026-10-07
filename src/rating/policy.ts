@@ -1,42 +1,35 @@
 /**
  * When to ask for a rating. No `vscode` import: the whole decision is a
- * function of stored counts and a day string, so it is tested without the
- * mock and a clock.
+ * function of stored counts, so it is tested without the mock.
  */
 
 export interface RatingState {
 	readonly uses: number;
-	readonly activeDays: number;
-	readonly lastActiveDay: string;
 	readonly asks: number;
 	readonly nextAskAtUses: number;
 	readonly settled: boolean;
 }
 
 /**
- * Three delivered results, on at least the second day the tool is used. The
- * day count is what separates someone trying the tool out from someone who
- * came back to it: three runs in the first five minutes is an evaluation,
- * and asking then is what makes a prompt unwelcome.
+ * The third delivered result, and the twentieth. Two asks is the lifetime
+ * ceiling: the second is the last, whatever the answer.
  *
  * The bar is low on purpose. These are tools used now and then, and one set
  * at ten uses over three days was a bar most people who liked them never
  * reached, so they were never asked.
  *
- * A first ask on the third use puts the second on the twenty-fifth. Two
- * asks is the lifetime ceiling: the second is the last, whatever the answer.
+ * The second ask is counted from the first, so that one which came late is
+ * not followed by another on the very next run. A first ask on the third
+ * use puts the second on the twentieth.
  */
 export const RATING_POLICY = Object.freeze({
 	firstAskAtUses: 3,
-	minActiveDays: 2,
-	snoozeUses: 22,
+	snoozeUses: 17,
 	maxAsks: 2,
 });
 
 export const INITIAL_RATING_STATE: RatingState = Object.freeze({
 	uses: 0,
-	activeDays: 0,
-	lastActiveDay: '',
 	asks: 0,
 	nextAskAtUses: RATING_POLICY.firstAskAtUses,
 	settled: false,
@@ -52,9 +45,6 @@ export function parseRatingState(raw: unknown): RatingState {
 	const stored = raw as Partial<Record<keyof RatingState, unknown>>;
 	return Object.freeze({
 		uses: readCount(stored.uses, INITIAL_RATING_STATE.uses),
-		activeDays: readCount(stored.activeDays, INITIAL_RATING_STATE.activeDays),
-		lastActiveDay:
-			typeof stored.lastActiveDay === 'string' ? stored.lastActiveDay : '',
 		asks: readCount(stored.asks, INITIAL_RATING_STATE.asks),
 		nextAskAtUses: readCount(
 			stored.nextAskAtUses,
@@ -70,19 +60,12 @@ function readCount(value: unknown, fallback: number): number {
 	return value as number;
 }
 
-export function recordUse(state: RatingState, day: string): RatingState {
-	const isNewDay = day !== state.lastActiveDay;
-	return Object.freeze({
-		...state,
-		uses: state.uses + 1,
-		activeDays: isNewDay ? state.activeDays + 1 : state.activeDays,
-		lastActiveDay: day,
-	});
+export function recordUse(state: RatingState): RatingState {
+	return Object.freeze({ ...state, uses: state.uses + 1 });
 }
 
 export function shouldAsk(state: RatingState): boolean {
 	if (state.settled) return false;
-	if (state.activeDays < RATING_POLICY.minActiveDays) return false;
 	return state.uses >= state.nextAskAtUses;
 }
 

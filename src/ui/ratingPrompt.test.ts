@@ -60,7 +60,6 @@ function chosenLevel(
 
 function setup(extensionId: string = MARKETPLACE_ID) {
 	const state = createMemento();
-	const clock = { day: '2026-01-01' };
 	const reports: string[] = [];
 	const prompt = createRatingPrompt({
 		state: state as never,
@@ -68,18 +67,15 @@ function setup(extensionId: string = MARKETPLACE_ID) {
 		displayName: 'Example-LE',
 		report: (event, properties) =>
 			reports.push(`${event}:${JSON.stringify(properties)}`),
-		today: () => clock.day,
 	});
 	const stored = (): RatingState =>
 		parseRatingState(state.get(RATING_STATE_KEY));
-	const use = async (day: string, times: number): Promise<void> => {
-		clock.day = day;
+	const use = async (times: number): Promise<void> => {
 		for (let i = 0; i < times; i++) await prompt.recordSuccess();
 	};
 	/** Leaves the state one use short of the first ask. */
 	const reachThreshold = async (): Promise<void> => {
-		await use('2026-01-01', 1);
-		await use('2026-01-02', RATING_POLICY.firstAskAtUses - 2);
+		await use(RATING_POLICY.firstAskAtUses - 1);
 	};
 	return { state, prompt, reports, stored, use, reachThreshold };
 }
@@ -97,13 +93,13 @@ describe('rating prompt', () => {
 		await reachThreshold();
 		expect(toast).not.toHaveBeenCalled();
 
-		await use('2026-01-03', 1);
+		await use(1);
 		expect(toast).toHaveBeenCalledTimes(1);
 		expect(toast.mock.calls[0]?.[0]).toContain('Example-LE');
 		expect(toast.mock.calls[0]?.slice(1)).toEqual([RATE, LATER, NEVER]);
 		expect(stored().asks).toBe(1);
 
-		await use('2026-01-03', 5);
+		await use(5);
 		expect(toast).toHaveBeenCalledTimes(1);
 	});
 
@@ -127,7 +123,7 @@ describe('rating prompt', () => {
 		const parse = vi.spyOn(vscode.Uri, 'parse');
 		const { use, reachThreshold, stored } = setup(id);
 		await reachThreshold();
-		await use('2026-01-03', 1);
+		await use(1);
 
 		expect(parse.mock.calls.map((call) => call[0])).toEqual([page]);
 		expect(vscode.env.openExternal).toHaveBeenCalledTimes(1);
@@ -140,7 +136,7 @@ describe('rating prompt', () => {
 			const toast = answerWith(RATE);
 			const { use, reachThreshold, stored } = setup(id);
 			await reachThreshold();
-			await use('2026-01-03', 50);
+			await use(50);
 
 			expect(toast).not.toHaveBeenCalled();
 			expect(stored().asks).toBe(0);
@@ -152,7 +148,7 @@ describe('rating prompt', () => {
 		opening(false);
 		const { use, reachThreshold, stored } = setup();
 		await reachThreshold();
-		await use('2026-01-03', 1);
+		await use(1);
 
 		expect(stored().settled).toBe(false);
 		expect(stored().asks).toBe(1);
@@ -162,12 +158,12 @@ describe('rating prompt', () => {
 		const toast = answerWith(NEVER);
 		const { use, reachThreshold, stored } = setup();
 		await reachThreshold();
-		await use('2026-01-03', 1);
+		await use(1);
 
 		expect(vscode.env.openExternal).not.toHaveBeenCalled();
 		expect(stored().settled).toBe(true);
 
-		await use('2026-02-01', 500);
+		await use(500);
 		expect(toast).toHaveBeenCalledTimes(1);
 	});
 
@@ -178,16 +174,16 @@ describe('rating prompt', () => {
 		const toast = answerWith(answer);
 		const { use, reachThreshold, stored } = setup();
 		await reachThreshold();
-		await use('2026-01-03', 1);
+		await use(1);
 		expect(stored().settled).toBe(false);
 
-		await use('2026-01-04', RATING_POLICY.snoozeUses - 1);
+		await use(RATING_POLICY.snoozeUses - 1);
 		expect(toast).toHaveBeenCalledTimes(1);
-		await use('2026-01-04', 1);
+		await use(1);
 		expect(toast).toHaveBeenCalledTimes(2);
 		expect(stored().settled).toBe(true);
 
-		await use('2026-06-01', 500);
+		await use(500);
 		expect(toast).toHaveBeenCalledTimes(2);
 	});
 
@@ -213,7 +209,7 @@ describe('rating prompt', () => {
 			chosenLevel(level);
 			const { use, reachThreshold, stored } = setup();
 			await reachThreshold();
-			await use('2026-01-03', 50);
+			await use(50);
 
 			expect(toast).not.toHaveBeenCalled();
 			expect(stored().asks).toBe(0);
@@ -225,7 +221,7 @@ describe('rating prompt', () => {
 		chosenLevel('silent', 'notificationLevel');
 		const { use, reachThreshold } = setup();
 		await reachThreshold();
-		await use('2026-01-03', 50);
+		await use(50);
 
 		expect(toast).not.toHaveBeenCalled();
 	});
@@ -235,7 +231,7 @@ describe('rating prompt', () => {
 		chosenLevel('all');
 		const { use, reachThreshold } = setup();
 		await reachThreshold();
-		await use('2026-01-03', 1);
+		await use(1);
 		expect(toast).toHaveBeenCalledTimes(1);
 	});
 
@@ -253,7 +249,6 @@ describe('rating prompt', () => {
 			displayName: 'Example-LE',
 			report: (event, properties) =>
 				reports.push(`${event}:${JSON.stringify(properties)}`),
-			today: () => '2026-01-01',
 		});
 
 		await expect(prompt.recordSuccess()).resolves.toBeUndefined();
