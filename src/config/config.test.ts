@@ -64,7 +64,11 @@ describe('config defaults parity with package.json', () => {
 
 describe('the README states the scan limits the code uses', () => {
 	const readme = readFileSync(join(__dirname, '..', '..', 'README.md'), 'utf8');
-	const grouped = (n: number) => n.toLocaleString('en-US');
+	// Grouped by hand, not by Intl. The first Intl call in a process loads its
+	// locale data, and on a Windows runner that once took sixteen seconds
+	// inside a test that only compares two strings.
+	const grouped = (n: number) =>
+		String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 
 	it('in the settings table', () => {
 		expect(readme).toContain(
