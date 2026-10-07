@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import type { Telemetry } from '../telemetry/telemetry';
 import type { Configuration } from '../types';
 import type { Notifier } from '../ui/notifier';
+import type { RatingPrompt } from '../ui/ratingPrompt';
 import type { StatusBar } from '../ui/statusBar';
 import type { ScanLimits } from '../workspace/scan';
 
@@ -11,6 +12,7 @@ export type WorkspaceDeps = Readonly<{
 	telemetry: Telemetry;
 	notifier: Notifier;
 	statusBar: StatusBar;
+	ratingPrompt: RatingPrompt;
 }>;
 
 export function limitsFrom(config: Configuration): ScanLimits {
@@ -87,6 +89,9 @@ export async function deliver(
 			? vscode.ViewColumn.Beside
 			: vscode.ViewColumn.Active,
 	);
+	// Not awaited: it resolves when the toast is answered, and a command that
+	// waited on that would stay pending for as long as the toast is ignored.
+	void deps.ratingPrompt.recordSuccess();
 }
 
 /** Text as a code span. A code span cannot escape a backtick, so one becomes a quote. */

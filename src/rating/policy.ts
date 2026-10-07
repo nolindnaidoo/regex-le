@@ -14,15 +14,22 @@ export interface RatingState {
 }
 
 /**
- * Uses alone would ask a first-day user who ran the command ten times while
- * trying it out, so the day count is what separates someone evaluating the
- * tool from someone who came back to it. Two asks is the lifetime ceiling:
- * the second is the last, whatever the answer.
+ * Three delivered results, on at least the second day the tool is used. The
+ * day count is what separates someone trying the tool out from someone who
+ * came back to it: three runs in the first five minutes is an evaluation,
+ * and asking then is what makes a prompt unwelcome.
+ *
+ * The bar is low on purpose. These are tools used now and then, and one set
+ * at ten uses over three days was a bar most people who liked them never
+ * reached, so they were never asked.
+ *
+ * A first ask on the third use puts the second on the twenty-fifth. Two
+ * asks is the lifetime ceiling: the second is the last, whatever the answer.
  */
 export const RATING_POLICY = Object.freeze({
-	firstAskAtUses: 10,
-	minActiveDays: 3,
-	snoozeUses: 30,
+	firstAskAtUses: 3,
+	minActiveDays: 2,
+	snoozeUses: 22,
 	maxAsks: 2,
 });
 

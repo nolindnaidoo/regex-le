@@ -47,13 +47,22 @@ function open(files: Record<string, string> = TREE): void {
 	workspace.workspaceFolders = [{ uri: Uri.file('/w'), name: 'w', index: 0 }];
 }
 
+/** How many delivered scans the rating prompt was told about. */
+const successes = { count: 0 };
+
 beforeEach(() => {
 	_resetMockState();
+	successes.count = 0;
 	const context = { subscriptions: [] as Array<{ dispose(): void }> } as never;
 	registerValidateWorkspaceCommands(context, {
 		telemetry: createTelemetry(),
 		notifier: createNotifier(),
 		statusBar: createStatusBar(context),
+		ratingPrompt: {
+			recordSuccess: async () => {
+				successes.count++;
+			},
+		},
 	});
 });
 
@@ -63,6 +72,15 @@ describe('regex-le.validateWorkspace and regex-le.validateFolder', () => {
 		await runCommand('regex-le.validateWorkspace');
 		expect(_shownMessages()[0]).toMatchObject({ kind: 'warning' });
 		expect(_openedDocuments()).toHaveLength(0);
+	});
+
+	it('counts a delivered scan toward the rating prompt, and nothing else', async () => {
+		await runCommand('regex-le.validateWorkspace');
+		expect(successes.count).toBe(0);
+
+		open();
+		await runCommand('regex-le.validateWorkspace');
+		expect(successes.count).toBe(1);
 	});
 
 	it('counts every pattern per file and lists the ones that can hang', async () => {

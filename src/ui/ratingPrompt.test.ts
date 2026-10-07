@@ -79,8 +79,7 @@ function setup(extensionId: string = MARKETPLACE_ID) {
 	/** Leaves the state one use short of the first ask. */
 	const reachThreshold = async (): Promise<void> => {
 		await use('2026-01-01', 1);
-		await use('2026-01-02', 1);
-		await use('2026-01-03', RATING_POLICY.firstAskAtUses - 3);
+		await use('2026-01-02', RATING_POLICY.firstAskAtUses - 2);
 	};
 	return { state, prompt, reports, stored, use, reachThreshold };
 }

@@ -19,8 +19,7 @@ function useOn(state: RatingState, day: string, times: number): RatingState {
 /** The fewest uses that satisfy both thresholds. */
 function eligible(): RatingState {
 	const dayOne = useOn(INITIAL_RATING_STATE, '2026-01-01', 1);
-	const dayTwo = useOn(dayOne, '2026-01-02', 1);
-	return useOn(dayTwo, '2026-01-03', RATING_POLICY.firstAskAtUses - 2);
+	return useOn(dayOne, '2026-01-02', RATING_POLICY.firstAskAtUses - 1);
 }
 
 describe('rating policy', () => {
@@ -33,9 +32,24 @@ describe('rating policy', () => {
 	it('does not ask a returning user below the use threshold', () => {
 		const dayOne = useOn(INITIAL_RATING_STATE, '2026-01-01', 1);
 		const dayTwo = useOn(dayOne, '2026-01-02', 1);
-		const dayThree = useOn(dayTwo, '2026-01-03', 1);
-		expect(dayThree.activeDays).toBe(RATING_POLICY.minActiveDays);
-		expect(shouldAsk(dayThree)).toBe(false);
+		expect(dayTwo.activeDays).toBe(RATING_POLICY.minActiveDays);
+		expect(shouldAsk(dayTwo)).toBe(false);
+	});
+
+	it('asks on the third use when that is on the second day', () => {
+		const state = eligible();
+		expect(state).toMatchObject({ uses: 3, activeDays: 2 });
+		expect(shouldAsk(state)).toBe(true);
+	});
+
+	it('puts the second ask on the twenty-fifth use', () => {
+		expect(recordAsk(eligible()).nextAskAtUses).toBe(25);
+	});
+
+	it('asks a first-day user on the first use of the next day', () => {
+		const dayOne = useOn(INITIAL_RATING_STATE, '2026-01-01', 40);
+		expect(shouldAsk(dayOne)).toBe(false);
+		expect(shouldAsk(recordUse(dayOne, '2026-01-02'))).toBe(true);
 	});
 
 	it('asks once both thresholds are met', () => {
