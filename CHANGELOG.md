@@ -9,7 +9,7 @@ This file covers the **VS Code extension**. The Rust CLI in `crate/` is a
 separate product on its own cadence and keeps its own
 [CHANGELOG](crate/CHANGELOG.md).
 
-## [2.6.0] - 2026-10-06
+## [2.6.0] - 2026-10-07
 
 ### Added
 
@@ -88,6 +88,7 @@ separate product on its own cadence and keeps its own
   description or any part of its schema. Six of the ten had drifted.
 - The npm README test also checks that every value an argument offers is
   named in that argument's row.
+
 ### Fixed
 
 - The Open VSX links and the Open VSX downloads badge in the README, the npm
