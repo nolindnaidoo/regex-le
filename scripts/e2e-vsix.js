@@ -195,7 +195,14 @@ exports.run = async function run() {
 		vscodeExecutablePath,
 		extensionDevelopmentPath: probeDir,
 		extensionTestsPath: path.join(probeDir, 'suite.js'),
-		launchArgs: ['--extensions-dir', extensionsDir, '--user-data-dir', userDataDir],
+		launchArgs: [
+			// As in .vscode-test.mjs: no GPU process to hang on under xvfb.
+			'--disable-gpu',
+			'--extensions-dir',
+			extensionsDir,
+			'--user-data-dir',
+			userDataDir,
+		],
 	});
 	console.log(`INSTALLED-VSIX TEST: PASS (${path.basename(vsixPath)})`);
 })()
