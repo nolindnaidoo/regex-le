@@ -32,8 +32,8 @@ artifact users actually install.
 - **Two README sections are generated.** Testing and Performance sit between
   `<!-- coverage:start -->` / `<!-- performance:start -->` markers and come
   from `scripts/coverage-readme.js` and `scripts/perf-readme.js`. Edit the
-  code and regenerate; do not type numbers in by hand. CI fails if the coverage
-  figures no longer match a real run.
+  code and regenerate; do not type numbers in by hand. They are regenerated
+  at release, and CI does not check them.
 - **Output changes must update the characterization goldens** in the same
   commit, with a CHANGELOG entry describing the behaviour change.
 - **Every claim must be provable.** No feature, metric or format goes in a
@@ -72,8 +72,8 @@ artifact users actually install.
 - **CI narrows itself on a docs-only push.** A change touching only `*.md` and
   `LICENSE` runs the Linux leg alone and skips the version gate; `ci-crate.yml`
   runs its `policy` gate with every Rust job skipped. Nothing that covers the
-  change is skipped — the README coverage gate, the integration suite and the
-  installed-VSIX end-to-end are Linux-only anyway. Anything unrecognised, and an
+  change is skipped — the integration suite and the installed-VSIX end-to-end
+  are Linux-only anyway. Anything unrecognised, and an
   unreadable diff, counts as code and runs everything. A release commit always
   touches `package.json`, so a release still sees the full three-OS matrix.
 - **Coverage floors are a backstop, not a target.** They sit well below where
