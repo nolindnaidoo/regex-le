@@ -42,7 +42,6 @@ export function createRatingPromptFor(
 		extensionId: context.extension.id,
 		displayName: context.extension.packageJSON.displayName,
 		report,
-		today: () => new Date().toISOString().slice(0, 10),
 	});
 }
 
@@ -52,7 +51,6 @@ export function createRatingPrompt(
 		extensionId: string;
 		displayName: string;
 		report: RatingReport;
-		today: () => string;
 	}>,
 ): RatingPrompt {
 	const reviewPage = reviewUrl(deps.extensionId);
@@ -94,7 +92,6 @@ export function createRatingPrompt(
 			try {
 				const used = recordUse(
 					parseRatingState(deps.state.get(RATING_STATE_KEY)),
-					deps.today(),
 				);
 				if (
 					!reviewPage ||
