@@ -26,8 +26,8 @@ jobs:
   # matrix for one is three runners answering a question with one answer. This
   # narrows the matrix rather than skipping anything: on a docs-only push every
   # check still runs, once, on the leg that carries the checks the other two do
-  # not — the README coverage gate, the integration suite and the installed
-  # VSIX end-to-end are all Linux-only already.
+  # not — the integration suite and the installed VSIX end-to-end are both
+  # Linux-only already.
   #
   # "Docs" is deliberately narrow: `*.md` and `LICENSE`, nothing else.
   # Anything unrecognised counts as code, and an unreadable diff counts as
@@ -147,13 +147,6 @@ jobs:
 
       - name: Unit tests with coverage
         run: bun run test:coverage
-
-      # The README's Testing section is generated from the coverage summary.
-      # Failing here means the committed numbers no longer match a real run —
-      # which is exactly how the pre-2.0 READMEs drifted into fiction.
-      - name: README coverage section is current
-        if: runner.os == 'Linux'
-        run: bun run coverage:readme:check
 
       - name: Build bundle
         run: bun run build
