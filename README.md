@@ -405,7 +405,7 @@ a Rust CLI and an MCP server. One page: **[letools.dev](https://letools.dev)**
 
 **Get it out**
 
-- **[String-LE](https://letools.dev/tools/string-le)** — Extract every string in a codebase, with its position, so a person can read them
+- **[String-LE](https://letools.dev/tools/string-le)** — Extract every string in a codebase, so a person can read them
 - **[Numbers-LE](https://letools.dev/tools/numbers-le)** — Extract every hardcoded number in a codebase, so a person can check them
 - **[Units-LE](https://letools.dev/tools/units-le)** — Extract every quantity with its unit, normalized, and refuse the ambiguous ones by name
 - **[Dates-LE](https://letools.dev/tools/dates-le)** — Extract every date and timestamp, and the exact instant each one resolves to
