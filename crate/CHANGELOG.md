@@ -16,6 +16,11 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   file that opens with one. The line is for the kernel and is no part of the
   program, so it is skipped in every grammar. Rust's `#![allow(...)]` opens
   the same way and is still read.
+- **The README's Open VSX link led nowhere.** It pointed at a namespace the
+  extension's listing has left, and points at `nolindnaidoo` now. The Zed
+  row is gone with the Zed extension, which was never listed.
+- The family list's String-LE line no longer promises a position for every
+  string.
 
 ## [0.4.1] - 2026-10-03
 
