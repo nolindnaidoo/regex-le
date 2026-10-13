@@ -40,6 +40,7 @@ export function createRatingPromptFor(
 	return createRatingPrompt({
 		state: context.globalState,
 		extensionId: context.extension.id,
+		appName: vscode.env.appName,
 		displayName: context.extension.packageJSON.displayName,
 		report,
 	});
@@ -49,11 +50,13 @@ export function createRatingPrompt(
 	deps: Readonly<{
 		state: vscode.Memento;
 		extensionId: string;
+		/** `vscode.env.appName`: which editor, and so which registry, this is. */
+		appName: string;
 		displayName: string;
 		report: RatingReport;
 	}>,
 ): RatingPrompt {
-	const reviewPage = reviewUrl(deps.extensionId);
+	const reviewPage = reviewUrl(deps.extensionId, deps.appName);
 
 	const ask = async (page: string): Promise<void> => {
 		// Bound once and compared below: showInformationMessage returns the
@@ -148,32 +151,29 @@ function promptsAllowed(extensionId: string): boolean {
 	});
 }
 
+/** The one publisher both registries list the family under. */
+const PUBLISHER = 'nolindnaidoo';
+
 /**
- * The two registries carry different builds of the same extension, under
- * different publishers, so the installed id says which one this copy came
- * from — and that is the only listing its user can be expected to rate.
- * Keyed in lower case because extension ids compare case-insensitively.
+ * The editors that install from Open VSX rather than the Marketplace, by the
+ * name each reports in `vscode.env.appName`. Both registries carry the
+ * extension under one publisher, so the installed id cannot say where this
+ * copy came from; the host can, and that is the only listing its user can be
+ * expected to rate.
  */
-const REVIEW_PAGES: ReadonlyMap<string, (name: string) => string> = new Map([
-	[
-		'nolindnaidoo',
-		(name: string) =>
-			`https://marketplace.visualstudio.com/items?itemName=nolindnaidoo.${name}&ssr=false#review-details`,
-	],
-	[
-		'offensiveedge',
-		(name: string) =>
-			`https://open-vsx.org/extension/OffensiveEdge/${name}/reviews`,
-	],
-]);
+const OPEN_VSX_HOSTS = /vscodium|cursor|windsurf/i;
 
 /**
  * Undefined for a publisher with no listing — a fork, or a locally packaged
  * build — and the prompt is then never shown: there is no page to send that
- * user to, and guessing one sends them to a 404.
+ * user to, and guessing one sends them to a 404. Compared in lower case
+ * because extension ids compare case-insensitively.
  */
-function reviewUrl(extensionId: string): string | undefined {
+function reviewUrl(extensionId: string, appName: string): string | undefined {
 	const [publisher = '', name = ''] = extensionId.split('.');
-	if (!name) return undefined;
-	return REVIEW_PAGES.get(publisher.toLowerCase())?.(name);
+	if (!name || publisher.toLowerCase() !== PUBLISHER) return undefined;
+	if (OPEN_VSX_HOSTS.test(appName)) {
+		return `https://open-vsx.org/extension/${PUBLISHER}/${name}/reviews`;
+	}
+	return `https://marketplace.visualstudio.com/items?itemName=${PUBLISHER}.${name}&ssr=false#review-details`;
 }

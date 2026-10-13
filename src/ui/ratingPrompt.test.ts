@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import * as vscode from 'vscode';
+import { _setAppName } from '../__mocks__/vscode';
 import {
 	parseRatingState,
 	RATING_POLICY,
@@ -58,12 +59,16 @@ function chosenLevel(
 	} as never);
 }
 
-function setup(extensionId: string = MARKETPLACE_ID) {
+function setup(
+	extensionId: string = MARKETPLACE_ID,
+	appName = 'Visual Studio Code',
+) {
 	const state = createMemento();
 	const reports: string[] = [];
 	const prompt = createRatingPrompt({
 		state: state as never,
 		extensionId,
+		appName,
 		displayName: 'Example-LE',
 		report: (event, properties) =>
 			reports.push(`${event}:${JSON.stringify(properties)}`),
@@ -103,45 +108,52 @@ describe('rating prompt', () => {
 		expect(toast).toHaveBeenCalledTimes(1);
 	});
 
-	// The Open VSX build is published as OffensiveEdge, so the installed id is
-	// what tells the two registries apart.
+	// Both registries carry the extension under one publisher, so the
+	// installed id cannot say where this copy came from; the host can. The
+	// editors that install from Open VSX name themselves.
+	const MARKETPLACE_PAGE =
+		'https://marketplace.visualstudio.com/items?itemName=nolindnaidoo.example-le&ssr=false#review-details';
+	const OPEN_VSX_PAGE =
+		'https://open-vsx.org/extension/nolindnaidoo/example-le/reviews';
 	it.each([
+		['nolindnaidoo.example-le', 'Visual Studio Code', MARKETPLACE_PAGE],
 		[
-			'nolindnaidoo.example-le',
-			'https://marketplace.visualstudio.com/items?itemName=nolindnaidoo.example-le&ssr=false#review-details',
+			'NolinDnaidoo.example-le',
+			'Visual Studio Code - Insiders',
+			MARKETPLACE_PAGE,
 		],
-		[
-			'OffensiveEdge.example-le',
-			'https://open-vsx.org/extension/OffensiveEdge/example-le/reviews',
-		],
-		[
-			'offensiveedge.example-le',
-			'https://open-vsx.org/extension/OffensiveEdge/example-le/reviews',
-		],
-	])('sends %s to the registry it was installed from', async (id, page) => {
-		answerWith(RATE);
-		const parse = vi.spyOn(vscode.Uri, 'parse');
-		const { use, reachThreshold, stored } = setup(id);
-		await reachThreshold();
-		await use(1);
-
-		expect(parse.mock.calls.map((call) => call[0])).toEqual([page]);
-		expect(vscode.env.openExternal).toHaveBeenCalledTimes(1);
-		expect(stored().settled).toBe(true);
-	});
-
-	it.each(['local.example-le', 'constructor.example-le', 'example-le'])(
-		'never asks a build with no listing: %s',
-		async (id) => {
-			const toast = answerWith(RATE);
-			const { use, reachThreshold, stored } = setup(id);
+		['nolindnaidoo.example-le', 'VSCodium', OPEN_VSX_PAGE],
+		['nolindnaidoo.example-le', 'Cursor', OPEN_VSX_PAGE],
+		['nolindnaidoo.example-le', 'Windsurf', OPEN_VSX_PAGE],
+	])(
+		'sends %s in %s to the registry it was installed from',
+		async (id, host, page) => {
+			answerWith(RATE);
+			const parse = vi.spyOn(vscode.Uri, 'parse');
+			const { use, reachThreshold, stored } = setup(id, host);
 			await reachThreshold();
-			await use(50);
+			await use(1);
 
-			expect(toast).not.toHaveBeenCalled();
-			expect(stored().asks).toBe(0);
+			expect(parse.mock.calls.map((call) => call[0])).toEqual([page]);
+			expect(vscode.env.openExternal).toHaveBeenCalledTimes(1);
+			expect(stored().settled).toBe(true);
 		},
 	);
+
+	it.each([
+		'local.example-le',
+		'constructor.example-le',
+		'offensiveedge.example-le',
+		'example-le',
+	])('never asks a build with no listing: %s', async (id) => {
+		const toast = answerWith(RATE);
+		const { use, reachThreshold, stored } = setup(id);
+		await reachThreshold();
+		await use(50);
+
+		expect(toast).not.toHaveBeenCalled();
+		expect(stored().asks).toBe(0);
+	});
 
 	it('still owes the second ask when the browser did not open', async () => {
 		answerWith(RATE);
@@ -246,6 +258,7 @@ describe('rating prompt', () => {
 				keys: () => [],
 			},
 			extensionId: MARKETPLACE_ID,
+			appName: 'Visual Studio Code',
 			displayName: 'Example-LE',
 			report: (event, properties) =>
 				reports.push(`${event}:${JSON.stringify(properties)}`),
@@ -277,5 +290,28 @@ describe('createRatingPromptFor', () => {
 		await prompt.recordSuccess();
 		expect(synced).toEqual([[RATING_STATE_KEY]]);
 		expect(parseRatingState(state.get(RATING_STATE_KEY)).uses).toBe(1);
+	});
+
+	it('reads the host from the environment, so an Open VSX install rates on Open VSX', async () => {
+		_setAppName('Cursor');
+		answerWith(RATE);
+		const parse = vi.spyOn(vscode.Uri, 'parse');
+		const state = createMemento();
+		const prompt = createRatingPromptFor(
+			{
+				globalState: { ...state, setKeysForSync: () => {} },
+				extension: {
+					id: MARKETPLACE_ID,
+					packageJSON: { displayName: 'Example-LE' },
+				},
+			} as never,
+			() => {},
+		);
+		for (let i = 0; i < RATING_POLICY.firstAskAtUses; i++) {
+			await prompt.recordSuccess();
+		}
+		expect(parse.mock.calls.map((call) => call[0])).toEqual([
+			'https://open-vsx.org/extension/nolindnaidoo/example-le/reviews',
+		]);
 	});
 });
