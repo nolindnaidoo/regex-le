@@ -6,6 +6,8 @@
 # scanning them produces findings that can only ever be dismissed. Suppressing
 # per-alert leaves a permanent backlog of "known false" entries and every new
 # fixture adds another; excluding the paths keeps the alert list meaningful.
+# The inputs a demo is recorded from, under assets/demos/, are the same kind
+# of file.
 #
 # Production source is fully in scope.
 name: "LE extension CodeQL config"
@@ -17,6 +19,7 @@ paths-ignore:
   - "**/__mocks__/**"
   - "**/__performance__/**"
   - "**/__data__/**"
+  - "assets/demos/**"
   - "test/**"
   - "out-test/**"
   - "dist/**"
