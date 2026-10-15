@@ -189,8 +189,16 @@ pub(crate) fn exit_code(reports: &[FileReport], strict: bool) -> u8 {
 }
 
 pub(crate) fn describe(report: &FileReport, pattern: &Pattern) -> String {
+    // Quoted and escaped: a witness can carry a NUL or a newline, and an
+    // unescaped one would put control bytes on a person's terminal.
+    let witness = pattern
+        .redos
+        .witness
+        .as_ref()
+        .map(|witness| format!("  witness {witness:?}"))
+        .unwrap_or_default();
     format!(
-        "{}:{}:{}  /{}/{}  [{}] {}",
+        "{}:{}:{}  /{}/{}  [{}] {}{witness}",
         report.file,
         pattern.line,
         pattern.column,
@@ -213,6 +221,41 @@ pub(crate) fn severity_name(severity: Severity) -> &'static str {
 mod tests {
     use super::*;
     use crate::testing::TempTree;
+
+    /// The witness is what makes a finding checkable, and with stdout
+    /// silent at a terminal the report is the only other place it lives.
+    #[test]
+    fn the_human_line_carries_the_witness() {
+        let report = scan_content(
+            "const re = /(a+)+b/;",
+            "a.js".into(),
+            Some(Language::JavaScript),
+            ScanOptions::default(),
+        );
+        let pattern = &report.patterns[0];
+        let witness = pattern.redos.witness.as_ref().expect("a witness");
+        assert!(
+            describe(&report, pattern).ends_with(&format!("  witness {witness:?}")),
+            "{}",
+            describe(&report, pattern)
+        );
+    }
+
+    #[test]
+    fn a_pattern_with_no_witness_names_none() {
+        let report = scan_content(
+            "const re = /[a-z]+/;",
+            "a.js".into(),
+            Some(Language::JavaScript),
+            ScanOptions {
+                all: true,
+                ..ScanOptions::default()
+            },
+        );
+        let pattern = &report.patterns[0];
+        assert!(pattern.redos.witness.is_none());
+        assert!(!describe(&report, pattern).contains("witness"));
+    }
 
     #[test]
     fn a_clean_file_exits_zero() {

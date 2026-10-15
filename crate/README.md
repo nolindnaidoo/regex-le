@@ -69,8 +69,8 @@ regex-le . || echo 'fix these before merging'
 ```
 
 ```
-./src/validate.js:1:15  /(\w+)+@/g  [high] exponential backtracking: 2000000 steps on 41 characters, against 229328 on 20
-./src/parse.ts:1:13  /(a|a)*b/  [high] exponential backtracking: 2000000 steps on 41 characters, against 458640 on 20
+./src/validate.js:1:15  /(\w+)+@/g  [high] exponential backtracking: 2000000 steps on 41 characters, against 229328 on 20  witness "0000000000000000000000000000000000000000\0"
+./src/parse.ts:1:13  /(a|a)*b/  [high] exponential backtracking: 2000000 steps on 41 characters, against 458640 on 20  witness "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\0"
 2 findings in 3 files
 ```
 

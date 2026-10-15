@@ -11,6 +11,10 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Changed
 
+- **A finding on stderr carries its witness.** The line gave the pattern
+  and the step counts and left the input that proves them in the report
+  alone, which a person at a terminal no longer sees.
+
 - **stdout is silent at a terminal.** The JSON reports printed on the
   same screen as the stderr listing and said the same thing again. Piped
   or redirected, stdout carries every report exactly as before.
