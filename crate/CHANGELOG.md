@@ -7,6 +7,14 @@ this repository release on their own cadence.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- **stdout is silent at a terminal.** The JSON reports printed on the
+  same screen as the stderr listing and said the same thing again. Piped
+  or redirected, stdout carries every report exactly as before.
+
 ## [0.4.2] - 2026-10-06
 
 ### Fixed
