@@ -271,7 +271,7 @@ The same lint runs from a terminal or a shell pipeline: a Rust CLI in
 document differently.
 
 ```bash
-regex-le .                      # every vulnerable pattern in the tree
+regex-le .                      # every vulnerable pattern; JSON on stdout when piped
 regex-le --severity high src/   # only the exponential shapes
 regex-le --all src/             # every pattern, vulnerable or not
 regex-le mcp                    # the same lint over MCP on stdio

@@ -264,8 +264,12 @@ not a line you can go and fix.
 
 ## Output contract
 
-**stdout is protocol, stderr is human.** One JSON report per line, one
-line per file.
+**stdout is protocol, stderr is human.** When stdout is a pipe, a file or
+a subprocess it carries one JSON report per line, one line per file. When
+it is a terminal it carries nothing, because the stderr listing already
+shows every finding a person reads there, and the same answer repeated
+as JSON on the same screen is noise. No script can tell the difference,
+since a script is never a terminal.
 
 ```json
 {

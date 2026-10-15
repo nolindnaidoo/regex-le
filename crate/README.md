@@ -59,7 +59,7 @@ and CI fails on drift.
 ## Sixty seconds
 
 ```bash
-regex-le .                        # every vulnerable pattern in the tree
+regex-le .                        # every vulnerable pattern; JSON on stdout when piped
 regex-le --severity high src/     # only the exponential shapes
 regex-le --all src/               # every pattern, vulnerable or not
 cat src/validate.js | regex-le --stdin
@@ -73,6 +73,9 @@ regex-le . || echo 'fix these before merging'
 ./src/parse.ts:1:13  /(a|a)*b/  [high] exponential backtracking: 2000000 steps on 41 characters, against 458640 on 20
 2 findings in 3 files
 ```
+
+stdout carries the JSON reports only when it is piped or redirected, and
+is left out at a terminal, where stderr lists every finding instead.
 
 **Exit codes**: `0` nothing vulnerable, `1` at least one finding, `2` the
 question was malformed. `--severity` sets where the line falls.

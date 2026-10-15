@@ -123,6 +123,9 @@ crate/src/
   written. `compiles` keeps its strict JavaScript meaning and is what
   the literal and constructor forms gate on.
 - **stdout is protocol, stderr is human. There is no `--json` flag.**
+  stdout stays silent when it is a terminal, because the stderr listing
+  already covers a person reading it. Anything that can parse gets every
+  report.
 - **Parity scope is detection only** — `src/extraction/**` on the
   extension side.
 
