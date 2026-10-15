@@ -291,6 +291,16 @@ mod tests {
         assert!(text.starts_with('{'), "{text}");
     }
 
+    #[test]
+    fn stderr_lists_each_finding_with_its_witness_before_the_tally() {
+        let mut err = Vec::new();
+        summarise(&mut err, &sample_reports(), 0);
+        let text = String::from_utf8(err).expect("utf-8");
+        assert!(text.starts_with("a.js:1:12  /(a+)+b/  [high]"), "{text}");
+        assert!(text.contains("  witness \""), "{text}");
+        assert!(text.ends_with("1 finding in 1 file\n"), "{text}");
+    }
+
     /// The summary on stderr already covers a person at a terminal.
     #[test]
     fn a_terminal_gets_no_json() {
