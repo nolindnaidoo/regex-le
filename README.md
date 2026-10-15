@@ -28,7 +28,7 @@
 ---
 
 <p align="center">
-  <img src="src/assets/images/demo.gif" alt="Regex-LE Demo" style="max-width: 100%; height: auto;" />
+  <img src="assets/demos/editor.gif" alt="Regex-LE in VS Code" style="max-width: 100%; height: auto;" />
 </p>
 
 > **Useful?** A star or rating is how other developers find it —
@@ -58,6 +58,10 @@ The same engine runs as an [MCP](https://modelcontextprotocol.io) server, so an 
 | **VS Code** 1.101+ | Nothing to install — the extension registers `extract_patterns` with agent mode |
 | **Claude Code** | `claude mcp add regex-le -- npx -y regex-le-mcp` |
 | **Cursor, Windsurf, anything else** | point it at `npx regex-le-mcp` |
+
+<p align="center">
+  <img src="assets/demos/mcp.gif" alt="An agent in Claude Code calling the regex-le MCP server" style="max-width: 100%; height: auto;" />
+</p>
 
 ```
 extract_patterns(content, format?, filename?, maxResults?)
@@ -272,6 +276,10 @@ regex-le --severity high src/   # only the exponential shapes
 regex-le --all src/             # every pattern, vulnerable or not
 regex-le mcp                    # the same lint over MCP on stdio
 ```
+
+<p align="center">
+  <img src="assets/demos/cli.gif" alt="regex-le in a terminal" style="max-width: 100%; height: auto;" />
+</p>
 
 **Exit codes**: 0 nothing vulnerable, 1 at least one finding, 2 the
 question was malformed — so `regex-le . || exit 1` is a CI gate.
