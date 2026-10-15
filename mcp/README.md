@@ -15,6 +15,8 @@
   </a>
 </p>
 
+![An agent in Claude Code calling the regex-le MCP server](https://raw.githubusercontent.com/nolindnaidoo/regex-le/main/assets/demos/mcp.gif)
+
 An [MCP](https://modelcontextprotocol.io) server that extracts the regular-expression
 patterns in source code and says which can be driven into catastrophic backtracking — the
 engine behind the

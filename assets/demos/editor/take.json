@@ -1,0 +1,16 @@
+{
+  "files": [
+    "validate.js"
+  ],
+  "steps": [
+    {
+      "wait": 1500
+    },
+    {
+      "command": "Regex-LE: Extract Patterns"
+    },
+    {
+      "wait": 5000
+    }
+  ]
+}

@@ -29,7 +29,7 @@
 </p>
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/nolindnaidoo/regex-le/main/assets/demo.gif" alt="regex-le demo — the real binary, recorded by assets/demo.tape" width="100%"/>
+  <img src="https://raw.githubusercontent.com/nolindnaidoo/regex-le/main/assets/demos/cli.gif" alt="regex-le demo — the real binary, recorded by assets/demos/cli/cli.tape" width="100%"/>
 </p>
 
 > **Useful?** A star is how other developers find it —
