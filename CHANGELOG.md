@@ -10,6 +10,17 @@ npm command line. The Rust CLI in `crate/` keeps its own
 [CHANGELOG](crate/CHANGELOG.md). From 2.7.0 every surface carries one
 version and releases from one tag.
 
+## [2.7.1] - 2026-10-17
+
+### Fixed
+
+- **`mcp` no longer ends the session on a frame that is not UTF-8**, in
+  the crate or the npm package. Such a frame is dropped like one that is not
+  JSON, and the requests after it are served. The npm server reads frames
+  with `src/cli/frames.ts`, the crate server's framing in one file shared
+  across the family, and `check:cli-pipes` now feeds both servers eighteen
+  malformed frames and requests and compares the answers.
+
 ## [2.7.0] - 2026-10-17
 
 ### Changed
