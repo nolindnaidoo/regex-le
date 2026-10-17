@@ -9,6 +9,7 @@
 import { sortedKeys } from '../mcp/envelope';
 import { TOOLS } from '../mcp/tools';
 import type { ScanOptions } from './args';
+import { requests } from './frames';
 import { type FileReport, scanFile } from './scan';
 import { collect } from './walk';
 
@@ -71,62 +72,19 @@ function sharedTool(name: string) {
 }
 
 /**
- * Serves until stdin closes, one request at a time, in order. A line that is
- * not UTF-8 ends the server with exit 2, as `BufRead::lines` does.
+ * Serves until stdin closes, one request at a time, in order, over the
+ * crate's framing in `frames.ts`.
  */
 export async function serve(
 	input: AsyncIterable<Uint8Array>,
 	write: (line: string) => void,
 	version: string,
 ): Promise<number> {
-	for await (const line of lines(input)) {
-		if (line === null) return 2;
-		if (isRustBlank(line)) continue;
-		let request: unknown;
-		try {
-			request = JSON.parse(line);
-		} catch {
-			// A frame that is not JSON has no id to answer against.
-			continue;
-		}
+	for await (const request of requests(input)) {
 		const response = await handle(request, version);
 		if (response !== undefined) write(`${response}\n`);
 	}
 	return 0;
-}
-
-/** Lines split on `\n` with one trailing `\r` dropped, or null for invalid UTF-8. */
-async function* lines(
-	input: AsyncIterable<Uint8Array>,
-): AsyncGenerator<string | null> {
-	const decoder = new TextDecoder('utf-8', { fatal: true, ignoreBOM: true });
-	let pending = Buffer.alloc(0);
-	for await (const chunk of input) {
-		pending = Buffer.concat([pending, chunk]);
-		let newline = pending.indexOf(10);
-		while (newline !== -1) {
-			yield decodeLine(decoder, pending.subarray(0, newline));
-			pending = pending.subarray(newline + 1);
-			newline = pending.indexOf(10);
-		}
-	}
-	if (pending.length > 0) yield decodeLine(decoder, pending);
-}
-
-function decodeLine(decoder: TextDecoder, bytes: Uint8Array): string | null {
-	try {
-		const line = decoder.decode(bytes);
-		return line.endsWith('\r') ? line.slice(0, -1) : line;
-	} catch {
-		return null;
-	}
-}
-
-/** Rust's `char::is_whitespace`, which `str::trim` strips. */
-function isRustBlank(line: string): boolean {
-	return /^[\t\n\v\f\r \u0085\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000]*$/.test(
-		line,
-	);
 }
 
 function field(value: unknown, name: string): unknown {

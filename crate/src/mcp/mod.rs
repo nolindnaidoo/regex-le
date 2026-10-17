@@ -35,8 +35,15 @@ pub(crate) fn serve() -> ExitCode {
     let stdin = std::io::stdin();
     let mut stdout = std::io::stdout();
     for line in stdin.lock().lines() {
-        let Ok(line) = line else {
-            return ExitCode::from(2);
+        let line = match line {
+            Ok(line) => line,
+            // A frame that is not UTF-8 is a malformed frame: it carries
+            // no id, so it is dropped like one that is not JSON, and the
+            // frames after it are still served.
+            Err(error) if error.kind() == std::io::ErrorKind::InvalidData => continue,
+            // Anything else is the stream itself failing. Reading on would
+            // spin.
+            Err(_) => return ExitCode::from(2),
         };
         if line.trim().is_empty() {
             continue;
