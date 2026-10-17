@@ -24,6 +24,14 @@ on:
       - 'scripts/check-mcp-definition.ts'
       - 'scripts/check-extraction-parity.ts'
       - '.github/workflows/ci-crate.yml'
+      - 'src/cli/**'
+      - 'cli/**'
+      - 'scripts/build-cli.js'
+      - 'scripts/check-cli-parity.ts'
+      - 'scripts/check-cli-pipes.ts'
+      - 'package.json'
+      - 'mcp/package.json'
+      - 'server.json'
       # The policy job greps every *.md, and in the crate-only repos holds
       # the six agent instruction files to one document. A change to one of
       # those has to be able to reach it — the filter used to admit only
@@ -43,6 +51,14 @@ on:
       - 'scripts/check-mcp-definition.ts'
       - 'scripts/check-extraction-parity.ts'
       - '.github/workflows/ci-crate.yml'
+      - 'src/cli/**'
+      - 'cli/**'
+      - 'scripts/build-cli.js'
+      - 'scripts/check-cli-parity.ts'
+      - 'scripts/check-cli-pipes.ts'
+      - 'package.json'
+      - 'mcp/package.json'
+      - 'server.json'
       # The policy job greps every *.md, and in the crate-only repos holds
       # the six agent instruction files to one document. A change to one of
       # those has to be able to reach it — the filter used to admit only
@@ -113,6 +129,34 @@ jobs:
           echo "code=$code" >> "$GITHUB_OUTPUT"
           echo "code=$code, files changed:"
           echo "$files"
+
+  # Every surface releases one version from one tag. ci.yml holds the
+  # extension, the MCP package and server.json equal; this holds the crate
+  # and the npm command line to the same number. It lives here because
+  # ci.yml is byte-identical across the *-le repos and only this one has
+  # both. A mismatch found after publishing costs a version on a registry
+  # that never gives one back.
+  versions:
+    name: One version
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: .
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - run: |
+          set -euo pipefail
+          expected=$(node -p "require('./package.json').version")
+          crate=$(grep -m1 '^version' crate/Cargo.toml | sed 's/.*"\(.*\)".*/\1/')
+          cli=$(node -p "require('./cli/package.json').version")
+          status=0
+          for pair in "crate/Cargo.toml:$crate" "cli/package.json:$cli"; do
+            if [ "${pair#*:}" != "$expected" ]; then
+              echo "::error::${pair%%:*} is ${pair#*:}, package.json is $expected"
+              status=1
+            fi
+          done
+          exit $status
 
   test:
     needs: changes
@@ -400,6 +444,47 @@ jobs:
       - name: Both servers define the shared tool identically
         working-directory: .
         run: bun scripts/check-mcp-definition.ts
+
+  # The npm package installs a command named `regex-le` too, so it is
+  # held to the whole terminal surface of this one: walk, verdicts,
+  # witnesses, exit codes, stdout and stderr byte for byte, and every
+  # reply `regex-le mcp` writes. A different contract from the differential
+  # above, which holds the shared tool equal and leaves the surfaces
+  # alone. Three operating systems, because the walk, the paths and
+  # the OS error wording are where the two runtimes part.
+  cli-parity:
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-15, windows-2025, ubuntu-24.04]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      # The package runs under Node wherever npx runs it, so the check does.
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 22.14.0
+      - uses: dtolnay/rust-toolchain@02cb101ec7c40f2c49e1d9714d64511d8e1b74de # master
+        with:
+          toolchain: stable
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: 1.3.13
+      - name: Install dependencies
+        working-directory: .
+        run: bun install --frozen-lockfile
+      - run: cargo build --locked
+      - name: Build the npm CLI
+        working-directory: .
+        run: bun run build:cli
+      - name: Both command lines behave identically
+        working-directory: .
+        run: bun run check:cli-parity
+      - name: Both command lines treat a closed pipe alike
+        working-directory: .
+        run: bun run check:cli-pipes
 
   # A standing net over the pure layer, time-boxed rather than run to
   # convergence. A ReDoS scanner that can itself be driven into

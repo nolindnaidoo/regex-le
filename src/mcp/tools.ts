@@ -1,4 +1,4 @@
-import { extractRegexPatterns } from '../extraction/regex/extractPatterns';
+import { extractRegexPatternsOrRefuse } from '../extraction/regex/extractPatterns';
 import { SUPPORTED_FORMATS } from '../extraction/regex/format';
 import { detectReDoS } from '../extraction/regex/redos';
 import {
@@ -57,9 +57,6 @@ function extract(args: Record<string, unknown>): Promise<unknown> {
 		typeof args.filename === 'string' ? args.filename : undefined;
 	const language = resolveFormat(format, filename);
 
-	const found = extractRegexPatterns(content, language);
-	const { items, truncated } = capped(found, maxResults);
-
 	const diagnostics: Diagnostic[] = [];
 	// Named rather than silently ignored: a caller who asked for Kotlin and got
 	// JavaScript's answers should be told which question was actually run. It is
@@ -72,6 +69,20 @@ function extract(args: Record<string, unknown>): Promise<unknown> {
 			message: `no regex spellings are known for ${named}, so every spelling was looked for`,
 		});
 	}
+
+	// A refusal, not an empty document: reporting no patterns when the scan
+	// gave up would have a model conclude the file is clean.
+	let found: ReturnType<typeof extractRegexPatternsOrRefuse> = [];
+	try {
+		found = extractRegexPatternsOrRefuse(content, language);
+	} catch (error) {
+		diagnostics.push({
+			severity: 'error',
+			code: 'incomplete',
+			message: error instanceof Error ? error.message : String(error),
+		});
+	}
+	const { items, truncated } = capped(found, maxResults);
 	const analysed = items.map((item) => {
 		// A pattern that defeats the analyser is still a real finding: report it
 		// without a verdict rather than dropping it or failing the whole scan.

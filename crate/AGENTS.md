@@ -291,7 +291,9 @@ The repo root's convention applies unchanged (root `AGENTS.md`):
 conventional prefix, imperative subject, body carrying the *why* —
 enforced by the `commit-msg` hook and the `Commit messages` CI job.
 One concern per change; if docs describe the thing you changed, update
-them in the same commit. Release tags are `crate-v*`, and a release
-goes out by dispatching `release-crate.yml` with its publish opt-in —
+them in the same commit. Since 2.7.0 the crate carries the repository's
+one version and releases from its one tag, `v<version>` (earlier
+releases were tagged `crate-v*`); the root `AGENTS.md` has the release
+steps. A release goes out by dispatching `release-crate.yml` with its publish opt-in —
 never by pushing a tag, because a crates.io version can never be
 reused.

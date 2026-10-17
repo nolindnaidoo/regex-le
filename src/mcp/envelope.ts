@@ -130,3 +130,20 @@ export function readString(
 	}
 	return value;
 }
+
+/**
+ * Keys in the order of their UTF-8 bytes, nested objects included, which is
+ * how the crate's `serde_json::Value` without `preserve_order` writes them.
+ * `extract_patterns` belongs to both servers, so its text is the same bytes from
+ * either one.
+ */
+export function sortedKeys<T>(value: T): T {
+	if (Array.isArray(value)) return value.map(sortedKeys) as T;
+	if (typeof value !== 'object' || value === null) return value;
+	const entries = Object.entries(value).sort(([left], [right]) =>
+		Buffer.compare(Buffer.from(left), Buffer.from(right)),
+	);
+	return Object.fromEntries(
+		entries.map(([key, item]) => [key, sortedKeys(item)]),
+	) as T;
+}

@@ -55,9 +55,67 @@ export function isValidFlagString(flags: string): boolean {
 }
 
 /**
- * True when the pattern+flags compile as a JavaScript regex.
+ * Past these, the crate's parser cannot be asked about a pattern at all, so
+ * it refuses one it was given unambiguously and drops one it was guessing
+ * at. V8 accepts deeper nesting; the bounds are held here so the shared
+ * `extract_patterns` tool answers the same from either server.
+ */
+export const MAX_GROUP_DEPTH = 255;
+export const MAX_ALTERNATION_BRANCHES = 5_000;
+
+/**
+ * The crate's one pass: how deep groups and classes nest, and how many
+ * top-level-of-a-class-free `|` there are, stopping once either bound is
+ * passed. Inside a class a `(` is a literal and a `)` closes nothing.
+ */
+function structure(pattern: string): { depth: number; branches: number } {
+	const characters = [...pattern];
+	const open: string[] = [];
+	let classes = 0;
+	let depth = 0;
+	let branches = 0;
+	for (let index = 0; index < characters.length; index++) {
+		const character = characters[index];
+		if (character === '\\') {
+			index += 1;
+			continue;
+		}
+		if (character === '[') {
+			open.push('[');
+			classes += 1;
+			depth = Math.max(depth, open.length);
+		} else if (character === ']' && classes > 0) {
+			open.pop();
+			classes -= 1;
+		} else if (character === '(' && classes === 0) {
+			open.push('(');
+			depth = Math.max(depth, open.length);
+		} else if (character === ')' && classes === 0) {
+			if (open.at(-1) === '(') open.pop();
+		} else if (character === '|' && classes === 0) {
+			branches += 1;
+		} else {
+			continue;
+		}
+		if (depth > MAX_GROUP_DEPTH || branches > MAX_ALTERNATION_BRANCHES) break;
+	}
+	return { depth, branches };
+}
+
+/** Whether a pattern is within the bounds the crate can judge. */
+export function isWithinParserLimits(pattern: string): boolean {
+	const found = structure(pattern);
+	return (
+		found.depth <= MAX_GROUP_DEPTH && found.branches <= MAX_ALTERNATION_BRANCHES
+	);
+}
+
+/**
+ * True when the pattern+flags compile as a JavaScript regex, and are within
+ * the bounds the crate can judge.
  */
 export function compiles(pattern: string, flags: string): boolean {
+	if (!isWithinParserLimits(pattern)) return false;
 	try {
 		new RegExp(pattern, flags);
 		return true;

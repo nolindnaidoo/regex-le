@@ -4,6 +4,9 @@ import {
 	isRegexContext,
 	isValidFlagString,
 	isWellFormed,
+	isWithinParserLimits,
+	MAX_ALTERNATION_BRANCHES,
+	MAX_GROUP_DEPTH,
 	VALID_FLAGS,
 } from './heuristics';
 import { isProse, proseSpans, type Span } from './mask';
@@ -85,6 +88,8 @@ const ESCAPED_GROUPS = ['esc1', 'esc2', 'esc3', 'esc4'] as const;
  * ReDoS scan does not depend on flags.
  */
 interface CallForm {
+	/** What a refusal calls this form, in the crate's words. */
+	readonly name: string;
 	readonly matcher: RegExp;
 	/** PHP writes the delimiters and modifiers *inside* the string. */
 	readonly delimited: boolean;
@@ -146,17 +151,38 @@ const CSHARP_STATIC = new RegExp(
 );
 
 const PYTHON_FORM: CallForm = Object.freeze({
+	name: 'python',
 	matcher: PYTHON,
 	delimited: false,
 });
-const RUST_FORM: CallForm = Object.freeze({ matcher: RUST, delimited: false });
-const GO_FORM: CallForm = Object.freeze({ matcher: GO, delimited: false });
-const JAVA_FORM: CallForm = Object.freeze({ matcher: JAVA, delimited: false });
-const RUBY_FORM: CallForm = Object.freeze({ matcher: RUBY, delimited: false });
-const PHP_FORM: CallForm = Object.freeze({ matcher: PHP, delimited: true });
+const RUST_FORM: CallForm = Object.freeze({
+	name: 'rust',
+	matcher: RUST,
+	delimited: false,
+});
+const GO_FORM: CallForm = Object.freeze({
+	name: 'go',
+	matcher: GO,
+	delimited: false,
+});
+const JAVA_FORM: CallForm = Object.freeze({
+	name: 'java',
+	matcher: JAVA,
+	delimited: false,
+});
+const RUBY_FORM: CallForm = Object.freeze({
+	name: 'ruby',
+	matcher: RUBY,
+	delimited: false,
+});
+const PHP_FORM: CallForm = Object.freeze({
+	name: 'php',
+	matcher: PHP,
+	delimited: true,
+});
 const CSHARP_FORMS: readonly CallForm[] = Object.freeze([
-	Object.freeze({ matcher: CSHARP_NEW, delimited: false }),
-	Object.freeze({ matcher: CSHARP_STATIC, delimited: false }),
+	Object.freeze({ name: 'csharp', matcher: CSHARP_NEW, delimited: false }),
+	Object.freeze({ name: 'csharp', matcher: CSHARP_STATIC, delimited: false }),
 ]);
 
 /**
@@ -208,6 +234,32 @@ export function extractRegexPatterns(
 	text: string,
 	languageId?: string,
 ): readonly ExtractedRegexPattern[] {
+	return extract(text, languageId, false);
+}
+
+/**
+ * The same extraction, refusing a constructor or call argument past the
+ * bounds the crate can judge rather than dropping it. That argument is
+ * unambiguously a pattern, so an answer without it would read as a clean
+ * file. The shared MCP tool and the command line ask this one.
+ */
+export function extractRegexPatternsOrRefuse(
+	text: string,
+	languageId?: string,
+): readonly ExtractedRegexPattern[] {
+	return extract(text, languageId, true);
+}
+
+/** The crate's refusal for a pattern its parser cannot be asked about. */
+export function tooComplex(form: string): string {
+	return `the ${form} pattern is nested past ${MAX_GROUP_DEPTH} groups or carries more than ${MAX_ALTERNATION_BRANCHES} alternation branches, which cannot be judged without overflowing the stack`;
+}
+
+function extract(
+	text: string,
+	languageId: string | undefined,
+	refuse: boolean,
+): readonly ExtractedRegexPattern[] {
 	const language = determineLanguage(languageId);
 	const patterns: ExtractedRegexPattern[] = [];
 	const found = new Set<string>();
@@ -243,10 +295,10 @@ export function extractRegexPatterns(
 		language === 'javascript' ||
 		language === 'typescript'
 	) {
-		scanConstructors(text, prose, push);
+		scanConstructors(text, prose, push, refuse);
 	}
 	for (const form of callForms(language)) {
-		scanCallForm(form, text, prose, push);
+		scanCallForm(form, text, prose, push, refuse);
 	}
 
 	patterns.sort((a, b) =>
@@ -283,6 +335,7 @@ function scanConstructors(
 	text: string,
 	prose: readonly Span[],
 	push: Push,
+	refuse: boolean,
 ): void {
 	CONSTRUCTOR.lastIndex = 0;
 	let m: RegExpExecArray | null;
@@ -300,6 +353,9 @@ function scanConstructors(
 		// \d. String.raw does not, which is why it is written.
 		const pattern =
 			groups.raw === undefined ? unescapeStringLiteral(body) : body;
+		if (refuse && !isWithinParserLimits(pattern)) {
+			throw new Error(tooComplex('constructor'));
+		}
 		if (!compiles(pattern, flags)) {
 			continue;
 		}
@@ -312,6 +368,7 @@ function scanCallForm(
 	text: string,
 	prose: readonly Span[],
 	push: Push,
+	refuse: boolean,
 ): void {
 	form.matcher.lastIndex = 0;
 	let m: RegExpExecArray | null;
@@ -326,6 +383,9 @@ function scanCallForm(
 			continue;
 		}
 		const pattern = form.delimited ? stripPhpDelimiters(body) : body;
+		if (refuse && pattern !== undefined && !isWithinParserLimits(pattern)) {
+			throw new Error(tooComplex(form.name));
+		}
 		// The validity judge is the language-tolerant one: JavaScript is
 		// the only engine here, and a Python or Go pattern it refuses is
 		// far more often valid than a typo.

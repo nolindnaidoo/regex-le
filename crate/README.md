@@ -85,9 +85,11 @@ question was malformed. `--severity` sets where the line falls.
 | Route | Command | Worth knowing |
 |---|---|---|
 | **cargo** | `cargo install regex-le` | Any platform, needs **Rust 1.88+**. |
+| **npm** | `npm install -g regex-le` or `npx regex-le` | Needs **Node 20+**. The same `regex-le` command, held to this one byte for byte. |
 | **From source** | `git clone https://github.com/nolindnaidoo/regex-le`<br>`cd regex-le/crate && cargo build --release` | The same build CI runs. |
 
-No runtime, no network, nothing written.
+The cargo build needs no runtime. Neither one touches the network or
+writes a file.
 
 ## Every finding comes with the input that proves it
 

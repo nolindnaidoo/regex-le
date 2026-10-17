@@ -356,6 +356,18 @@ Exit codes: 0 nothing vulnerable · 1 at least one finding · 2 the
 question was malformed.
 ```
 
+**Held equal: this surface and the npm one.** The npm package `regex-le`
+installs a command named `regex-le`, built from the extension's `src/cli/`
+over the extension's engine, and nobody running `regex-le` can tell which
+one they have. It is held to everything in this section byte for byte —
+flags, walk, verdicts, witnesses, exit codes, stdout, stderr, and every
+reply `regex-le mcp` writes — by `scripts/check-cli-parity.ts`. A change to
+this surface changes `src/cli/` in the same commit. That includes
+`--version`: every surface in the repository carries one version. One gap
+is known: an extraction regex that exhausts this crate's backtracking
+budget makes the file `incomplete` here, and JavaScript, which has no
+budget, reads it.
+
 ## The MCP surface
 
 - **`extract_patterns` belongs to both servers.** The npm server and this
