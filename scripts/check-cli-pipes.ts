@@ -10,7 +10,8 @@
  *
  * Shared by every repo with an npm command line, and held identical by
  * letools-site's fleet check. `--mcp-only` skips the command-line cases,
- * for a tool whose command line needs the network.
+ * for a tool whose command line cannot read the shared tree: one that needs
+ * the network, or one that reads a set of catalogues rather than files.
  *
  * Run: bun run build:cli && cargo build --locked --manifest-path crate/Cargo.toml
  *      bun scripts/check-cli-pipes.ts [--mcp-only]
@@ -56,13 +57,22 @@ function file(name: string, content: string): void {
 	writeFileSync(join(tree, name), content);
 	created.push(join(tree, name));
 }
-// Something every extractor finds, many times over, and two dotenv files
-// that disagree on every key.
+// Something every extractor finds, many times over, two dotenv files that
+// disagree on every key, and two manifests that disagree on every
+// dependency. A report too small to outlast the pipe's buffer can land
+// before the close does, and then the case proves nothing.
 const line = '#ff0000 /usr/local/bin/tool "a string" 12345 https://a.example/x KEY=value\n';
+const manifest = (version: string) =>
+	JSON.stringify({
+		dependencies: Object.fromEntries(Array.from({ length: 5_000 }, (_, at) => [`dep-${at}`, version])),
+	});
 mkdirSync(join(tree, 'big'));
+mkdirSync(join(tree, 'big', 'other'));
 file('big/many.txt', line.repeat(20_000));
 file('big/.env.example', Array.from({ length: 20_000 }, (_, at) => `KEY_${at}=v`).join('\n'));
 file('big/.env', 'OTHER=1\n');
+file('big/package.json', manifest('1'));
+file('big/other/package.json', manifest('2'));
 
 const list = (id: number) => JSON.stringify({ jsonrpc: '2.0', id, method: 'tools/list' });
 const requests = `${Array.from({ length: 300 }, (_, at) => list(at)).join('\n')}\n`;
@@ -97,6 +107,7 @@ try {
 	}
 } finally {
 	for (const path of created) unlinkSync(path);
+	rmdirSync(join(tree, 'big', 'other'));
 	rmdirSync(join(tree, 'big'));
 	rmdirSync(tree);
 }
