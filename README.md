@@ -47,6 +47,7 @@ Open any file and run one of three commands. **Extract** lists every regex patte
 | **VS Code** | The lint *and* the tester, in your editor | [Marketplace](https://marketplace.visualstudio.com/items?itemName=nolindnaidoo.regex-le) |
 | **Cursor, VSCodium, Windsurf** | The same extension | [Open VSX](https://open-vsx.org/extension/nolindnaidoo/regex-le) |
 | **A terminal or a CI step** | The same run over a whole tree, with exit codes | `cargo install regex-le` · [crates.io](https://crates.io/crates/regex-le) |
+| **A terminal, via Node** | The same command line, held to the Rust one byte for byte | `npx regex-le` · [npm](https://www.npmjs.com/package/regex-le) |
 | **Any MCP agent, via Node** | `extract_patterns` over stdio | `npx regex-le-mcp` · [npm](https://www.npmjs.com/package/regex-le-mcp) |
 
 ## Use it from an AI agent
@@ -268,7 +269,9 @@ The settings that shape a scan are under [Settings](#settings). The positions se
 The same lint runs from a terminal or a shell pipeline: a Rust CLI in
 [`crate/`](crate/README.md), sharing one corpus with the extension —
 [`crate/fixtures/`](crate/fixtures/) — so the two can never read a
-document differently.
+document differently. The same command line also ships on npm as
+`regex-le`, for a machine with Node and no Rust, and CI holds it to the
+crate byte for byte on three operating systems.
 
 ```bash
 regex-le .                      # every vulnerable pattern; JSON on stdout when piped
@@ -391,12 +394,12 @@ a build only tells you how busy the runner was.
 <!-- coverage:start -->
 | Metric | Coverage |
 | --- | --- |
-| Statements | 93.34% |
-| Branches | 82.27% |
-| Functions | 98.59% |
-| Lines | 95.39% |
+| Statements | 84.57% |
+| Branches | 74.84% |
+| Functions | 85.10% |
+| Lines | 87.25% |
 
-378 test cases across 26 files, plus an integration suite that runs
+401 test cases across 28 files, plus an integration suite that runs
 in a real VS Code extension host and an end-to-end test that installs the
 built `.vsix` into a clean profile.
 

@@ -1,0 +1,46 @@
+{
+	"name": "regex-le",
+	"version": "2.7.0",
+	"description": "Find every regular expression in a codebase and report which can be driven into catastrophic backtracking, with the input that proves it.",
+	"keywords": [
+		"regex",
+		"redos",
+		"security",
+		"lint",
+		"audit",
+		"cli",
+		"regex-le",
+		"nolindnaidoo",
+		"letools"
+	],
+	"license": "MIT",
+	"author": {
+		"name": "Nolin Naidoo",
+		"url": "https://nolindnaidoo.com"
+	},
+	"homepage": "https://letools.dev/tools/regex-le",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/nolindnaidoo/regex-le.git",
+		"directory": "cli"
+	},
+	"bugs": {
+		"url": "https://github.com/nolindnaidoo/regex-le/issues"
+	},
+	"type": "commonjs",
+	"bin": {
+		"regex-le": "cli.js"
+	},
+	"files": [
+		"cli.js",
+		"README.md",
+		"LICENSE"
+	],
+	"engines": {
+		"node": ">=20"
+	},
+	"publishConfig": {
+		"access": "public",
+		"provenance": true
+	}
+}

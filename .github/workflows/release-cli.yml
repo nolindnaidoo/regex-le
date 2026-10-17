@@ -1,0 +1,130 @@
+# Publishes the npm command line from cli/, under the package name in
+# cli/package.json, which installs the command `regex-le`.
+# Its own workflow rather than a job in release.yml, because release.yml
+# is byte-identical across the *-le repos (letools-site's fleet check)
+# and not every one of them has a command line on npm.
+#
+# Dispatch-only, like the other release workflows: a tag push must not be
+# able to spend a version by itself, because an npm version can never be
+# reused. With `publish` off it runs every check and publishes nothing.
+name: Release (npm CLI)
+
+on:
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: Publish the cli/ package to npm (off runs the full dry run only)
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-cli
+  cancel-in-progress: false
+
+jobs:
+  # Everything that must be true before a version is spent. Runs whether
+  # or not `publish` is set, so the dry run is a first-class way to check
+  # a release without risking one.
+  preflight:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 22.14.0
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: 1.3.13
+      - uses: dtolnay/rust-toolchain@02cb101ec7c40f2c49e1d9714d64511d8e1b74de # master
+        with:
+          toolchain: stable
+      - run: bun install --frozen-lockfile
+
+      # The tag is the artifact. Publishing from a commit that is not the
+      # tagged release would put code on npm that no tag describes.
+      - name: The commit is the tagged release
+        run: |
+          set -euo pipefail
+          version=$(node -p "require('./package.json').version")
+          if [ "$(git rev-parse HEAD)" != "$(git rev-parse "v$version^{commit}" 2>/dev/null || true)" ]; then
+            echo "::error::HEAD is not tagged v$version. Tag the release commit and dispatch from it."
+            exit 1
+          fi
+
+      - name: The changelog documents this version
+        run: |
+          set -euo pipefail
+          version=$(node -p "require('./package.json').version")
+          if ! grep -q "^## \[$version\]" CHANGELOG.md; then
+            echo "::error::CHANGELOG.md has no entry for $version"
+            exit 1
+          fi
+
+      - name: Refuse to republish an existing version
+        run: |
+          set -euo pipefail
+          version=$(node -p "require('./package.json').version")
+          package=$(node -p "require('./cli/package.json').name")
+          if npm view "$package@$version" version >/dev/null 2>&1; then
+            echo "::error::$package@$version is already published; bump the version first."
+            exit 1
+          fi
+          echo "$package@$version is unpublished"
+
+      - run: bun run typecheck
+      - run: bun run test
+      - run: bun run build:cli:prod
+      - run: bun run check:cli-package
+
+      # Two binaries install as regex-le. Publishing one that no longer
+      # behaves as the other does would ship the drift this exists to stop.
+      - run: cargo build --locked
+        working-directory: crate
+      - run: bun run check:cli-parity
+      - run: bun run check:cli-pipes
+
+  publish:
+    needs: preflight
+    if: inputs.publish
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    # `id-token: write` signs the provenance statement and nothing else.
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      # With a registry URL, setup-node writes an .npmrc that reads the token
+      # from NODE_AUTH_TOKEN, so it is never written to disk or passed in argv.
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 22.14.0
+          registry-url: https://registry.npmjs.org
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: 1.3.13
+      - run: bun install --frozen-lockfile
+
+      - name: Check the npm credential
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          if [ -z "$NPM_TOKEN" ]; then
+            echo "::error::npm publishing requested but NPM_TOKEN is not set."
+            exit 1
+          fi
+
+      - name: Build and gate the package
+        run: |
+          bun run build:cli:prod
+          bun run check:cli-package
+
+      - name: Publish to npm
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm publish ./cli --access public

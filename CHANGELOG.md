@@ -5,13 +5,41 @@ All notable changes to Regex-LE will be documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-This file covers the **VS Code extension**. The Rust CLI in `crate/` is a
-separate product on its own cadence and keeps its own
-[CHANGELOG](crate/CHANGELOG.md).
+This file covers the **VS Code extension**, the npm MCP server and the
+npm command line. The Rust CLI in `crate/` keeps its own
+[CHANGELOG](crate/CHANGELOG.md). From 2.7.0 every surface carries one
+version and releases from one tag.
 
-## [Unreleased]
+## [2.7.0] - 2026-10-17
+
+### Changed
+
+- **One version for every surface.** The extension, the MCP server on
+  npm, the new npm command line and the Rust crate all release as 2.7.0
+  from the tag `v2.7.0`. The crate jumps from 0.4.3 to join them, and CI
+  now fails a commit where any of them disagree.
+
+### Added
+
+- An npm command line, `regex-le`, built in `cli/` from `src/cli/`. It is
+  the Rust CLI's surface over this extension's extraction and ReDoS
+  engine: the same flags, walk, verdicts, witnesses, exit codes, JSON
+  Lines and stderr listing, and `regex-le mcp` serves the same two tools
+  with the same bytes. `scripts/check-cli-parity.ts` runs both binaries
+  over one tree on three operating systems and fails on any byte of
+  difference, and `scripts/check-cli-pipes.ts` does the same with stdout
+  or stderr closed early. It is published as `regex-le` on npm, beside
+  `regex-le-mcp`.
 
 ### Fixed
+
+- **The shared `extract_patterns` tool answered differently from the
+  crate's for a pattern nested past 255 groups or carrying more than
+  5,000 alternation branches.** The crate refuses a constructor or call
+  argument that deep, because its parser cannot be asked about it, and
+  drops a bare literal; this server reported both. It now does what the
+  crate does, and `crate/fixtures/mcp-extract-patterns.json` pins both
+  cases. The editor commands drop such a pattern rather than show it.
 
 - The rating prompt's Rate button opened the Marketplace review page for
   every install, including one from Open VSX in VSCodium, Cursor or

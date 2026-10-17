@@ -1,6 +1,8 @@
 # Publishes the Rust CLI to crates.io. Separate from release.yml, which
-# publishes the extension and the npm MCP server — the two products in
-# this repo release on their own cadence and their own tags.
+# publishes the extension and the npm MCP server, and from release-cli.yml,
+# which publishes the npm command line. All of them release one version
+# from one tag, `v<version>`; ci-crate.yml's `versions` job holds the
+# manifests equal.
 #
 # Dispatch-only, like release.yml: a tag push must not be able to spend
 # a version by itself, because a crates.io version can never be reused.
