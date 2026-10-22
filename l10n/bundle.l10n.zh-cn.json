@@ -49,5 +49,6 @@
 	"{0} distinct pattern(s) in {1} file(s)": "{1} 个文件中有 {0} 个不同的模式",
 	"Pattern": "模式",
 	"Files": "文件",
-	"Could not copy the report to the clipboard: {0}": "无法将报告复制到剪贴板：{0}"
+	"Could not copy the report to the clipboard: {0}": "无法将报告复制到剪贴板：{0}",
+	"{0} file(s) could not be read.": "{0} 个文件无法读取。"
 }

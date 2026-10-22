@@ -44,8 +44,14 @@ export interface ScanSummary {
 	readonly read: number;
 	/** Files left unread for being over the size limit. */
 	readonly tooLarge: number;
-	/** Files left unread for not being UTF-8 text, or not being readable. */
+	/** Files left unread for not being UTF-8 text. */
 	readonly notText: number;
+	/**
+	 * Files listed and then not readable: gone before they were opened, or
+	 * refused by the filesystem. Counted apart from `notText`, because "is not
+	 * UTF-8 text" is false of a deleted file and the report says which it was.
+	 */
+	readonly unreadable: number;
 	/** More files matched than `maxFiles` allows. */
 	readonly fileLimitReached: boolean;
 	/** Files a `.gitignore` left out. */
@@ -216,13 +222,21 @@ export async function scanFiles(
 	let read = 0;
 	let tooLarge = 0;
 	let notText = 0;
+	let unreadable = 0;
 	for (const [index, uri] of files.entries()) {
 		if (token.isCancellationRequested) {
-			return { read, tooLarge, notText, stoppedEarly: false, cancelled: true };
+			return {
+				read,
+				tooLarge,
+				notText,
+				unreadable,
+				stoppedEarly: false,
+				cancelled: true,
+			};
 		}
 		if (index % 50 === 0) onProgress(index, files.length);
 
-		let text: string | undefined;
+		let bytes: Uint8Array;
 		try {
 			if (
 				limits.maxFileBytes !== undefined &&
@@ -231,12 +245,13 @@ export async function scanFiles(
 				tooLarge++;
 				continue;
 			}
-			text = decodeText(await vscode.workspace.fs.readFile(uri));
+			bytes = await vscode.workspace.fs.readFile(uri);
 		} catch {
-			// A file that could not be read was not examined, and is counted
-			// with the others nothing could be read from.
-			text = undefined;
+			// Listed, then gone or refused. Not examined, and not a binary file.
+			unreadable++;
+			continue;
 		}
+		const text = decodeText(bytes);
 		if (text === undefined) {
 			notText++;
 			continue;
@@ -249,12 +264,20 @@ export async function scanFiles(
 				read,
 				tooLarge,
 				notText,
+				unreadable,
 				stoppedEarly: index < files.length - 1,
 				cancelled: false,
 			};
 		}
 	}
-	return { read, tooLarge, notText, stoppedEarly: false, cancelled: false };
+	return {
+		read,
+		tooLarge,
+		notText,
+		unreadable,
+		stoppedEarly: false,
+		cancelled: false,
+	};
 }
 
 /** A folder that was picked is the reader's frame of reference, wherever the workspace is. */
@@ -338,6 +361,11 @@ export function unreadNotes(
 				'{0} file(s) that are not UTF-8 text were not read.',
 				summary.notText,
 			),
+		);
+	}
+	if (summary.unreadable > 0) {
+		notes.push(
+			vscode.l10n.t('{0} file(s) could not be read.', summary.unreadable),
 		);
 	}
 	return notes;

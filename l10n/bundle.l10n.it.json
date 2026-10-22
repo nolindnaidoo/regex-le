@@ -49,5 +49,6 @@
 	"{0} distinct pattern(s) in {1} file(s)": "{0} pattern distinti in {1} file",
 	"Pattern": "Pattern",
 	"Files": "File",
-	"Could not copy the report to the clipboard: {0}": "Impossibile copiare il report negli appunti: {0}"
+	"Could not copy the report to the clipboard: {0}": "Impossibile copiare il report negli appunti: {0}",
+	"{0} file(s) could not be read.": "Impossibile leggere {0} file."
 }

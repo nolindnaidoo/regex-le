@@ -49,5 +49,6 @@
 	"{0} distinct pattern(s) in {1} file(s)": "{1} 個のファイルに {0} 種類のパターン",
 	"Pattern": "パターン",
 	"Files": "ファイル数",
-	"Could not copy the report to the clipboard: {0}": "レポートをクリップボードにコピーできませんでした: {0}"
+	"Could not copy the report to the clipboard: {0}": "レポートをクリップボードにコピーできませんでした: {0}",
+	"{0} file(s) could not be read.": "{0} 個のファイルを読み取れませんでした。"
 }

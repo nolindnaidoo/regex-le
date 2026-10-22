@@ -49,5 +49,6 @@
 	"{0} distinct pattern(s) in {1} file(s)": "{0} mẫu khác nhau trong {1} tệp",
 	"Pattern": "Mẫu",
 	"Files": "Tệp",
-	"Could not copy the report to the clipboard: {0}": "Không thể sao chép báo cáo vào bảng nhớ tạm: {0}"
+	"Could not copy the report to the clipboard: {0}": "Không thể sao chép báo cáo vào bảng nhớ tạm: {0}",
+	"{0} file(s) could not be read.": "Không thể đọc {0} tệp."
 }

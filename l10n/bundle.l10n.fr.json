@@ -49,5 +49,6 @@
 	"{0} distinct pattern(s) in {1} file(s)": "{0} motif(s) distinct(s) dans {1} fichier(s)",
 	"Pattern": "Motif",
 	"Files": "Fichiers",
-	"Could not copy the report to the clipboard: {0}": "Impossible de copier le rapport dans le presse-papiers : {0}"
+	"Could not copy the report to the clipboard: {0}": "Impossible de copier le rapport dans le presse-papiers : {0}",
+	"{0} file(s) could not be read.": "{0} fichier(s) n'ont pas pu être lus."
 }

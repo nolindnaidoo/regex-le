@@ -49,5 +49,6 @@
 	"{0} distinct pattern(s) in {1} file(s)": "Различных шаблонов: {0}, файлов: {1}",
 	"Pattern": "Шаблон",
 	"Files": "Файлы",
-	"Could not copy the report to the clipboard: {0}": "Не удалось скопировать отчёт в буфер обмена: {0}"
+	"Could not copy the report to the clipboard: {0}": "Не удалось скопировать отчёт в буфер обмена: {0}",
+	"{0} file(s) could not be read.": "Не удалось прочитать файлов: {0}."
 }
