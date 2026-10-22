@@ -95,8 +95,26 @@ jobs:
           set -euo pipefail
           version=$(cargo metadata --no-deps --format-version 1 | python3 -c 'import json,sys; print(json.load(sys.stdin)["packages"][0]["version"])')
           echo "local: $version"
-          body=$(curl -sS "https://crates.io/api/v1/crates/regex-le/versions" || echo '{}')
-          if printf '%s' "$body" | python3 -c 'import json,sys; d=json.load(sys.stdin); print("\n".join(v["num"] for v in d.get("versions", [])))' 2>/dev/null | grep -qx "$version"; then
+          # An answer the probe cannot read must not read as "unpublished".
+          # A parse failure used to be silenced and fall through to the same
+          # branch as an absent version, so an HTML error page from the
+          # registry let the publish run. Each failure is its own exit now:
+          # curl's on the request, python's on a body that is not the
+          # version list. A crate that was never published answers with an
+          # `errors` body, and that alone is read as "no versions".
+          body=$(curl -sS "https://crates.io/api/v1/crates/regex-le/versions")
+          published=$(printf '%s' "$body" | python3 -c '
+          import json, sys
+          answer = json.load(sys.stdin)
+          if "versions" in answer:
+              print("\n".join(v["num"] for v in answer["versions"]))
+          elif "errors" not in answer:
+              sys.exit("the body is JSON but not a version list")
+          ') || {
+            echo "::error::crates.io did not answer with a version list; refusing to publish without knowing"
+            exit 1
+          }
+          if printf '%s\n' "$published" | grep -qx "$version"; then
             echo "::error::$version is already on crates.io; a published version can never be reused"
             exit 1
           fi
