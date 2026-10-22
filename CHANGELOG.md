@@ -10,6 +10,28 @@ npm command line. The Rust CLI in `crate/` keeps its own
 [CHANGELOG](crate/CHANGELOG.md). From 2.7.0 every surface carries one
 version and releases from one tag.
 
+## [Unreleased]
+
+### Fixed
+
+- A number setting cleared to an empty string or null read as 0 and was
+  clamped to its floor, so the size guard became 1,000 bytes. It falls back
+  to the default.
+- A folder or workspace scan counted a file deleted or made unreadable after
+  it was listed as "not UTF-8 text". It has its own line in the report:
+  "N file(s) could not be read."
+- The MCP server held every byte of a frame until its newline, with no
+  ceiling, so a client that streamed without one grew the process without
+  bound and got no answer. A frame over 16 MiB is refused with a parse error
+  and the next line is served.
+- A failure inside a command, such as the editor refusing to open a document
+  or a dialog going away, escaped as an unhandled rejection the editor
+  reported in its own words, home directory included. Every command reports
+  it as one redacted, localized error.
+- The crate release workflow read a crates.io answer it could not parse, or
+  a failed request, as "unpublished" and would have let the publish run. It
+  refuses to publish without a version list.
+
 ## [2.7.1] - 2026-10-17
 
 ### Fixed
