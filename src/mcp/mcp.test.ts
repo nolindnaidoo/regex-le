@@ -2,7 +2,7 @@ import { EventEmitter } from 'node:events';
 import { describe, expect, it } from 'vitest';
 import { analysisFailed, capped, isOk, readMaxResults } from './envelope';
 import { TOOLS } from './tools';
-import { createResponder, serve } from './transport';
+import { createResponder, MAX_FRAME_BYTES, serve } from './transport';
 
 /**
  * The MCP layer: the normalisation boundary, the tool table and the protocol.
@@ -286,5 +286,43 @@ describe('serve: the stdio loop', () => {
 		);
 		await settle();
 		expect(replies()).toHaveLength(0);
+	});
+
+	it('refuses a frame over the limit whose newline arrives in the same chunk', async () => {
+		// The over-limit check on the leftover buffer never sees a line that
+		// arrives whole; the limit is on the line, not on its framing.
+		const { input, replies } = harness();
+		input.emit(
+			'data',
+			`${'x'.repeat(MAX_FRAME_BYTES + 1)}\n{"jsonrpc":"2.0","id":8,"method":"ping"}\n`,
+		);
+		await settle();
+		expect(replies().map((r) => r.error?.message ?? r.id)).toEqual([
+			`Message exceeds the ${MAX_FRAME_BYTES} byte frame limit`,
+			8,
+		]);
+	});
+
+	it('refuses a frame over the limit and keeps serving', async () => {
+		// Input with no newline grew the buffer without bound: 64 MiB of it
+		// held the process near a gigabyte and answered nothing. Past the
+		// limit the frame is refused with a parse error, the rest of that line
+		// is dropped as it arrives, and the next line is served.
+		const { input, replies } = harness();
+		input.emit('data', 'x'.repeat(MAX_FRAME_BYTES + 1));
+		input.emit('data', 'y'.repeat(1000));
+		input.emit('data', 'z\n{"jsonrpc":"2.0","id":9,"method":"ping"}\n');
+		await settle();
+		expect(replies()).toEqual([
+			{
+				jsonrpc: '2.0',
+				id: null,
+				error: {
+					code: -32700,
+					message: `Message exceeds the ${MAX_FRAME_BYTES} byte frame limit`,
+				},
+			},
+			{ jsonrpc: '2.0', id: 9, result: {} },
+		]);
 	});
 });
