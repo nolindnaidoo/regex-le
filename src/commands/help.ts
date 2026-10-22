@@ -1,5 +1,7 @@
 import * as vscode from 'vscode';
 import type { Telemetry } from '../telemetry/telemetry';
+import { createNotifier } from '../ui/notifier';
+import { guarded } from './guard';
 
 /**
  * Register help command to show documentation
@@ -10,7 +12,7 @@ export function registerHelpCommand(
 ): void {
 	const disposable = vscode.commands.registerCommand(
 		'regex-le.help',
-		async () => {
+		guarded(createNotifier(), async () => {
 			telemetry.event('help-opened');
 
 			const helpContent = buildHelpContent();
@@ -21,7 +23,7 @@ export function registerHelpCommand(
 			});
 
 			await vscode.window.showTextDocument(doc, vscode.ViewColumn.Beside);
-		},
+		}),
 	);
 
 	context.subscriptions.push(disposable);

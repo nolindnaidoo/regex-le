@@ -50,5 +50,6 @@
 	"Pattern": "Patrón",
 	"Files": "Archivos",
 	"Could not copy the report to the clipboard: {0}": "No se pudo copiar el informe al portapapeles: {0}",
-	"{0} file(s) could not be read.": "{0} archivo(s) no se pudieron leer."
+	"{0} file(s) could not be read.": "{0} archivo(s) no se pudieron leer.",
+	"Regex-LE could not finish: {0}": "Regex-LE no pudo terminar: {0}"
 }

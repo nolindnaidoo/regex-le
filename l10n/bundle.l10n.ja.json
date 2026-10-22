@@ -50,5 +50,6 @@
 	"Pattern": "パターン",
 	"Files": "ファイル数",
 	"Could not copy the report to the clipboard: {0}": "レポートをクリップボードにコピーできませんでした: {0}",
-	"{0} file(s) could not be read.": "{0} 個のファイルを読み取れませんでした。"
+	"{0} file(s) could not be read.": "{0} 個のファイルを読み取れませんでした。",
+	"Regex-LE could not finish: {0}": "Regex-LE を完了できませんでした: {0}"
 }

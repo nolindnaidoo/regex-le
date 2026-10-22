@@ -50,5 +50,6 @@
 	"Pattern": "Motif",
 	"Files": "Fichiers",
 	"Could not copy the report to the clipboard: {0}": "Impossible de copier le rapport dans le presse-papiers : {0}",
-	"{0} file(s) could not be read.": "{0} fichier(s) n'ont pas pu être lus."
+	"{0} file(s) could not be read.": "{0} fichier(s) n'ont pas pu être lus.",
+	"Regex-LE could not finish: {0}": "Regex-LE n'a pas pu terminer : {0}"
 }

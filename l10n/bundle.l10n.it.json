@@ -50,5 +50,6 @@
 	"Pattern": "Pattern",
 	"Files": "File",
 	"Could not copy the report to the clipboard: {0}": "Impossibile copiare il report negli appunti: {0}",
-	"{0} file(s) could not be read.": "Impossibile leggere {0} file."
+	"{0} file(s) could not be read.": "Impossibile leggere {0} file.",
+	"Regex-LE could not finish: {0}": "Regex-LE non è riuscito a completare: {0}"
 }

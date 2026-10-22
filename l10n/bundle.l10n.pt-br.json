@@ -50,5 +50,6 @@
 	"Pattern": "Padrão",
 	"Files": "Arquivos",
 	"Could not copy the report to the clipboard: {0}": "Não foi possível copiar o relatório para a área de transferência: {0}",
-	"{0} file(s) could not be read.": "{0} arquivo(s) não puderam ser lidos."
+	"{0} file(s) could not be read.": "{0} arquivo(s) não puderam ser lidos.",
+	"Regex-LE could not finish: {0}": "O Regex-LE não pôde concluir: {0}"
 }

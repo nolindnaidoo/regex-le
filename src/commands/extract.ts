@@ -8,6 +8,7 @@ import type { StatusBar } from '../ui/statusBar';
 import { sanitizeErrorMessage } from '../utils/errors';
 import { positioned } from '../utils/positions';
 import { checkOutputSafety, handleSafetyChecks } from '../utils/safety';
+import { guarded } from './guard';
 
 /**
  * Register the regex extract command
@@ -24,7 +25,7 @@ export function registerExtractCommand(
 ): void {
 	const disposable = vscode.commands.registerCommand(
 		'regex-le.extract',
-		async (): Promise<void> => {
+		guarded(deps.notifier, async (): Promise<void> => {
 			deps.telemetry.event('command-extract');
 
 			const editor = vscode.window.activeTextEditor;
@@ -143,7 +144,7 @@ export function registerExtractCommand(
 				);
 				deps.telemetry.event('extract-failed', { error: errorMessage });
 			}
-		},
+		}),
 	);
 
 	context.subscriptions.push(disposable);

@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { getConfiguration } from '../config/config';
 import { extractRegexPatterns } from '../extraction/regex/extractPatterns';
 import { resolveFormat } from '../mcp/fileType';
+import { createNotifier } from '../ui/notifier';
 import {
 	listFiles,
 	type ScanLimits,
@@ -9,6 +10,7 @@ import {
 	scanFiles,
 	unreadNotes,
 } from '../workspace/scan';
+import { guarded } from './guard';
 import {
 	askForFolder,
 	code,
@@ -37,17 +39,18 @@ export function registerExtractWorkspaceCommands(
 	deps: WorkspaceDeps,
 ): void {
 	context.subscriptions.push(
-		vscode.commands.registerCommand('regex-le.extractWorkspace', async () =>
-			extractWorkspace(deps),
+		vscode.commands.registerCommand(
+			'regex-le.extractWorkspace',
+			guarded(createNotifier(), async () => extractWorkspace(deps)),
 		),
 		// The Explorer hands over the folder that was clicked. From the
 		// palette there is none, and the command asks.
 		vscode.commands.registerCommand(
 			'regex-le.extractFolder',
-			async (picked?: vscode.Uri) => {
+			guarded(createNotifier(), async (picked?: vscode.Uri) => {
 				const folder = picked ?? (await askForFolder());
 				if (folder !== undefined) await extractWorkspace(deps, folder);
-			},
+			}),
 		),
 	);
 }

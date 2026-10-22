@@ -50,5 +50,6 @@
 	"Pattern": "Mẫu",
 	"Files": "Tệp",
 	"Could not copy the report to the clipboard: {0}": "Không thể sao chép báo cáo vào bảng nhớ tạm: {0}",
-	"{0} file(s) could not be read.": "Không thể đọc {0} tệp."
+	"{0} file(s) could not be read.": "Không thể đọc {0} tệp.",
+	"Regex-LE could not finish: {0}": "Regex-LE không thể hoàn thành: {0}"
 }
