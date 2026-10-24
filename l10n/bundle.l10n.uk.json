@@ -49,5 +49,7 @@
 	"{0} distinct pattern(s) in {1} file(s)": "Різних шаблонів: {0}, файлів: {1}",
 	"Pattern": "Шаблон",
 	"Files": "Файли",
-	"Could not copy the report to the clipboard: {0}": "Не вдалося скопіювати звіт до буфера обміну: {0}"
+	"Could not copy the report to the clipboard: {0}": "Не вдалося скопіювати звіт до буфера обміну: {0}",
+	"{0} file(s) could not be read.": "Не вдалося прочитати файлів: {0}.",
+	"Regex-LE could not finish: {0}": "Regex-LE не вдалося завершити: {0}"
 }

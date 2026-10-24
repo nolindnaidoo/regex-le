@@ -16,6 +16,7 @@ import {
 	scanFiles,
 	unreadNotes,
 } from '../workspace/scan';
+import { guarded } from './guard';
 import {
 	askForFolder,
 	code,
@@ -96,18 +97,19 @@ export function registerValidateWorkspaceCommands(
 	const diagnostics = vscode.languages.createDiagnosticCollection('regex-le');
 	context.subscriptions.push(
 		diagnostics,
-		vscode.commands.registerCommand('regex-le.validateWorkspace', async () =>
-			validateWorkspace(deps, diagnostics),
+		vscode.commands.registerCommand(
+			'regex-le.validateWorkspace',
+			guarded(deps.notifier, async () => validateWorkspace(deps, diagnostics)),
 		),
 		// The Explorer hands over the folder that was clicked. From the
 		// palette there is none, and the command asks.
 		vscode.commands.registerCommand(
 			'regex-le.validateFolder',
-			async (picked?: vscode.Uri) => {
+			guarded(deps.notifier, async (picked?: vscode.Uri) => {
 				const folder = picked ?? (await askForFolder());
 				if (folder !== undefined)
 					await validateWorkspace(deps, diagnostics, folder);
-			},
+			}),
 		),
 	);
 }

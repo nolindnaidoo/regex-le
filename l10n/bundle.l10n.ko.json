@@ -49,5 +49,7 @@
 	"{0} distinct pattern(s) in {1} file(s)": "파일 {1}개에 서로 다른 패턴 {0}개",
 	"Pattern": "패턴",
 	"Files": "파일",
-	"Could not copy the report to the clipboard: {0}": "보고서를 클립보드에 복사할 수 없습니다: {0}"
+	"Could not copy the report to the clipboard: {0}": "보고서를 클립보드에 복사할 수 없습니다: {0}",
+	"{0} file(s) could not be read.": "파일 {0}개를 읽을 수 없습니다.",
+	"Regex-LE could not finish: {0}": "Regex-LE을(를) 완료할 수 없습니다: {0}"
 }

@@ -49,5 +49,7 @@
 	"{0} distinct pattern(s) in {1} file(s)": "{0} pola berbeda dalam {1} file",
 	"Pattern": "Pola",
 	"Files": "File",
-	"Could not copy the report to the clipboard: {0}": "Tidak dapat menyalin laporan ke papan klip: {0}"
+	"Could not copy the report to the clipboard: {0}": "Tidak dapat menyalin laporan ke papan klip: {0}",
+	"{0} file(s) could not be read.": "{0} file tidak dapat dibaca.",
+	"Regex-LE could not finish: {0}": "Regex-LE tidak dapat menyelesaikan: {0}"
 }

@@ -4,6 +4,7 @@ import type { Telemetry } from '../telemetry/telemetry';
 import type { Notifier } from '../ui/notifier';
 import type { StatusBar } from '../ui/statusBar';
 import { sanitizeErrorMessage } from '../utils/errors';
+import { guarded } from './guard';
 import { validateAllPatterns, validateSinglePattern } from './validateRunner';
 
 /**
@@ -20,7 +21,7 @@ export function registerValidateCommand(
 ): void {
 	const disposable = vscode.commands.registerCommand(
 		'regex-le.validate',
-		async () => {
+		guarded(deps.notifier, async () => {
 			deps.telemetry.event('command-validate');
 
 			const editor = vscode.window.activeTextEditor;
@@ -90,7 +91,7 @@ export function registerValidateCommand(
 				);
 				deps.telemetry.event('validate-failed', { error: errorMessage });
 			}
-		},
+		}),
 	);
 
 	context.subscriptions.push(disposable);

@@ -6,6 +6,7 @@ import type { Notifier } from '../ui/notifier';
 import type { StatusBar } from '../ui/statusBar';
 import { sanitizeErrorMessage } from '../utils/errors';
 import { handleSafetyChecks } from '../utils/safety';
+import { guarded } from './guard';
 import { testAllPatterns, testSinglePattern } from './testRunner';
 
 /**
@@ -22,7 +23,7 @@ export function registerTestCommand(
 ): void {
 	const disposable = vscode.commands.registerCommand(
 		'regex-le.test',
-		async () => {
+		guarded(deps.notifier, async () => {
 			deps.telemetry.event('command-test');
 
 			const editor = vscode.window.activeTextEditor;
@@ -144,7 +145,7 @@ export function registerTestCommand(
 				);
 				deps.telemetry.event('test-failed', { error: errorMessage });
 			}
-		},
+		}),
 	);
 
 	context.subscriptions.push(disposable);

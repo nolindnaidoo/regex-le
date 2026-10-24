@@ -49,5 +49,7 @@
 	"{0} distinct pattern(s) in {1} file(s)": "{0} verschiedene Muster in {1} Datei(en)",
 	"Pattern": "Muster",
 	"Files": "Dateien",
-	"Could not copy the report to the clipboard: {0}": "Der Bericht konnte nicht in die Zwischenablage kopiert werden: {0}"
+	"Could not copy the report to the clipboard: {0}": "Der Bericht konnte nicht in die Zwischenablage kopiert werden: {0}",
+	"{0} file(s) could not be read.": "{0} Datei(en) konnten nicht gelesen werden.",
+	"Regex-LE could not finish: {0}": "Regex-LE konnte nicht abschließen: {0}"
 }
