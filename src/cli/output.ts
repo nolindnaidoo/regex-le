@@ -9,7 +9,8 @@
 import { rustIoMessage } from './ioError';
 
 export interface Output {
-	readonly stdout: (text: string) => void;
+	/** False once the pipe is full, as the stream's own `write` answers. */
+	readonly stdout: (text: string) => boolean;
 	readonly stderr: (text: string) => void;
 	/**
 	 * Exit once both streams have drained. `refusal` is what the crate says
@@ -33,9 +34,8 @@ export function crateOutput(
 	stderr.on('error', () => {});
 
 	return Object.freeze({
-		stdout: (text: string) => {
-			if (failure === null) stdout.write(text, (error) => error && fail(error));
-		},
+		stdout: (text: string) =>
+			failure === null && stdout.write(text, (error) => error && fail(error)),
 		// Queued behind every report already written, so nothing reaches stderr
 		// ahead of stdout, and nothing at all once stdout has failed.
 		stderr: (text: string) => {
