@@ -171,17 +171,26 @@ jobs:
 
       # Before anything irreversible: a published version can never be reused,
       # and the unpublish window is 72 hours.
-      - name: Refuse to republish an existing version
+      # A version is published once. One that npm already serves is not
+      # published again; the job goes on to the registry step, so a run whose
+      # registration failed after the publish is finished by running it again.
+      - name: Is this version already on npm?
+        id: npm
         run: |
           version=$(node -p "require('./package.json').version")
           name=$(node -p "require('./mcp/package.json').name")
+          echo "name=$name" >> "$GITHUB_OUTPUT"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
           if npm view "$name@$version" version >/dev/null 2>&1; then
-            echo "::error::$name@$version is already published — bump the version first."
-            exit 1
+            echo "$name@$version is already on npm; it is not published again, only registered."
+            echo "published=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "Publishing $name@$version"
+            echo "published=false" >> "$GITHUB_OUTPUT"
           fi
-          echo "Publishing $name@$version"
 
       - name: Build and gate the package
+        if: steps.npm.outputs.published != 'true'
         run: |
           bun run build:mcp:prod
           bun run check:mcp-bundle
@@ -189,9 +198,32 @@ jobs:
           bun run check:npm-package
 
       - name: Publish to npm
+        if: steps.npm.outputs.published != 'true'
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: npm publish ./mcp --access public
+
+      # The registry validates the metadata against npm, so a version npm does
+      # not serve yet is refused with a 404. A fresh publish takes a while to
+      # reach every read path, and this job used to register the moment the
+      # publish returned: four releases in a row failed here with the package
+      # already on npm. It waits for npm to serve the version, then retries the
+      # registration itself, because the registry's own read can lag the one
+      # this runner sees.
+      - name: Wait for npm to serve the version
+        env:
+          NAME: ${{ steps.npm.outputs.name }}
+          VERSION: ${{ steps.npm.outputs.version }}
+        run: |
+          for attempt in $(seq 1 30); do
+            if npm view "$NAME@$VERSION" version >/dev/null 2>&1; then
+              echo "npm serves $NAME@$VERSION (attempt $attempt)"
+              exit 0
+            fi
+            sleep 10
+          done
+          echo "::error::npm does not serve $NAME@$VERSION after five minutes."
+          exit 1
 
       # The registry hosts metadata pointing at the npm package, so it can only
       # be correct once that version exists. It logs in with this job's OIDC
@@ -213,4 +245,12 @@ jobs:
           }
           tar xzf publisher.tar.gz mcp-publisher
           ./mcp-publisher login github-oidc
-          ./mcp-publisher publish
+          for attempt in $(seq 1 10); do
+            if ./mcp-publisher publish; then
+              exit 0
+            fi
+            echo "registration attempt $attempt refused; waiting for the registry's read of npm to catch up"
+            sleep 30
+          done
+          echo "::error::the MCP registry refused the registration ten times over five minutes."
+          exit 1
