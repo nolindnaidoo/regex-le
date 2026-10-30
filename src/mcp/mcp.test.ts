@@ -1,4 +1,5 @@
 import { EventEmitter } from 'node:events';
+import { PassThrough } from 'node:stream';
 import { describe, expect, it } from 'vitest';
 import { analysisFailed, capped, isOk, readMaxResults } from './envelope';
 import { TOOLS } from './tools';
@@ -147,25 +148,76 @@ describe('protocol', () => {
 		TOOLS,
 	);
 
-	it('echoes the protocol version the client asked for', async () => {
+	it("answers with its own protocol version, as the crate's server does", async () => {
+		// It echoed whatever the client asked for, with `listChanged: false`
+		// in its capabilities, so one handshake got two answers from the two
+		// servers that offer the shared tool.
 		const reply = await respond({
 			jsonrpc: '2.0',
 			id: 1,
 			method: 'initialize',
 			params: { protocolVersion: '2024-11-05' },
 		});
-		expect(reply?.result?.protocolVersion).toBe('2024-11-05');
+		expect(reply?.result?.protocolVersion).toBe('2025-06-18');
+		expect(reply?.result?.capabilities).toEqual({ tools: {} });
 		expect(reply?.result?.serverInfo).toEqual({
 			name: 'regex-le',
 			version: '1.0.0',
 		});
 	});
 
-	it('does not reply to a notification', async () => {
-		// A reply to a notification is the classic way to wedge a client.
+	it('does not reply to a notification, a null id included', async () => {
+		// A reply to a notification is the classic way to wedge a client. An
+		// initialize with no id was answered with `id: null`.
 		expect(
 			await respond({ jsonrpc: '2.0', method: 'notifications/initialized' }),
 		).toBeNull();
+		expect(
+			await respond({ jsonrpc: '2.0', id: null, method: 'initialize' }),
+		).toBeNull();
+		expect(await respond({ jsonrpc: '2.0', method: 'initialize' })).toBeNull();
+	});
+
+	it("refuses notifications/initialized sent with an id as a method it does not implement, as the crate's server does", async () => {
+		const reply = await respond({
+			jsonrpc: '2.0',
+			id: 7,
+			method: 'notifications/initialized',
+		});
+		expect(reply?.error?.code).toBe(-32601);
+	});
+
+	it('refuses in the words the other two servers use', async () => {
+		// Three servers ship from this repository; a client must not be able
+		// to tell them apart by what it sent.
+		expect(
+			(await respond({ jsonrpc: '2.0', id: 1, method: 'resources/list' }))
+				?.error?.message,
+		).toBe('Unknown method: resources/list');
+		expect(
+			(
+				await respond({
+					jsonrpc: '2.0',
+					id: 1,
+					method: 'tools/call',
+					params: { name: 'nope' },
+				})
+			)?.error?.message,
+		).toBe('Unknown tool: nope');
+		expect(
+			(await respond({ jsonrpc: '2.0', id: 1, method: 'tools/call' }))?.error
+				?.message,
+		).toBe('tools/call requires a string `name`');
+		expect(
+			(
+				await respond({
+					jsonrpc: '2.0',
+					id: 1,
+					method: 'tools/call',
+					params: { name: 3 },
+				})
+			)?.error?.message,
+		).toBe('tools/call requires a string `name`');
 	});
 
 	it('reports an unknown method as a JSON-RPC error', async () => {
@@ -271,6 +323,19 @@ describe('serve: the stdio loop', () => {
 		expect(replies()[0]?.error?.code).toBe(-32700);
 	});
 
+	it("refuses a frame led by a byte order mark as not JSON, as the crate's server does", async () => {
+		// JavaScript's trim strips the mark; Rust's does not, and serde_json
+		// refuses it. The loop trims as Rust trims.
+		const { input, replies } = harness();
+		input.emit('data', '\uFEFF{"jsonrpc":"2.0","id":1,"method":"ping"}\n');
+		input.emit('data', '\u0085 \t\n{"jsonrpc":"2.0","id":2,"method":"ping"}\n');
+		await settle();
+		expect(replies().map((r) => r.error?.message ?? r.id)).toEqual([
+			'Invalid JSON',
+			2,
+		]);
+	});
+
 	it('ignores blank lines', async () => {
 		const { input, replies } = harness();
 		input.emit('data', '\n\n{"jsonrpc":"2.0","id":6,"method":"ping"}\n');
@@ -324,5 +389,71 @@ describe('serve: the stdio loop', () => {
 			},
 			{ jsonrpc: '2.0', id: 9, result: {} },
 		]);
+	});
+});
+
+describe('serve: a client that reads slowly', () => {
+	// The pipe to the client fills; `write` answers false. Every reply after
+	// that would sit in this process until the client drained the pipe, so
+	// the server stops reading until it does: what it holds is bounded by
+	// the requests already in flight, not by everything the client sent.
+	function slowReader() {
+		const input = new PassThrough();
+		const written: string[] = [];
+		let full = false;
+		const output = Object.assign(new EventEmitter(), {
+			write: (chunk: string) => {
+				written.push(chunk);
+				return !full;
+			},
+		});
+		serve(
+			{ name: 'regex-le', version: '1.0.0' },
+			TOOLS,
+			input,
+			output as never,
+		);
+		return {
+			input,
+			output,
+			written,
+			fill: () => {
+				full = true;
+			},
+			drain: () => {
+				full = false;
+				output.emit('drain');
+			},
+		};
+	}
+
+	const settle = () => new Promise((r) => setTimeout(r, 20));
+	const ping = (id: number) => `{"jsonrpc":"2.0","id":${id},"method":"ping"}\n`;
+
+	it('stops reading while the pipe is full and resumes when it drains', async () => {
+		const reader = slowReader();
+		reader.fill();
+		reader.input.write(ping(1));
+		await settle();
+		expect(reader.written).toHaveLength(1);
+		expect(reader.input.isPaused()).toBe(true);
+
+		reader.input.write(ping(2));
+		await settle();
+		expect(reader.written).toHaveLength(1);
+
+		reader.drain();
+		await settle();
+		expect(reader.input.isPaused()).toBe(false);
+		expect(reader.written).toHaveLength(2);
+		expect(JSON.parse(reader.written[1] ?? '').id).toBe(2);
+	});
+
+	it('reads on while the pipe accepts every reply', async () => {
+		const reader = slowReader();
+		reader.input.write(ping(1) + ping(2) + ping(3));
+		await settle();
+		expect(reader.written).toHaveLength(3);
+		expect(reader.input.isPaused()).toBe(false);
 	});
 });

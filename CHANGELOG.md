@@ -14,6 +14,16 @@ version and releases from one tag.
 
 ### Fixed
 
+- The extension's MCP server answered `initialize` with whatever protocol
+  version the client asked for and a `listChanged: false` capability, where
+  the crate's server answers its own version and `tools: {}`; it replied to
+  an `initialize` with no id; it answered `notifications/initialized` sent
+  with an id with nothing, where the crate's server refuses an unknown
+  method; and a frame led by a byte order mark was read as a request here
+  and refused as not JSON there. The three servers answer one handshake and
+  one malformed frame alike now. The server also stops reading while the
+  pipe to a slow client is full, so what it holds is bounded by the
+  requests in flight.
 - A number setting cleared to an empty string or null read as 0 and was
   clamped to its floor, so the size guard became 1,000 bytes. It falls back
   to the default.
