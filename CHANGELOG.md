@@ -14,6 +14,18 @@ version and releases from one tag.
 
 ### Fixed
 
+- The npm command line's MCP server dropped a frame that was not JSON, not
+  UTF-8, not a JSON-RPC 2.0 request or led by a byte order mark without a
+  word, where the extension's server answers a parse error; it answered a
+  request with a null id, which the extension's server reads as a
+  notification; it refused an unknown method, an unknown tool and a call
+  naming no tool in its own words; and it held a frame until its newline
+  with no ceiling, so a client that streamed without one grew the process
+  without bound. It answers every malformed frame in the extension server's
+  words now, refuses a frame over 16 MiB and serves the next line, reads a
+  last line with no newline as the partial frame it is, joins the chunks of
+  a line once at its newline rather than on every chunk, and waits for the
+  pipe to drain before reading the next frame.
 - The extension's MCP server answered `initialize` with whatever protocol
   version the client asked for and a `listChanged: false` capability, where
   the crate's server answers its own version and `tools: {}`; it replied to

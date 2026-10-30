@@ -207,11 +207,153 @@ describe('mcp', () => {
 		};
 		await serve(
 			Readable.from([Buffer.from(`${JSON.stringify(request)}\n`)]),
-			(reply) => written.push(reply),
+			(reply) => {
+				written.push(reply);
+				return undefined;
+			},
 			'9.9.9',
 		);
 		expect(
 			written[0]?.startsWith('{"id":1,"jsonrpc":"2.0","result":{"content":'),
 		).toBe(true);
+	});
+});
+
+describe('mcp: the crate framing', () => {
+	// The protocol around the tools answers as the extension's server and
+	// the crate's answer, so a client cannot tell the three apart by what it
+	// sent. Replies are parsed: key order is the crate's concern, not this one.
+	async function session(
+		lines: readonly (string | Uint8Array)[],
+	): Promise<{ status: number; replies: unknown[] }> {
+		const written: string[] = [];
+		const input = Readable.from(lines.map((item) => Buffer.from(item)));
+		const status = await serve(
+			input,
+			(line) => {
+				written.push(line);
+				return undefined;
+			},
+			'9.9.9',
+		);
+		return { status, replies: written.map((line) => JSON.parse(line)) };
+	}
+
+	it("answers a malformed frame in the extension server's words and serves the next line", async () => {
+		// A frame that is not JSON, or not UTF-8, was dropped without a word,
+		// and a client lost every request it then waited on.
+		const { status, replies } = await session([
+			'{"jsonrpc":"2.0","id":1,"method":"initialize"}\n',
+			'{"jsonrpc":"2.0","method":"notifications/initialized"}\n',
+			'not json\n',
+			Uint8Array.from([0x7b, 0xff, 0x7d, 0x0a]),
+			'   \n',
+			'{"jsonrpc":"2.0","id":2,"method":"nope"}\n',
+		]);
+		expect(status).toBe(0);
+		expect(replies).toEqual([
+			{
+				jsonrpc: '2.0',
+				id: 1,
+				result: {
+					protocolVersion: '2025-06-18',
+					capabilities: { tools: {} },
+					serverInfo: { name: 'regex-le', version: '9.9.9' },
+				},
+			},
+			{
+				jsonrpc: '2.0',
+				id: null,
+				error: { code: -32700, message: 'Invalid JSON' },
+			},
+			{
+				jsonrpc: '2.0',
+				id: null,
+				error: { code: -32700, message: 'Invalid JSON' },
+			},
+			{
+				jsonrpc: '2.0',
+				id: 2,
+				error: { code: -32601, message: 'Unknown method: nope' },
+			},
+		]);
+	});
+
+	it('refuses malformed frames in the words the other two servers use, and a null id is a notification', async () => {
+		const { replies } = await session([
+			'{"id":1,"method":"ping"}\n',
+			'{"jsonrpc":"1.0","id":2,"method":"ping"}\n',
+			'[{"jsonrpc":"2.0","id":3,"method":"ping"}]\n',
+			'{"jsonrpc":"2.0","id":null,"method":"ping"}\n',
+			'{"jsonrpc":"2.0","id":4,"method":"notifications/initialized"}\n',
+			'{"jsonrpc":"2.0","id":5,"method":"tools/call","params":5}\n',
+			'{"jsonrpc":"2.0","id":6,"method":"tools/call","params":{"name":"nope"}}\n',
+			'{"jsonrpc":"2.0","id":7,"method":"tools/call"}\n',
+			'{"jsonrpc":"2.0","id":8,"method":"initialize","params":{"protocolVersion":"1999-01-01"}}\n',
+		]);
+		const refused = {
+			jsonrpc: '2.0',
+			id: null,
+			error: { code: -32700, message: 'Not a JSON-RPC 2.0 request' },
+		};
+		expect(replies).toEqual([
+			refused,
+			refused,
+			refused,
+			{
+				jsonrpc: '2.0',
+				id: 4,
+				error: {
+					code: -32601,
+					message: 'Unknown method: notifications/initialized',
+				},
+			},
+			{
+				jsonrpc: '2.0',
+				id: 5,
+				error: { code: -32602, message: 'tools/call requires a string `name`' },
+			},
+			{
+				jsonrpc: '2.0',
+				id: 6,
+				error: { code: -32602, message: 'Unknown tool: nope' },
+			},
+			{
+				jsonrpc: '2.0',
+				id: 7,
+				error: { code: -32602, message: 'tools/call requires a string `name`' },
+			},
+			{
+				jsonrpc: '2.0',
+				id: 8,
+				result: {
+					capabilities: { tools: {} },
+					protocolVersion: '2025-06-18',
+					serverInfo: { name: 'regex-le', version: '9.9.9' },
+				},
+			},
+		]);
+	});
+
+	it('waits for the pipe to drain before reading the next frame', async () => {
+		const lines: string[] = [];
+		let drained = 0;
+		const input = Readable.from([
+			Buffer.from(
+				'{"jsonrpc":"2.0","id":1,"method":"ping"}\n{"jsonrpc":"2.0","id":2,"method":"ping"}\n',
+			),
+		]);
+		const write = (line: string) => {
+			lines.push(line);
+			return new Promise<void>((resolve) =>
+				setTimeout(() => {
+					drained += 1;
+					resolve();
+				}, 1),
+			);
+		};
+		await serve(input, write, '9.9.9');
+		expect(lines).toHaveLength(2);
+		expect(drained).toBe(2);
 	});
 });
