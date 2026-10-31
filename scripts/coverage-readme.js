@@ -100,9 +100,9 @@ in a real VS Code extension host and an end-to-end test that installs the
 built \`.vsix\` into a clean profile.
 
 Generated from a real run — \`coverage/coverage-summary.json\` and
-\`coverage/test-results.json\` — by \`scripts/coverage-readme.js\`; CI fails if
-this section drifts. Reproduce with \`bun run test:coverage\`, and the case
-count is the one vitest prints.
+\`coverage/test-results.json\` — by \`scripts/coverage-readme.js\`, and
+\`bun run coverage:readme:check\` says whether it has drifted since. Reproduce
+with \`bun run test:coverage\`, and the case count is the one vitest prints.
 ${END}`;
 
 const readme = fs.readFileSync(readmePath, 'utf8');

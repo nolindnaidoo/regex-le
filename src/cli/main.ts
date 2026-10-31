@@ -18,7 +18,14 @@ function main(args: readonly string[]): void {
 	if (args[0] === 'mcp') {
 		// The crate's server stops at the first reply it cannot write.
 		process.stdout.once('error', () => output.exit(2, null));
-		serve(process.stdin, output.stdout, version).then((code) =>
+		// A client that reads slowly fills the pipe; the next frame waits until
+		// it drains, as the crate's blocking write waits it out. The write goes
+		// through the shared output, so a failed pipe is the exit it decides.
+		const writeReply = (line: string): Promise<void> | undefined =>
+			output.stdout(line)
+				? undefined
+				: new Promise((resolve) => process.stdout.once('drain', resolve));
+		serve(process.stdin, writeReply, version).then((code) =>
 			output.exit(code, null),
 		);
 		return;

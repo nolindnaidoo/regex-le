@@ -53,9 +53,10 @@ export interface ServerInfo {
 /**
  * The protocol revision this server speaks.
  *
- * Echoed back only when the client asks for it; otherwise the client's own
- * version is returned, which is what the specification requires for forward
- * compatibility.
+ * Answered whatever the client asked for, as the crate's server answers it;
+ * a client then accepts the revision or disconnects. Echoing the client's
+ * own version, which this did, had the two servers answer one handshake
+ * differently.
  */
 const SUPPORTED_PROTOCOL = '2025-06-18';
 
@@ -118,11 +119,15 @@ export function createResponder(
 			});
 		}
 
+		// Absent or null arguments are an empty object, which the tool then
+		// refuses for what it lacks, in the same words the crate's server uses.
 		const args = (params?.arguments ?? {}) as Record<string, unknown>;
 
-		// A tool that throws is a tool-level failure, not a protocol failure: the
-		// client gets a result carrying isError so a model can read the reason,
-		// rather than a JSON-RPC error that reads as "the server is broken".
+		// An argument that does not fit the tool's schema is a protocol error,
+		// thrown with its code, which the responder answers as `-32602`. A tool
+		// that fails on what it was given at run time is a result carrying
+		// isError, so a model can read the reason rather than a JSON-RPC error
+		// that reads as "the server is broken".
 		try {
 			const data = await tool.handler(args);
 			return {
@@ -131,6 +136,7 @@ export function createResponder(
 				isError: false,
 			};
 		} catch (error) {
+			if ((error as { code?: unknown })?.code === INVALID_PARAMS) throw error;
 			const message = error instanceof Error ? error.message : String(error);
 			return {
 				content: [{ type: 'text', text: message }],
@@ -146,27 +152,23 @@ export function createResponder(
 		request: JsonRpcRequest,
 	): Promise<JsonRpcResponse | null> {
 		const { method, params } = request;
-		const id = request.id ?? null;
-		// Notifications carry no id and take no reply.
-		const isNotification = request.id === undefined || request.id === null;
+		// Notifications carry no id, or a null one, and take no reply, whatever
+		// the method. The crate's server answers the same way.
+		if (request.id === undefined || request.id === null) return null;
+		const id = request.id;
 
 		try {
 			if (method === 'initialize') {
-				const asked = params?.protocolVersion;
 				return {
 					jsonrpc: '2.0' as const,
 					id,
 					result: {
-						protocolVersion:
-							typeof asked === 'string' ? asked : SUPPORTED_PROTOCOL,
-						capabilities: { tools: { listChanged: false } },
+						protocolVersion: SUPPORTED_PROTOCOL,
+						capabilities: { tools: {} },
 						serverInfo: info,
 					},
 				};
 			}
-
-			if (method === 'notifications/initialized') return null;
-			if (isNotification) return null;
 
 			if (method === 'ping') {
 				return { jsonrpc: '2.0' as const, id, result: {} };
@@ -219,8 +221,19 @@ export function serve(
 	// as it arrives, so the oversized message is never held.
 	let discarding = false;
 
+	// A client that reads slowly fills the pipe, and every reply after that
+	// sits in this process until it drains. Reading stops while the pipe is
+	// full, so what is held is bounded by the requests already in flight
+	// rather than by everything the client has sent.
+	let waitingForDrain = false;
 	const write = (message: unknown): void => {
-		output.write(`${JSON.stringify(message)}\n`);
+		if (output.write(`${JSON.stringify(message)}\n`) || waitingForDrain) return;
+		waitingForDrain = true;
+		input.pause();
+		output.once('drain', () => {
+			waitingForDrain = false;
+			input.resume();
+		});
 	};
 
 	const frameRefusal = () => ({
@@ -246,7 +259,7 @@ export function serve(
 		// Process every complete line; keep the partial tail for the next chunk.
 		let newline = buffer.indexOf('\n');
 		while (newline !== -1) {
-			const line = buffer.slice(0, newline).trim();
+			const line = rustTrim(buffer.slice(0, newline));
 			buffer = buffer.slice(newline + 1);
 			newline = buffer.indexOf('\n');
 			if (!line) continue;
@@ -290,4 +303,15 @@ export function serve(
 			write(frameRefusal());
 		}
 	});
+}
+
+/**
+ * Rust's `str::trim`, which the crate's server reads a line with. JavaScript's
+ * also strips a byte order mark and keeps U+0085, so a frame led by a BOM was
+ * read here and refused there.
+ */
+function rustTrim(line: string): string {
+	const space =
+		'[\\t\\n\\v\\f\\r \\u0085\\u00a0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]';
+	return line.replace(new RegExp(`^${space}+|${space}+$`, 'g'), '');
 }

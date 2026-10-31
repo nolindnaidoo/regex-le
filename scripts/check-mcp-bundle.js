@@ -3,7 +3,7 @@
  * MCP bundle gate.
  *
  * The extension bundle has `check-bundle.js`; this is its counterpart for
- * `dist/mcp-server.js`, and it asserts three things nothing else can:
+ * `dist/mcp-server.js`, and it asserts four things nothing else can:
  *
  * 1. **Self-contained, and free of `vscode`.** The server runs outside the
  *    editor — in Claude Code, from `npx`. A stray `vscode` import would
@@ -13,6 +13,10 @@
  *    `check-bundle.js` exists for; the same class of bug applies here.
  * 3. **It stays small.** The SDK was rejected at 5.9 MB for a repo whose
  *    extension bundle is 66 KB. Without a ceiling that decision quietly rots.
+ * 4. **A client that went away is exit 2, not a stack trace.** The crate's
+ *    server and the npm command line's stop at the first reply they cannot
+ *    write; this one died on an unhandled EPIPE with a Node stack trace on
+ *    stderr, which a host logs as the server crashing.
  */
 const { spawn } = require('node:child_process');
 const fs = require('node:fs');
@@ -59,6 +63,21 @@ if (size > SIZE_CEILING_BYTES) {
 		'a dependency has grown; re-measure before raising this',
 	);
 }
+
+// --- 4. a reader that went away ---------------------------------------
+// The read end is closed before the server starts, so its first reply is
+// an EPIPE. Checked first, since the handshake below ends the process.
+const gone = spawn(process.execPath, [bundlePath], { stdio: 'pipe' });
+let goneStderr = '';
+gone.stdout.destroy();
+gone.stderr.on('data', (d) => {
+	goneStderr += d;
+});
+gone.stdin.on('error', () => {});
+gone.stdin.end(
+	`${Array.from({ length: 300 }, (_, id) => JSON.stringify({ jsonrpc: '2.0', id, method: 'tools/list' })).join('\n')}\n`,
+);
+const goneExit = new Promise((resolve) => gone.on('close', resolve));
 
 // --- 3. protocol handshake ------------------------------------------
 const proc = spawn(process.execPath, [bundlePath], { stdio: 'pipe' });
@@ -107,8 +126,16 @@ send({
 	},
 });
 
-setTimeout(() => {
+setTimeout(async () => {
 	proc.stdin.end();
+
+	const code = await goneExit;
+	if (code !== 2 || goneStderr.trim() !== '') {
+		fail(
+			'a client that closed the pipe was not answered with a quiet exit 2',
+			`exit ${code}, stderr: ${goneStderr.trim().split('\n')[0]}`,
+		);
+	}
 
 	const init = byId(1)?.result;
 	if (init?.serverInfo?.name !== 'regex-le') {

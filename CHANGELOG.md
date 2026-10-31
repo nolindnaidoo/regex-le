@@ -14,6 +14,33 @@ version and releases from one tag.
 
 ### Fixed
 
+- The extension's MCP server, the one `regex-le-mcp` and the editor run, died
+  on an unhandled EPIPE with a Node stack trace when the client closed the
+  pipe, which a host logs as the server crashing. It exits 2 quietly at the
+  first reply it cannot write, as the crate's server and the npm command
+  line do.
+- The npm command line's MCP server dropped a frame that was not JSON, not
+  UTF-8, not a JSON-RPC 2.0 request or led by a byte order mark without a
+  word, where the extension's server answers a parse error; it answered a
+  request with a null id, which the extension's server reads as a
+  notification; it refused an unknown method, an unknown tool and a call
+  naming no tool in its own words; and it held a frame until its newline
+  with no ceiling, so a client that streamed without one grew the process
+  without bound. It answers every malformed frame in the extension server's
+  words now, refuses a frame over 16 MiB and serves the next line, reads a
+  last line with no newline as the partial frame it is, joins the chunks of
+  a line once at its newline rather than on every chunk, and waits for the
+  pipe to drain before reading the next frame.
+- The extension's MCP server answered `initialize` with whatever protocol
+  version the client asked for and a `listChanged: false` capability, where
+  the crate's server answers its own version and `tools: {}`; it replied to
+  an `initialize` with no id; it answered `notifications/initialized` sent
+  with an id with nothing, where the crate's server refuses an unknown
+  method; and a frame led by a byte order mark was read as a request here
+  and refused as not JSON there. The three servers answer one handshake and
+  one malformed frame alike now. The server also stops reading while the
+  pipe to a slow client is full, so what it holds is bounded by the
+  requests in flight.
 - A number setting cleared to an empty string or null read as 0 and was
   clamped to its floor, so the size guard became 1,000 bytes. It falls back
   to the default.
